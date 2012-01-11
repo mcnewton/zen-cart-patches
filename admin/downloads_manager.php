@@ -142,11 +142,8 @@ function go_option() {
       $padInfo = new objectInfo($padInfo_array);
     }
 
-// Moved to /admin/includes/configure.php
-  if (!defined('DIR_FS_DOWNLOAD')) define('DIR_FS_DOWNLOAD', DIR_FS_CATALOG . 'download/');
-
   $filename_is_missing='';
-  if ( !file_exists(DIR_FS_DOWNLOAD . $products_downloads_query->fields['products_attributes_filename']) ) {
+  if ( !zen_orders_products_downloads($products_downloads_query->fields['products_attributes_filename']) ) {
     $filename_is_missing = zen_image(DIR_WS_IMAGES . 'icon_status_red.gif');
   } else {
     $filename_is_missing = zen_image(DIR_WS_IMAGES . 'icon_status_green.gif');

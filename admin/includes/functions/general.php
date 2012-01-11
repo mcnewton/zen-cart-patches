@@ -2431,7 +2431,7 @@ function zen_copy_products_attributes($products_id_from, $products_id_to) {
       if ($check_valid == true) {
         $valid_downloads = '';
         while (!$download_display->EOF) {
-          if (!file_exists(DIR_FS_DOWNLOAD . $download_display->fields['products_attributes_filename'])) {
+          if (!zen_orders_products_downloads($download_display->fields['products_attributes_filename'])) {
             $valid_downloads .= '<br />&nbsp;&nbsp;' . zen_image(DIR_WS_IMAGES . 'icon_status_red.gif') . ' Invalid: ' . $download_display->fields['products_attributes_filename'];
             // break;
           } else {
@@ -3174,7 +3174,7 @@ function zen_copy_products_attributes($products_id_from, $products_id_to) {
     // Moved to /admin/includes/configure.php
     if (!defined('DIR_FS_DOWNLOAD')) define('DIR_FS_DOWNLOAD', DIR_FS_CATALOG . 'download/');
 
-    if (!file_exists(DIR_FS_DOWNLOAD . $check_filename)) {
+    if (!file_exists(zen_download_location($check_filename))) {
       $valid_downloads = false;
     // break;
     } else {
@@ -3182,6 +3182,26 @@ function zen_copy_products_attributes($products_id_from, $products_id_to) {
     }
 
     return $valid_downloads;
+  }
+
+////
+// get the location of a download (or script)
+  function zen_download_location($check_filename) {
+    $filename = DIR_FS_DOWNLOAD . $check_filename;
+
+    if (zen_download_is_script($check_filename)) {
+      list(, $script_filename) = explode(':', $check_filename);
+      $filename = DIR_FS_SCRIPT . $script_filename;
+    }
+
+    return $filename;
+  }
+
+////
+// check to see if the download is actually a script
+  function zen_download_is_script($check_filename) {
+    if (substr($check_filename, 0, 7) == "script:") return true;
+    return false;
   }
 
 ////

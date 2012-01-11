@@ -37,14 +37,23 @@
       $download_timestamp = mktime(23, 59, 59, $dt_month, $dt_day + $downloads->fields['download_maxdays'], $dt_year);
       $download_expiry = date('Y-m-d H:i:s', $download_timestamp);
 
-      $is_downloadable = ( (file_exists(DIR_FS_DOWNLOAD . $downloads->fields['orders_products_filename']) && (($downloads->fields['download_count'] > 0 && $download_timestamp > time()) || $downloads->fields['download_maxdays'] == 0)) ) ? true : false;
-      $zv_filesize = filesize (DIR_FS_DOWNLOAD . $downloads->fields['orders_products_filename']);
-      if ($zv_filesize >= 1024) {
-        $zv_filesize = number_format($zv_filesize/1024/1024,2);
-        $zv_filesize_units = TEXT_FILESIZE_MEGS;
+      $zv_filename = $downloads->fields['orders_products_filename'];
+
+      if (substr($zv_filename, 0, 7) == "script:"){
+        list(, $zv_scriptname, $zv_filename, $zv_size) =  explode(':', $downloads->fields['orders_products_filename']);
+        $is_downloadable = ( (file_exists(DIR_FS_SCRIPT . $zv_scriptname) && (($downloads->fields['download_count'] > 0 && $download_timestamp > time()) || $downloads->fields['download_maxdays'] == 0)) ) ? true : false;
+        $zv_filesize = $zv_size; // "unknown";
+        $zv_filesize_units = "";
       } else {
-        $zv_filesize = number_format($zv_filesize);
-        $zv_filesize_units = TEXT_FILESIZE_BYTES;
+        $is_downloadable = ( (file_exists(DIR_FS_DOWNLOAD . $downloads->fields['orders_products_filename']) && (($downloads->fields['download_count'] > 0 && $download_timestamp > time()) || $downloads->fields['download_maxdays'] == 0)) ) ? true : false;
+        $zv_filesize = filesize (DIR_FS_DOWNLOAD . $downloads->fields['orders_products_filename']);
+        if ($zv_filesize >= 1024) {
+          $zv_filesize = number_format($zv_filesize/1024/1024,2);
+          $zv_filesize_units = TEXT_FILESIZE_MEGS;
+        } else {
+          $zv_filesize = number_format($zv_filesize);
+          $zv_filesize_units = TEXT_FILESIZE_BYTES;
+        }
       }
 ?>
           <tr class="tableRow">
@@ -66,7 +75,7 @@
       }
 ?>
       <td class=""><?php echo $zv_filesize . $zv_filesize_units; ?></td>
-      <td class=""><?php echo $downloads->fields['orders_products_filename']; ?></td>
+      <td class=""><?php echo $zv_filename; ?></td>
       <td class=""><?php echo ($downloads->fields['download_maxdays'] == 0 ? TEXT_DOWNLOADS_UNLIMITED : zen_date_short($download_expiry)); ?></td>
       <td class="centeredContent"><?php echo ($downloads->fields['download_maxdays'] == 0 ? TEXT_DOWNLOADS_UNLIMITED_COUNT : $downloads->fields['download_count']); ?></td>
       <td class="centeredContent"><?php echo ($is_downloadable) ? '<a href="' . zen_href_link(FILENAME_DOWNLOAD, 'order=' . $last_order . '&id=' . $downloads->fields['orders_products_download_id']) . '">' . zen_image_button(BUTTON_IMAGE_DOWNLOAD, BUTTON_DOWNLOAD_ALT) . '</a>' : '&nbsp;'; ?></td>

@@ -45,6 +45,7 @@ define('DIR_FS_DOWNLOAD_PUBLIC', DIR_FS_CATALOG . 'pub/');
 define('DIR_WS_UPLOADS', DIR_WS_IMAGES . 'uploads/');
 define('DIR_FS_UPLOADS', DIR_FS_CATALOG . DIR_WS_UPLOADS);
 define('DIR_FS_EMAIL_TEMPLATES', DIR_FS_CATALOG . 'email/');
+define('DIR_FS_SCRIPT', DIR_FS_CATALOG . 'dlscript/');
 
 // define our database connection
 define('DB_TYPE', 'mysql');

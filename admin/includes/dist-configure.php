@@ -68,6 +68,7 @@
   define('DIR_FS_BACKUP', DIR_FS_ADMIN . 'backups/');
   define('DIR_FS_EMAIL_TEMPLATES', DIR_FS_CATALOG . 'email/');
   define('DIR_FS_DOWNLOAD', DIR_FS_CATALOG . 'download/');
+  define('DIR_FS_SCRIPT', DIR_FS_CATALOG . 'dlscript/');
 
 // define our database connection
   define('DB_TYPE', 'mysql');

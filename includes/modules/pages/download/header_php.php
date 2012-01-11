@@ -53,9 +53,24 @@ if ($downloads->fields['download_count'] <= 0 and $downloads->fields['download_m
   zen_redirect(zen_href_link(FILENAME_DOWNLOAD_TIME_OUT));
 }
 
+// determine filename for download
+$origin_filename = $downloads->fields['orders_products_filename'];
+$browser_filename = $origin_filename;
+
+$downloadScript = 0;
+$file_dir = DIR_FS_DOWNLOAD;
+if (substr($origin_filename, 0, 7) == "script:") {
+  $downloadScript = 1;
+  $script_opts = explode(':', $origin_filename);
+  array_shift($script_opts);
+  $origin_filename = $script_opts[0]; # name of the script
+  $browser_filename = $script_opts[1]; # filename to return to browser
+  $file_dir = DIR_FS_SCRIPT;
+}
+
 // FIX HERE AND GIVE ERROR PAGE FOR MISSING FILE
 // Die if file is not there
-if (!file_exists(DIR_FS_DOWNLOAD . $downloads->fields['orders_products_filename'])) die('Sorry. File not found. Please contact the webmaster to report this error.<br />c/f: ' . $downloads->fields['orders_products_filename']);
+if (!file_exists($file_dir . $origin_filename)) die('Sorry. File not found. Please contact the webmaster to report this error.<br />c/f: ' . $downloads->fields['orders_products_filename']);
 
 // Now decrement counter (probably should skip this if download_maxdays = 0, ie: unlimited) -- move it up to lines 48-54?
 $sql = "UPDATE " . TABLE_ORDERS_PRODUCTS_DOWNLOAD . "
@@ -106,19 +121,20 @@ function zen_unlink_temp_dir($dir)
 @ob_end_clean();
 @ini_set('zlib.output_compression', 'Off');
 
-// determine filename for download
-$origin_filename = $downloads->fields['orders_products_filename'];
-$browser_filename = str_replace(' ', '_', $origin_filename);
+
+$browser_filename = str_replace(' ', '_', $browser_filename);
 if (strstr($browser_filename, '/')) $browser_filename = substr($browser_filename, strrpos($browser_filename, '/')+1);
 if (strstr($browser_filename, '\\')) $browser_filename = substr($browser_filename, strrpos($browser_filename, '\\')+1);
-if (substr(DIR_FS_DOWNLOAD, -1) != '/') $origin_filename = '/' . $origin_filename;
-if (!file_exists(DIR_FS_DOWNLOAD . $origin_filename)) {
-  $msg = 'DOWNLOAD PROBLEM: Problems detected with download for ' . DIR_FS_DOWNLOAD . $origin_filename . ' because the file could not be found on the server. If the file exists, then its permissions are too low for PHP to access it. Contact your hosting company for specific help in determining correct permissions to make the file readable by PHP.';
+if (substr($file_dir, -1) != '/') $origin_filename = '/' . $origin_filename;
+
+if (!file_exists($file_dir . $origin_filename)) {
+  $msg = 'DOWNLOAD PROBLEM: Problems detected with download for ' . $file_dir . $origin_filename . ' because the file could not be found on the server. If the file exists, then its permissions are too low for PHP to access it. Contact your hosting company for specific help in determining correct permissions to make the file readable by PHP.';
   zen_mail('', STORE_OWNER_EMAIL_ADDRESS, ERROR_CUSTOMER_DOWNLOAD_FAILURE, $msg, STORE_NAME, EMAIL_FROM);
 }
-$downloadFilesize = @filesize(DIR_FS_DOWNLOAD . $origin_filename);
+
+$downloadFilesize = @filesize($file_dir . $origin_filename);
 if (!isset($downloadFilesize) || ($downloadFilesize < 1)) {
-  $msg = 'DOWNLOAD PROBLEM: Problem detected with download for ' . DIR_FS_DOWNLOAD . $origin_filename . ' because the server is preventing PHP from reading the file size attributes, or the file is actually 0 bytes in size (which suggests the uploaded file is damaged or incomplete). Perhaps its permissions are too low for PHP to access it? Contact your hosting company for specific help in determining correct permissions to allow PHP to stat the file using the filesize() function.';
+  $msg = 'DOWNLOAD PROBLEM: Problem detected with download for ' . $file_dir . $origin_filename . ' because the server is preventing PHP from reading the file size attributes, or the file is actually 0 bytes in size (which suggests the uploaded file is damaged or incomplete). Perhaps its permissions are too low for PHP to access it? Contact your hosting company for specific help in determining correct permissions to allow PHP to stat the file using the filesize() function.';
   zen_mail('', STORE_OWNER_EMAIL_ADDRESS, ERROR_CUSTOMER_DOWNLOAD_FAILURE, $msg, STORE_NAME, EMAIL_FROM);
 }
 
@@ -149,7 +165,7 @@ if (!isset($downloadFilesize) || ($downloadFilesize < 1)) {
      */
     $hfile = $hline = '';
     if (headers_sent($hfile, $hline)) {
-      $msg = 'DOWNLOAD PROBLEM: Cannot begin download for ' . $origin_filename . ' because HTTP headers were already sent. This indicates a PHP error, probably in a language file.  Start by checking ' . $hfile . ' on line ' . $hline . '.';
+      $msg = 'DOWNLOAD PROBLEM: Cannot begin download for ' . $file_dir . $origin_filename . ' because HTTP headers were already sent. This indicates a PHP error, probably in a language file.  Start by checking ' . $hfile . ' on line ' . $hline . '.';
       zen_mail('', STORE_OWNER_EMAIL_ADDRESS, ERROR_CUSTOMER_DOWNLOAD_FAILURE, $msg, STORE_NAME, EMAIL_FROM);
     }
 
@@ -199,11 +215,18 @@ if (!isset($downloadFilesize) || ($downloadFilesize < 1)) {
 
     header("Content-Transfer-Encoding: binary");
     header('Content-Disposition: attachment; filename="' . urlencode($browser_filename) . '"');
-    if ($downloadFilesize > 0) header("Content-Length: " . (string) $downloadFilesize);
+    if (!$downloadScript and $downloadFilesize > 0) header("Content-Length: " . (string) $downloadFilesize);
+
+
+if ($downloadScript) {
+  $zco_notifier->notify('NOTIFY_DOWNLOAD_VIA_SCRIPT___BEGINS', $origin_filename, $browser_filename);
+  include $file_dir . $origin_filename;
+  $zco_notifier->notify('NOTIFY_DOWNLOAD_VIA_SCRIPT___COMPLETED', $origin_filename);
+}
 
 
 // Redirect usually will work only on Unix/Linux hosts since Windows hosts can't do symlinking in PHP versions older than 5.3.0
-if (DOWNLOAD_BY_REDIRECT == 'true') {
+if (!$downloadScript and DOWNLOAD_BY_REDIRECT == 'true') {
   zen_unlink_temp_dir(DIR_FS_DOWNLOAD_PUBLIC);
   $tempdir = zen_random_name();
   umask(0000);
@@ -218,7 +241,7 @@ if (DOWNLOAD_BY_REDIRECT == 'true') {
   }
 }
 
-if (DOWNLOAD_BY_REDIRECT != 'true' or $link_create_status==false ) {
+if (!$downloadScript and DOWNLOAD_BY_REDIRECT != 'true' or $link_create_status==false ) {
   // not downloading by redirect; instead, we stream it to the browser.
   // This happens if the symlink couldn't happen, or if set as default in Admin
   if (DOWNLOAD_IN_CHUNKS != 'true') {
