@@ -1,0 +1,45 @@
+#! /bin/sh
+
+BUILD=__package
+MANIFEST=$BUILD/MANIFEST-downloadscripts.txt
+
+if [ ! -d .git ]; then
+  echo "wrong location"
+  exit 1
+fi
+
+[ -e $BUILD ] && rm -rf $BUILD
+mkdir $BUILD
+
+for FILE in `git diff --name-status master | awk '{print $2}' | grep -v '__'`
+do
+  echo $FILE
+  cp --parents $FILE $BUILD/
+done
+
+echo 'Files modified by this package:' > $MANIFEST
+echo '-------------------------------' >> $MANIFEST
+
+git diff --name-status master | awk '/^M/{print $2}' | grep -v '__' >> $MANIFEST
+
+echo >> $MANIFEST
+echo 'Files added by this package:' >> $MANIFEST
+echo '----------------------------' >> $MANIFEST
+
+git diff --name-status master | awk '/^A/{print $2}' | grep -v '__' >> $MANIFEST
+
+VERSION=`head -1 VERSION-downloadscripts.txt`
+ZIP=downloadscripts-$VERSION
+
+mv $BUILD $ZIP
+zip -r $ZIP.zip $ZIP
+rm -rf $ZIP
+
+echo
+echo Release notes
+echo
+echo - Check VERSION is correct
+echo - Check VERSION HISTORY has been updated in README
+echo - Check files in $ZIP.zip are correct
+echo - git tag dlscripts-$VERSION
+echo - git push github
