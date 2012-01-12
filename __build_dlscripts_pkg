@@ -11,7 +11,7 @@ fi
 [ -e $BUILD ] && rm -rf $BUILD
 mkdir $BUILD
 
-for FILE in `git diff --name-status master | awk '{print $2}' | grep -v '__'`
+for FILE in `git diff --name-status zencart | awk '{print $2}' | grep -v '__'`
 do
   echo $FILE
   cp --parents $FILE $BUILD/
@@ -20,13 +20,13 @@ done
 echo 'Files modified by this package:' > $MANIFEST
 echo '-------------------------------' >> $MANIFEST
 
-git diff --name-status master | awk '/^M/{print $2}' | grep -v '__' >> $MANIFEST
+git diff --name-status zencart | awk '/^M/{print $2}' | grep -v '__' >> $MANIFEST
 
 echo >> $MANIFEST
 echo 'Files added by this package:' >> $MANIFEST
 echo '----------------------------' >> $MANIFEST
 
-git diff --name-status master | awk '/^A/{print $2}' | grep -v '__' >> $MANIFEST
+git diff --name-status zencart | awk '/^A/{print $2}' | grep -v '__' >> $MANIFEST
 
 VERSION=`head -1 VERSION-downloadscripts.txt`
 ZIP=downloadscripts-$VERSION
