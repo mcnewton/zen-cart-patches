@@ -1,10 +1,10 @@
 <?php
 /**
  * @package languageDefines
- * @copyright Copyright 2003-2006 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: button_names.php 5410 2006-12-27 03:56:46Z drbyte $
+ * @version $Id: button_names.php 19690 2011-10-04 16:41:45Z drbyte $
  */
 
 
@@ -43,8 +43,6 @@ define('BUTTON_IMAGE_SHIPPING_ESTIMATOR', 'button_shipping_estimator.gif');
 define('BUTTON_IMAGE_SOLD_OUT','button_sold_out.gif');
 define('BUTTON_IMAGE_SOLD_OUT_SMALL','button_sold_out_sm.gif');
 define('BUTTON_IMAGE_SUBMIT', 'button_submit.gif');
-define('BUTTON_IMAGE_TELL_A_FRIEND', 'button_tell_a_friend.gif');
-define('BUTTON_IMAGE_TELLAFRIEND', 'button_TellAFriend.gif');
 define('BUTTON_IMAGE_UNSUBSCRIBE', 'button_unsubscribe.gif');
 define('BUTTON_IMAGE_UPDATE', 'button_update.gif');
 define('BUTTON_IMAGE_VIEW_SMALL', 'button_view.gif');
@@ -63,7 +61,7 @@ define('BUTTON_IMAGE_LOG_OFF', 'button_logoff.gif');
 /*
  * ALT tags used for buttons
  */
- 
+
 define('BUTTON_CREATE_ACCOUNT_ALT', 'Sign Up');
 define('BUTTON_LOG_OFF_ALT', 'Log Off');
 define('BUTTON_ADD_TO_CART_ALT', 'Add This to My Cart');
@@ -97,8 +95,6 @@ define('BUTTON_SHIPPING_ESTIMATOR_ALT', 'Shipping Estimator');
 define('BUTTON_SOLD_OUT_ALT', 'Sold Out');
 define('BUTTON_SOLD_OUT_SMALL_ALT', 'Sold Out');
 define('BUTTON_SUBMIT_ALT', 'Submit the Information');
-define('BUTTON_TELL_A_FRIEND_ALT', 'Tell a Friend');
-define('BUTTON_TELLAFRIEND_ALT', 'Tell a Friend');
 define('BUTTON_UNSUBSCRIBE', 'Unsubscribe');
 define('BUTTON_UPDATE_ALT', 'Update');
 define('BUTTON_VIEW_SMALL_ALT', 'View');
@@ -106,4 +102,3 @@ define('BUTTON_WRITE_REVIEW_ALT', 'Write Review');
 define('BUTTON_READ_REVIEWS_ALT', 'Read the Review');
 define('BUTTON_GOTO_PROD_DETAILS_ALT', 'Go To This Product\'s Detailed Information');
 define('BUTTON_MORE_REVIEWS_ALT', 'Read More Reviews');
-?>

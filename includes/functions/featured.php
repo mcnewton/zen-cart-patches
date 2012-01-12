@@ -3,10 +3,10 @@
  * featured-products functions
  *
  * @package functions
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: featured.php 15974 2010-04-17 00:29:17Z ajeh $
+ * @version $Id: featured.php 18695 2011-05-04 05:24:19Z drbyte $
  */
 
 ////
@@ -14,7 +14,7 @@
   function zen_set_featured_status($featured_id, $status) {
     global $db;
     $sql = "update " . TABLE_FEATURED . "
-            set status = '" . $status . "', date_status_change = now()
+            set status = '" . (int)$status . "', date_status_change = now()
             where featured_id = '" . (int)$featured_id . "'";
 
     return $db->Execute($sql);

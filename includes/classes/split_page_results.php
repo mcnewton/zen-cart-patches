@@ -3,10 +3,10 @@
  * split_page_results Class.
  *
  * @package classes
- * @copyright Copyright 2003-2009 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: split_page_results.php 17066 2010-07-29 19:18:14Z wilt $
+ * @version $Id: split_page_results.php 18925 2011-06-13 04:35:37Z drbyte $
  */
 if (!defined('IS_ADMIN_FLAG')) {
   die('Illegal Access');
@@ -93,6 +93,7 @@ class splitPageResults extends base {
   // display split-page-number-links
   function display_links($max_page_links, $parameters = '') {
     global $request_type;
+    if ($max_page_links == '') $max_page_links = 1;
 
     $display_links_string = '';
 
@@ -156,4 +157,3 @@ class splitPageResults extends base {
     }
   }
 }
-?>

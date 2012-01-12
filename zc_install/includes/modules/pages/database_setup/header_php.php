@@ -2,10 +2,10 @@
 /**
  * @package Installer
  * @access private
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: header_php.php 17621 2010-09-25 22:00:05Z drbyte $
+ * @version $Id: header_php.php 19537 2011-09-20 17:14:44Z drbyte $
  */
 
 $write_config_files_only = ((isset($_POST['submit']) && $_POST['submit']==ONLY_UPDATE_CONFIG_FILES) || (isset($_POST['configfile']) && zen_not_null($_POST['configfile'])) || (isset($_GET['configfile']) && zen_not_null($_GET['configfile'])) || ZC_UPG_DEBUG3 != false) ? true : false;
@@ -35,8 +35,8 @@ $is_upgrade = (int)$zc_install->getConfigKey('is_upgrade');
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" dir="ltr" lang="en">
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
-<title>Zen Cart&trade; Setup - Database Loading ...</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Zen Cart&reg; Setup - Database Loading ...</title>
 <link rel="stylesheet" type="text/css" href="includes/templates/template_default/css/stylesheet.css">
 </head>
 <div id="wrap">
@@ -68,29 +68,25 @@ $is_upgrade = (int)$zc_install->getConfigKey('is_upgrade');
   }
 
   if ($is_upgrade) { // read previous settings from configure.php
-    $zdb_type       = zen_read_config_value('DB_TYPE');
-    $zdb_coll       = zen_read_config_value('DB_CHARSET');
-    if ($zdb_coll != 'utf8') $zdb_coll = 'latin1';
-    $zdb_prefix     = zen_read_config_value('DB_PREFIX');
-    $zdb_server     = zen_read_config_value('DB_SERVER');
-    $zdb_user       = zen_read_config_value('DB_SERVER_USERNAME');
-    $zdb_pwd        = zen_read_config_value('DB_SERVER_PASSWORD');
-    $zdb_name       = zen_read_config_value('DB_DATABASE');
-    $zdb_sql_cache  = ($zc_install->getConfigKey('DIR_FS_SQL_CACHE')=='') ? zen_read_config_value('DIR_FS_SQL_CACHE') : $zc_install->getConfigKey('DIR_FS_SQL_CACHE');
-    $zdb_cache_type = zen_read_config_value('SQL_CACHE_METHOD');
-    $zdb_persistent = zen_read_config_value('USE_PCONNECT');
-    $zdb_sessions   = (zen_read_config_value('STORE_SESSIONS')) ? 'true' : 'false';
+    $zdb_type       = zen_read_config_value('DB_TYPE', FALSE);
+    $zdb_coll       = zen_read_config_value('DB_CHARSET', FALSE);
+    if ($zdb_coll != 'latin1') $zdb_coll = 'utf8';
+    $zdb_prefix     = zen_read_config_value('DB_PREFIX', FALSE);
+    $zdb_server     = zen_read_config_value('DB_SERVER', FALSE);
+    $zdb_user       = zen_read_config_value('DB_SERVER_USERNAME', FALSE);
+    $zdb_pwd        = zen_read_config_value('DB_SERVER_PASSWORD', FALSE);
+    $zdb_name       = zen_read_config_value('DB_DATABASE', FALSE);
+    $zdb_sql_cache  = ($zc_install->getConfigKey('DIR_FS_SQL_CACHE')=='') ? zen_read_config_value('DIR_FS_SQL_CACHE', FALSE) : $zc_install->getConfigKey('DIR_FS_SQL_CACHE');
+    $zdb_cache_type = zen_read_config_value('SQL_CACHE_METHOD', FALSE);
   } else { // set defaults:
     $zdb_type       = 'MySQL';
-    $zdb_coll       = 'latin1';
+    $zdb_coll       = 'utf8';
     $zdb_prefix     = '';
     $zdb_server     = 'localhost';
     $zdb_user       = '';
     $zdb_name       = 'zencart';
     $zdb_sql_cache  = $zc_install->getConfigKey('DIR_FS_SQL_CACHE');
     $zdb_cache_type = 'none';
-    $zdb_persistent = 'false';
-    $zdb_sessions   = 'true';
   } //endif $is_upgrade
 
   if (!isset($dir_fs_www_root) || $dir_fs_www_root == '') $dir_fs_www_root = $zc_install->detectDocumentRoot();
@@ -100,8 +96,6 @@ $is_upgrade = (int)$zc_install->getConfigKey('is_upgrade');
   if (!isset($_POST['db_username'])) $_POST['db_username']= $zdb_user;
   if (!isset($_POST['db_name']))     $_POST['db_name']    = $zdb_name;
   if (!isset($_POST['sql_cache']))   $_POST['sql_cache']  = $zdb_sql_cache;
-  if (!isset($_POST['db_conn']))     $_POST['db_conn']    = $zdb_persistent;
-  if (!isset($_POST['db_sess']))     $_POST['db_sess']    = $zdb_sessions;
   if (!isset($_POST['db_prefix']))   $_POST['db_prefix']  = $zdb_prefix;
   if (!isset($_POST['db_type']))     $_POST['db_type']    = $zdb_type;
   if (!isset($_POST['db_coll']))     $_POST['db_coll']    = $zdb_coll;
@@ -112,8 +106,6 @@ $is_upgrade = (int)$zc_install->getConfigKey('is_upgrade');
   setInputValue($_POST['db_name'],    'DATABASE_NAME_VALUE', $zdb_name);
   setInputValue($_POST['sql_cache'],  'SQL_CACHE_VALUE', $zdb_sql_cache);
   setInputValue($_POST['db_prefix'],  'DATABASE_NAME_PREFIX', $zdb_prefix );
-  setRadioChecked($_POST['db_conn'],  'DB_CONN', $zdb_persistent);
-  setRadioChecked($_POST['db_sess'],  'DB_SESS', $zdb_sessions);
 
   $zc_first_field= 'onload="document.getElementById(\'db_username\').focus()"';
 

@@ -4,10 +4,10 @@
  * This class is used during the installation and upgrade processes
  * @package Installer
  * @access private
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: installer.php 17527 2010-09-08 05:44:26Z drbyte $
+ * @version $Id: installer.php 19690 2011-10-04 16:41:45Z drbyte $
  */
 
 
@@ -431,6 +431,13 @@
         fclose($fp);
         @chmod($this->getConfigKey('DIR_FS_CATALOG') . '/includes/configure.php', 0444);
       }
+      $http_srvr_admin = $http_server;
+      $http_catalog_admin = $http_catalog;
+      // if SSL is enabled for admin, put the SSL address into the HTTP_SERVER field (and set corresponding DIR_WS_ADMIN param too)
+      if ($this->getConfigKey('ENABLE_SSL_ADMIN') == 'true') {
+        $http_srvr_admin = $https_server;
+        $http_catalog_admin = $https_catalog;
+      }
       // now Admin version:
       require('includes/admin_configure.php');
       $config_file_contents_admin = $file_contents;
@@ -438,7 +445,7 @@
       if ($fp) {
         fputs($fp, $file_contents);
         fclose($fp);
-        @chmod($this->getConfigKey('DIR_FS_CATALOG') . '/admin/includes/configure.php', 0444);
+//        @chmod($this->getConfigKey('DIR_FS_CATALOG') . '/admin/includes/configure.php', 0444);
       }
 
       $this->configFiles = array('catalog' => $config_file_contents_catalog, 'admin' => $config_file_contents_admin);
@@ -464,7 +471,7 @@
 
     function validateDatabaseSetup($data) {
       if ($data['db_type'] != 'mysql') $data['db_prefix'] = '';  // if not using mysql, don't support prefixes because we don't trap for them
-      if ($data['db_sess'] != 'true' || $data['cache_type'] == 'file') {  //if not storing sessions in database, or if caching to file, check folder
+      if ($data['cache_type'] == 'file') {  //if caching to file, check folder
         $this->isEmpty($data['sql_cache_dir'],  ERROR_TEXT_CACHE_DIR_ISEMPTY, ERROR_CODE_CACHE_DIR_ISEMPTY);
         $this->isDir($data['sql_cache_dir'],  ERROR_TEXT_CACHE_DIR_ISDIR, ERROR_CODE_CACHE_DIR_ISDIR);
         $this->isWriteable($data['sql_cache_dir'],  ERROR_TEXT_CACHE_DIR_ISWRITEABLE, ERROR_CODE_CACHE_DIR_ISWRITEABLE);
@@ -478,7 +485,6 @@
       $this->functionExists($data['db_type'], ERROR_TEXT_DB_NOTSUPPORTED, ERROR_CODE_DB_NOTSUPPORTED);
       $this->dbConnect($data['db_type'], $data['db_host'], $data['db_name'], $data['db_username'], $data['db_pass'], ERROR_TEXT_DB_CONNECTION_FAILED, ERROR_CODE_DB_CONNECTION_FAILED,ERROR_TEXT_DB_NOTEXIST, ERROR_CODE_DB_NOTEXIST);
       $this->dbExists(false, $data['db_type'], $data['db_host'], $data['db_username'], $data['db_pass'], $data['db_name'], ERROR_TEXT_DB_NOTEXIST, ERROR_CODE_DB_NOTEXIST);
-      $data['db_sess'] = ($data['db_sess'] == 'true') ? 'db' : '';
       if ($data['db_coll'] != 'utf8') $data['db_coll'] = 'latin1';
       $this->setConfigKey('DB_TYPE', $data['db_type']);
       $this->setConfigKey('DB_PREFIX', $data['db_prefix']);
@@ -487,23 +493,21 @@
       $this->setConfigKey('DB_SERVER_USERNAME', $data['db_username']);
       $this->setConfigKey('DB_SERVER_PASSWORD', $data['db_pass']);
       $this->setConfigKey('DB_DATABASE', $data['db_name']);
-      $this->setConfigKey('STORE_SESSIONS', $data['db_sess']);
-      $this->setConfigKey('USE_PCONNECT', @$data['db_conn']);
       $this->setConfigKey('SQL_CACHE_METHOD', $data['cache_type']);
       $this->setConfigKey('DIR_FS_SQL_CACHE', $this->trimTrailingSlash($data['sql_cache_dir']));
     }
 
     function dbActivate() {
       if (isset($this->db)) return;
-      if ($this->getConfigKey('DB_TYPE') == '') $this->setConfigKey('DB_TYPE', zen_read_config_value('DB_TYPE'));
-      if ($this->getConfigKey('DB_CHARSET') == '') $this->setConfigKey('DB_CHARSET', zen_read_config_value('DB_CHARSET'));
-      if ($this->getConfigKey('DB_CHARSET') != 'utf8') $this->setConfigKey('DB_CHARSET', 'latin1');
+      if ($this->getConfigKey('DB_TYPE') == '') $this->setConfigKey('DB_TYPE', zen_read_config_value('DB_TYPE', FALSE));
+      if ($this->getConfigKey('DB_CHARSET') == '') $this->setConfigKey('DB_CHARSET', zen_read_config_value('DB_CHARSET', FALSE));
+      if ($this->getConfigKey('DB_CHARSET') != 'latin1') $this->setConfigKey('DB_CHARSET', 'utf8');
       if (!defined('DB_CHARSET') && $this->getConfigKey('DB_CHARSET') != '') define('DB_CHARSET', $this->getConfigKey('DB_CHARSET'));
-      if ($this->getConfigKey('DB_PREFIX') == '') $this->setConfigKey('DB_PREFIX', zen_read_config_value('DB_PREFIX'));
-      if ($this->getConfigKey('DB_SERVER') == '') $this->setConfigKey('DB_SERVER', zen_read_config_value('DB_SERVER'));
-      if ($this->getConfigKey('DB_SERVER_USERNAME') == '') $this->setConfigKey('DB_SERVER_USERNAME', zen_read_config_value('DB_SERVER_USERNAME'));
-      if ($this->getConfigKey('DB_SERVER_PASSWORD') == '') $this->setConfigKey('DB_SERVER_PASSWORD', zen_read_config_value('DB_SERVER_PASSWORD'));
-      if ($this->getConfigKey('DB_DATABASE') == '') $this->setConfigKey('DB_DATABASE', zen_read_config_value('DB_DATABASE'));
+      if ($this->getConfigKey('DB_PREFIX') == '') $this->setConfigKey('DB_PREFIX', zen_read_config_value('DB_PREFIX', FALSE));
+      if ($this->getConfigKey('DB_SERVER') == '') $this->setConfigKey('DB_SERVER', zen_read_config_value('DB_SERVER', FALSE));
+      if ($this->getConfigKey('DB_SERVER_USERNAME') == '') $this->setConfigKey('DB_SERVER_USERNAME', zen_read_config_value('DB_SERVER_USERNAME', FALSE));
+      if ($this->getConfigKey('DB_SERVER_PASSWORD') == '') $this->setConfigKey('DB_SERVER_PASSWORD', zen_read_config_value('DB_SERVER_PASSWORD', FALSE));
+      if ($this->getConfigKey('DB_DATABASE') == '') $this->setConfigKey('DB_DATABASE', zen_read_config_value('DB_DATABASE', FALSE));
       include_once('../includes/classes/db/' . $this->getConfigKey('DB_TYPE') . '/query_factory.php');
       $this->db = new queryFactory;
       $this->db->Connect($this->getConfigKey('DB_SERVER'), $this->getConfigKey('DB_SERVER_USERNAME'), $this->getConfigKey('DB_SERVER_PASSWORD'), $this->getConfigKey('DB_DATABASE'), true);
@@ -513,7 +517,9 @@
       $this->dbActivate(); // can likely remove this line for v1.4
       global $db;
       $db = $this->db;
+      // process the actual sql insertions
       executeSql('sql/' . $this->getConfigKey('DB_TYPE') . '_zencart.sql', $this->getConfigKey('DB_DATABASE'), $this->getConfigKey('DB_PREFIX'));
+      executeSql('sql/' . $this->getConfigKey('DB_TYPE') . '_' . $this->getConfigKey('DB_CHARSET') . '.sql', $this->getConfigKey('DB_DATABASE'), $this->getConfigKey('DB_PREFIX'));
 
       //update the cache folder setting:
       $this->dbAfterLoadActions();
@@ -602,7 +608,7 @@
       $sql = "update " . DB_PREFIX . "configuration set configuration_value = '" . $this->db->prepare_input($this->configInfo['store_owner']) . "' where configuration_key = 'STORE_OWNER'";
       $this->db->Execute($sql);
       $sql = "update " . DB_PREFIX . "configuration set configuration_value = '" . $this->db->prepare_input($this->configInfo['store_owner_email']) . "' where configuration_key in
-               ('STORE_OWNER_EMAIL_ADDRESS', 'EMAIL_FROM', 'SEND_EXTRA_ORDER_EMAILS_TO', 'SEND_EXTRA_CREATE_ACCOUNT_EMAILS_TO', 'SEND_EXTRA_LOW_STOCK_EMAILS_TO', 'SEND_EXTRA_GV_CUSTOMER_EMAILS_TO', 'SEND_EXTRA_GV_ADMIN_EMAILS_TO', 'SEND_EXTRA_DISCOUNT_COUPON_ADMIN_EMAILS_TO', 'SEND_EXTRA_ORDERS_STATUS_ADMIN_EMAILS_TO', 'SEND_EXTRA_TELL_A_FRIEND_EMAILS_TO', 'SEND_EXTRA_REVIEW_NOTIFICATION_EMAILS_TO', 'MODULE_PAYMENT_CC_EMAIL')";
+               ('STORE_OWNER_EMAIL_ADDRESS', 'EMAIL_FROM', 'SEND_EXTRA_ORDER_EMAILS_TO', 'SEND_EXTRA_CREATE_ACCOUNT_EMAILS_TO', 'SEND_EXTRA_LOW_STOCK_EMAILS_TO', 'SEND_EXTRA_GV_CUSTOMER_EMAILS_TO', 'SEND_EXTRA_GV_ADMIN_EMAILS_TO', 'SEND_EXTRA_DISCOUNT_COUPON_ADMIN_EMAILS_TO', 'SEND_EXTRA_ORDERS_STATUS_ADMIN_EMAILS_TO', 'SEND_EXTRA_REVIEW_NOTIFICATION_EMAILS_TO', 'MODULE_PAYMENT_CC_EMAIL')";
       $this->db->Execute($sql);
       $sql = "update " . DB_PREFIX . "configuration set configuration_value = '" . $this->db->prepare_input($this->configInfo['store_country']) . "' where configuration_key in ('STORE_COUNTRY', 'SHIPPING_ORIGIN_COUNTRY')";
       $this->db->Execute($sql);
@@ -642,12 +648,17 @@
       $this->isEmpty($this->configInfo['admin_email'], ERROR_TEXT_ADMIN_EMAIL_ISEMPTY, ERROR_CODE_ADMIN_EMAIL_ISEMPTY);
       $this->isEmail($this->configInfo['admin_email'], ERROR_TEXT_ADMIN_EMAIL_NOTEMAIL, ERROR_CODE_ADMIN_EMAIL_NOTEMAIL);
       $this->isEmpty($this->configInfo['admin_pass'], ERROR_TEXT_ADMIN_PASS_ISEMPTY, ERROR_CODE_ADMIN_PASS_ISEMPTY);
+
+      // passwords must contain at least 1 letter and 1 number and be of required minimum length
+      if (!preg_match('/^(?=.*[a-zA-Z]+.*)(?=.*[\d]+.*)[\d\w[:punct:]]{7,}$/', $this->configInfo['admin_pass'])) {
+        $this->setError(ERROR_TEXT_ADMIN_PASS_INSECURE, ERROR_CODE_ADMIN_PASS_INSECURE, true);
+      }
     }
 
 
     function dbAdminSetup() {
-      $this->dbActivate(); // can likely remove this line for v1.4
-      $sql = "update " . DB_PREFIX . "admin set admin_name = '" . $this->configInfo['admin_username'] . "', admin_email = '" . $this->configInfo['admin_email'] . "', admin_pass = '" . zen_encrypt_password($this->configInfo['admin_pass']) . "' where admin_id = 1";
+      $this->dbActivate();
+      $sql = "update " . DB_PREFIX . "admin set admin_name = '" . $this->configInfo['admin_username'] . "', admin_email = '" . $this->configInfo['admin_email'] . "', admin_pass = '" . zen_encrypt_password($this->configInfo['admin_pass']) . "', pwd_last_change_date = 0, reset_token = '" . (time() + (72 * 60 * 60)) . '}' . zen_encrypt_password($this->configInfo['admin_pass']) . "' where admin_id = 1";
       $this->db->Execute($sql) or die("Error in query: $sql".$this->db->ErrorMsg());
 
       // enable/disable automatic version-checking
@@ -666,6 +677,7 @@
         if ($prefix == '^^^') $prefix = DB_PREFIX;
         $admin_name = zen_db_prepare_input($admin_name);
         $admin_pass = zen_db_prepare_input($admin_pass);
+//@TODO: deal with super-user requirement and expired-passwords?
         $sql = "select admin_id, admin_name, admin_pass from " . $prefix . "admin where admin_name = '" . $admin_name . "'";
         //open database connection to run queries against it
         $this->dbActivate();
@@ -675,9 +687,22 @@
         $result = $this->db->Execute($sql);
         if ($result->EOF || $admin_name != $result->fields['admin_name'] || !zen_validate_password($admin_pass, $result->fields['admin_pass'])) {
           $this->setError(ERROR_TEXT_ADMIN_PWD_REQUIRED, ERROR_CODE_ADMIN_PWD_REQUIRED, true);
+        } else {
+          $this->candidateSuperuser = $result->fields['admin_id'];
         }
         $this->db->Close();
       }
+    }
+
+    function addSuperUser($prefix = '^^^') {
+      if ($prefix == '^^^') $prefix = DB_PREFIX;
+      $this->dbActivate();
+      $this->db->Close();
+      unset($this->db);
+      $this->dbActivate();
+      $sql = "UPDATE " . $prefix . "admin SET admin_profile = 1 WHERE admin_id = " . $this->candidateSuperuser;
+      $this->db->Execute($sql) or die("Error in query: $sql".$this->db->ErrorMsg());
+      $this->db->Close();
     }
 
     function doPrefixRename($newprefix, $db_prefix_rename_from) {

@@ -6,7 +6,7 @@
  * @copyright Copyright 2003-2010 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: ot_tax.php 16965 2010-07-23 10:54:39Z wilt $
+ * @version $Id: ot_tax.php 17018 2010-07-27 07:25:41Z drbyte $
  */
   class ot_tax {
     var $title, $output;

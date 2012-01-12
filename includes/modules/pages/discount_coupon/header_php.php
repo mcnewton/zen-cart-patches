@@ -3,10 +3,10 @@
  * discount coupon info
  *
  * @package page
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: header_php.php 15880 2010-04-11 16:24:30Z wilt $
+ * @version $Id: header_php.php 19517 2011-09-14 21:28:12Z wilt $
  */
 
   require(DIR_WS_MODULES . zen_get_module_directory('require_languages.php'));
@@ -15,7 +15,7 @@
 // lookup requested discount coupon
 
     $coupon = $db->Execute("select * from " . TABLE_COUPONS . " where coupon_code = '" . zen_db_input($_POST['lookup_discount_coupon']) . "' and  coupon_type != 'G'");
-
+    $_POST['lookup_discount_coupon'] = zen_sanitize_string($_POST['lookup_discount_coupon']);
     if ($coupon->RecordCount() < 1) {
 // invalid discount coupon code
       $text_coupon_help = sprintf(TEXT_COUPON_FAILED, zen_output_string_protected($_POST['lookup_discount_coupon']));

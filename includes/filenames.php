@@ -4,10 +4,10 @@
  * Defines the filenames used in the project
  *
  * @package general
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: filenames.php 17421 2010-08-31 00:23:52Z drbyte $
+ * @version $Id: filenames.php 19690 2011-10-04 16:41:45Z drbyte $
  * @private
  */
 /**
@@ -22,11 +22,13 @@ define('FILENAME_ACCOUNT_NOTIFICATIONS', 'account_notifications');
 define('FILENAME_ACCOUNT_PASSWORD', 'account_password');
 define('FILENAME_ADDRESS_BOOK', 'address_book');
 define('FILENAME_ADDRESS_BOOK_PROCESS', 'address_book_process');
-define('FILENAME_ADMIN', 'admin');
+define('FILENAME_ADMIN_ACCOUNT', 'admin_account');
+define('FILENAME_ADMIN_ACTIVITY', 'admin_activity');
+define('FILENAME_ADMIN_PAGE_REGISTRATION', 'admin_page_registration');
 define('FILENAME_ADVANCED_SEARCH', 'advanced_search');
 define('FILENAME_ADVANCED_SEARCH_RESULT', 'advanced_search_result');
-define('FILENAME_ALERT_PAGE', 'alert_page');
 define('FILENAME_ALT_NAV', 'alt_nav');
+define('FILENAME_ALERT_PAGE', 'alert_page');
 define('FILENAME_ATTRIBUTES', 'attributes');
 define('FILENAME_ATTRIBUTES_CONTROLLER', 'attributes_controller');
 define('FILENAME_BACKUP', 'backup');
@@ -35,6 +37,7 @@ define('FILENAME_BANNER_STATISTICS', 'banner_statistics');
 define('FILENAME_CACHE', 'cache');
 define('FILENAME_CATALOG_ACCOUNT_HISTORY_INFO', 'account_history_info');
 define('FILENAME_CATEGORIES', 'categories');
+define('FILENAME_CATEGORY_ICON_DISPLAY', 'category_icon_display');
 define('FILENAME_CHECKOUT_CONFIRMATION', 'checkout_confirmation');
 define('FILENAME_CHECKOUT_PAYMENT', 'checkout_payment');
 define('FILENAME_CHECKOUT_PAYMENT_ADDRESS', 'checkout_payment_address');
@@ -48,12 +51,12 @@ define('FILENAME_CONTACT_US', 'contact_us');
 define('FILENAME_COOKIE_USAGE', 'cookie_usage');
 define('FILENAME_COUNTRIES', 'countries');
 define('FILENAME_COUPON_ADMIN', 'coupon_admin');
+define('FILENAME_COUPON_RESTRICT', 'coupon_restrict');
 define('FILENAME_CREATE_ACCOUNT', 'create_account');
 define('FILENAME_CREATE_ACCOUNT_SUCCESS', 'create_account_success');
 define('FILENAME_CURRENCIES', 'currencies');
 define('FILENAME_CUSTOMERS', 'customers');
 define('FILENAME_DEFAULT', 'index');
-define('FILENAME_CATEGORY_ICON_DISPLAY', 'category_icon_display');
 define('FILENAME_DEFINE_PAGES_EDITOR', 'define_pages_editor');
 define('FILENAME_DEFINE_MAIN_PAGE', 'define_main_page');
 define('FILENAME_DEFINE_CHECKOUT_SUCCESS', 'define_checkout_success');
@@ -68,12 +71,12 @@ define('FILENAME_DEFINE_PRIVACY', 'define_privacy');
 define('FILENAME_DEFINE_SHIPPINGINFO', 'define_shippinginfo');
 define('FILENAME_DEFINE_SITE_MAP', 'define_site_map');
 define('FILENAME_DEFINE_LANGUAGE', 'define_language');
+define('FILENAME_DENIED', 'denied');
 define('FILENAME_DEVELOPERS_TOOL_KIT', 'developers_tool_kit');
 define('FILENAME_DISCOUNT_COUPON', 'discount_coupon');
 define('FILENAME_DOWNLOAD', 'download');
 define('FILENAME_DOWNLOAD_TIME_OUT','download_time_out');
 define('FILENAME_DOWNLOADS_MANAGER','downloads_manager');
-define('FILENAME_EMAIL_WELCOME','email_welcome');
 define('FILENAME_EZPAGES', 'page');
 define('FILENAME_EZPAGES_ADMIN', 'ezpages');
 define('FILENAME_GEO_ZONES', 'geo_zones');
@@ -135,6 +138,7 @@ define('FILENAME_PRODUCTS_OPTIONS_NAME','option_name');
 define('FILENAME_PRODUCTS_OPTIONS_VALUES','option_values');
 define('FILENAME_PRODUCTS_QUANTITY_DISCOUNTS', 'products_quantity_discounts');
 define('FILENAME_PRODUCTS_TO_CATEGORIES', 'products_to_categories');
+define('FILENAME_PROFILES', 'profiles');
 define('FILENAME_REDIRECT', 'redirect');
 define('FILENAME_REVIEWS', 'reviews');
 define('FILENAME_SALEMAKER', 'salemaker');
@@ -156,13 +160,12 @@ define('FILENAME_STATS_PRODUCTS_LOWSTOCK', 'stats_products_lowstock');
 define('FILENAME_STORE_MANAGER', 'store_manager');
 define('FILENAME_TAX_CLASSES', 'tax_classes');
 define('FILENAME_TAX_RATES', 'tax_rates');
-define('FILENAME_TELL_A_FRIEND', 'tell_a_friend');
 define('FILENAME_TEMPLATE_SELECT', 'template_select');
 define('FILENAME_TIME_OUT','time_out');
 define('FILENAME_UNSUBSCRIBE', 'unsubscribe');
+define('FILENAME_USERS', 'users');
 define('FILENAME_ZONES', 'zones');
 define('FILENAME_WHOS_ONLINE', 'whos_online');
-
 
 // The following have .php or other suffix INTENTIONALLY !!!
 

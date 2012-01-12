@@ -1,17 +1,18 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: categories.php 17534 2010-09-08 19:50:34Z wilt $
+ * @version $Id: categories.php 19330 2011-08-07 06:32:56Z drbyte $
  */
-
   require('includes/application_top.php');
 
   require(DIR_WS_MODULES . 'prod_cat_header_code.php');
 
   $action = (isset($_GET['action']) ? $_GET['action'] : '');
+  if (isset($_GET['page'])) $_GET['page'] = (int)$_GET['page'];
+  if (isset($_GET['product_type'])) $_GET['product_type'] = (int)$_GET['product_type'];
 
   if (!isset($_SESSION['categories_products_sort_order'])) {
     $_SESSION['categories_products_sort_order'] = CATEGORIES_PRODUCTS_SORT_ORDER;
@@ -89,38 +90,39 @@
         } // for
 
       }
-      zen_redirect(zen_href_link(FILENAME_CATEGORIES, 'cPath=' . $_GET['cPath'] . '&cID=' . $_GET['cID']));
+      zen_redirect(zen_href_link(FILENAME_CATEGORIES, 'cPath=' . $_GET['cPath'] . '&cID=' . $_GET['cID'] . (isset($_GET['page']) ? '&page=' . $_GET['page'] : '') . ((isset($_GET['search']) && !empty($_GET['search'])) ? '&search=' . $_GET['search'] : '')));
       break;
 
       case 'remove_type':
-      $sql = "delete from " .  TABLE_PRODUCT_TYPES_TO_CATEGORY . "
-              where category_id = '" . zen_db_prepare_input($_GET['cID']) . "'
-              and product_type_id = '" . zen_db_prepare_input($_GET['type_id']) . "'";
+        if (isset($_POST['type_id']))
+        {
+          $sql = "delete from " .  TABLE_PRODUCT_TYPES_TO_CATEGORY . "
+                  where category_id = '" . (int)zen_db_prepare_input($_GET['cID']) . "'
+                 and product_type_id = '" . (int)zen_db_prepare_input($_POST['type_id']) . "'";
 
-      $db->Execute($sql);
-
-      zen_remove_restrict_sub_categories($_GET['cID'], $_GET['type_id']);
-
-      $action = "edit";
-      zen_redirect(zen_href_link(FILENAME_CATEGORIES, 'action=edit_category&cPath=' . $_GET['cPath'] . '&cID=' . zen_db_prepare_input($_GET['cID'])));
+          $db->Execute($sql);
+          zen_remove_restrict_sub_categories($_GET['cID'], (int)$_POST['type_id']);
+          $action = "edit";
+          zen_redirect(zen_href_link(FILENAME_CATEGORIES, 'action=edit_category&cPath=' . $_GET['cPath'] . '&cID=' . zen_db_prepare_input($_GET['cID'])));
+        }
       break;
       case 'setflag':
-      if ( ($_GET['flag'] == '0') || ($_GET['flag'] == '1') ) {
-        if (isset($_GET['pID'])) {
-          zen_set_product_status($_GET['pID'], $_GET['flag']);
-        }
 
+      if ( isset($_POST['flag']) && ($_POST['flag'] == '0') || ($_POST['flag'] == '1') ) {
+        if (isset($_GET['pID'])) {
+          zen_set_product_status($_GET['pID'], $_POST['flag']);
+        }
       }
 
-      zen_redirect(zen_href_link(FILENAME_CATEGORIES, 'cPath=' . $_GET['cPath'] . '&pID=' . $_GET['pID'] . (isset($_GET['page']) ? '&page=' . $_GET['page'] : '')));
+      zen_redirect(zen_href_link(FILENAME_CATEGORIES, 'cPath=' . $_GET['cPath'] . '&pID=' . $_GET['pID'] . (isset($_GET['page']) ? '&page=' . $_GET['page'] : '') . ((isset($_GET['search']) && !empty($_GET['search'])) ? '&search=' . $_GET['search'] : '')));
       break;
       case 'insert_category':
       case 'update_category':
       if ( isset($_POST['add_type']) or isset($_POST['add_type_all']) ) {
         // check if it is already restricted
         $sql = "select * from " . TABLE_PRODUCT_TYPES_TO_CATEGORY . "
-                where category_id = '" . zen_db_prepare_input($_POST['categories_id']) . "'
-                and product_type_id = '" . zen_db_prepare_input($_POST['restrict_type']) . "'";
+                where category_id = '" . (int)zen_db_prepare_input($_POST['categories_id']) . "'
+                and product_type_id = '" . (int)zen_db_prepare_input($_POST['restrict_type']) . "'";
 
         $type_to_cat = $db->Execute($sql);
         if ($type_to_cat->RecordCount() < 1) {
@@ -150,7 +152,7 @@
       $sql_data_array = array('sort_order' => (int)$sort_order);
 
       if ($action == 'insert_category') {
-        $insert_sql_data = array('parent_id' => $current_category_id,
+        $insert_sql_data = array('parent_id' => (int)$current_category_id,
                                  'date_added' => 'now()');
 
         $sql_data_array = array_merge($sql_data_array, $insert_sql_data);
@@ -160,7 +162,7 @@
         $categories_id = zen_db_insert_id();
         // check if [arent is restricted
         $sql = "select parent_id from " . TABLE_CATEGORIES . "
-                where categories_id = '" . $categories_id . "'";
+                where categories_id = '" . (int)$categories_id . "'";
 
         $parent_cat = $db->Execute($sql);
         if ($parent_cat->fields['parent_id'] != '0') {
@@ -169,8 +171,8 @@
           $has_type = $db->Execute($sql);
           if ($has_type->RecordCount() > 0 ) {
             while (!$has_type->EOF) {
-              $insert_sql_data = array('category_id' => $categories_id,
-                                       'product_type_id' => $has_type->fields['product_type_id']);
+              $insert_sql_data = array('category_id' => (int)$categories_id,
+                                       'product_type_id' => (int)$has_type->fields['product_type_id']);
               zen_db_perform(TABLE_PRODUCT_TYPES_TO_CATEGORY, $insert_sql_data);
               $has_type->moveNext();
             }
@@ -195,8 +197,8 @@
                                 'categories_description' => ($categories_description_array[$language_id] == '<p />' ? '' : zen_db_prepare_input($categories_description_array[$language_id])));
 
         if ($action == 'insert_category') {
-          $insert_sql_data = array('categories_id' => $categories_id,
-                                   'language_id' => $languages[$i]['id']);
+          $insert_sql_data = array('categories_id' => (int)$categories_id,
+                                   'language_id' => (int)$languages[$i]['id']);
 
           $sql_data_array = array_merge($sql_data_array, $insert_sql_data);
 
@@ -208,7 +210,7 @@
 
       if ($_POST['categories_image_manual'] != '') {
         // add image manually
-        $categories_image_name = $_POST['img_dir'] . $_POST['categories_image_manual'];
+        $categories_image_name = zen_db_input($_POST['img_dir'] . $_POST['categories_image_manual']);
         $db->Execute("update " . TABLE_CATEGORIES . "
                       set categories_image = '" . $categories_image_name . "'
                       where categories_id = '" . (int)$categories_id . "'");
@@ -216,7 +218,7 @@
         if ($categories_image = new upload('categories_image')) {
           $categories_image->set_destination(DIR_FS_CATALOG_IMAGES . $_POST['img_dir']);
           if ($categories_image->parse() && $categories_image->save()) {
-            $categories_image_name = $_POST['img_dir'] . $categories_image->filename;
+            $categories_image_name = zen_db_input($_POST['img_dir'] . $categories_image->filename);
           }
           if ($categories_image->filename != 'none' && $categories_image->filename != '' && $_POST['image_delete'] != 1) {
             // save filename when not set to none and not blank
@@ -263,8 +265,8 @@
                                 'metatags_description' => zen_db_prepare_input($_POST['metatags_description'][$language_id]));
 
         if ($action == 'insert_categories_meta_tags') {
-          $insert_sql_data = array('categories_id' => $categories_id,
-                                   'language_id' => $language_id);
+          $insert_sql_data = array('categories_id' => (int)$categories_id,
+                                   'language_id' => (int)$language_id);
           $sql_data_array = array_merge($sql_data_array, $insert_sql_data);
 
           zen_db_perform(TABLE_METATAGS_CATEGORIES_DESCRIPTION, $sql_data_array);
@@ -484,7 +486,7 @@
       $copy_attributes_delete_first = ($_POST['copy_attributes'] == 'copy_attributes_delete' ? '1' : '0');
       $copy_attributes_duplicates_skipped = ($_POST['copy_attributes'] == 'copy_attributes_ignore' ? '1' : '0');
       $copy_attributes_duplicates_overwrite = ($_POST['copy_attributes'] == 'copy_attributes_update' ? '1' : '0');
-      $copy_to_category = $db->Execute("select products_id from " . TABLE_PRODUCTS_TO_CATEGORIES . " where categories_id='" . $_POST['categories_update_id'] . "'");
+      $copy_to_category = $db->Execute("select products_id from " . TABLE_PRODUCTS_TO_CATEGORIES . " where categories_id='" . (int)$_POST['categories_update_id'] . "'");
       while (!$copy_to_category->EOF) {
         zen_copy_products_attributes($_POST['products_id'], $copy_to_category->fields['products_id']);
         $copy_to_category->MoveNext();
@@ -500,13 +502,13 @@
         $pieces = explode('_',$_GET['cPath']);
         $cat_id = $pieces[sizeof($pieces)-1];
         //	echo $cat_id;
-        $sql = "select product_type_id from " . TABLE_PRODUCT_TYPES_TO_CATEGORY . " where category_id = '" . $cat_id . "'";
+        $sql = "select product_type_id from " . TABLE_PRODUCT_TYPES_TO_CATEGORY . " where category_id = '" . (int)$cat_id . "'";
         $product_type_list = $db->Execute($sql);
-        $sql = "select product_type_id from " . TABLE_PRODUCT_TYPES_TO_CATEGORY . " where category_id = '" . $cat_id . "' and product_type_id = '" . $_GET['product_type'] . "'";
+        $sql = "select product_type_id from " . TABLE_PRODUCT_TYPES_TO_CATEGORY . " where category_id = '" . (int)$cat_id . "' and product_type_id = '" . (int)$_GET['product_type'] . "'";
         $product_type_good = $db->Execute($sql);
         if ($product_type_list->RecordCount() < 1 || $product_type_good->RecordCount() > 0) {
           $url = zen_get_all_get_params();
-          $sql = "select type_handler from " . TABLE_PRODUCT_TYPES . " where type_id = '" . $_GET['product_type'] . "'";
+          $sql = "select type_handler from " . TABLE_PRODUCT_TYPES . " where type_id = '" . (int)$_GET['product_type'] . "'";
           $handler = $db->Execute($sql);
           zen_redirect(zen_href_link($handler->fields['type_handler'] . '.php', zen_get_all_get_params()));
         } else {
@@ -661,7 +663,7 @@ function init()
   switch ($action) {
     case 'setflag_categories':
     $heading[] = array('text' => '<b>' . TEXT_INFO_HEADING_STATUS_CATEGORY . '</b>');
-    $contents = array('form' => zen_draw_form('categories', FILENAME_CATEGORIES, 'action=update_category_status&cPath=' . $_GET['cPath'] . '&cID=' . $_GET['cID'], 'post', 'enctype="multipart/form-data"') . zen_draw_hidden_field('categories_id', $cInfo->categories_id) . zen_draw_hidden_field('categories_status', $cInfo->categories_status));
+    $contents = array('form' => zen_draw_form('categories', FILENAME_CATEGORIES, 'action=update_category_status&cPath=' . $_GET['cPath'] . '&cID=' . $_GET['cID'] . (isset($_GET['page']) ? '&page=' . $_GET['page'] : '') . ((isset($_GET['search']) && !empty($_GET['search'])) ? '&search=' . $_GET['search'] : ''), 'post', 'enctype="multipart/form-data"') . zen_draw_hidden_field('categories_id', $cInfo->categories_id) . zen_draw_hidden_field('categories_status', $cInfo->categories_status));
     $contents[] = array('text' => zen_get_category_name($cInfo->categories_id, $_SESSION['languages_id']));
     $contents[] = array('text' => '<br />' . TEXT_CATEGORIES_STATUS_WARNING . '<br /><br />');
     $contents[] = array('text' => TEXT_CATEGORIES_STATUS_INTRO . ' ' . ($cInfo->categories_status == '1' ? TEXT_CATEGORIES_STATUS_OFF : TEXT_CATEGORIES_STATUS_ON));
@@ -677,7 +679,7 @@ function init()
 
     //        $contents[] = array('text' => '<br />' . TEXT_PRODUCTS_STATUS_INFO . '<br />' . zen_draw_radio_field('set_products_status', 'set_products_status_off', true) . ' ' . TEXT_PRODUCTS_STATUS_OFF . '<br />' . zen_draw_radio_field('set_products_status', 'set_products_status_on') . ' ' . TEXT_PRODUCTS_STATUS_ON);
 
-    $contents[] = array('align' => 'center', 'text' => '<br />' . zen_image_submit('button_update.gif', IMAGE_UPDATE) . ' <a href="' . zen_href_link(FILENAME_CATEGORIES, 'cPath=' . $cPath) . '">' . zen_image_button('button_cancel.gif', IMAGE_CANCEL) . '</a>');
+    $contents[] = array('align' => 'center', 'text' => '<br />' . zen_image_submit('button_update.gif', IMAGE_UPDATE) . ' <a href="' . zen_href_link(FILENAME_CATEGORIES, 'cPath=' . $cPath . (isset($_GET['page']) ? '&page=' . $_GET['page'] : '') . ((isset($_GET['search']) && !empty($_GET['search'])) ? '&search=' . $_GET['search'] : '')) . '">' . zen_image_button('button_cancel.gif', IMAGE_CANCEL) . '</a>');
     break;
 
     case 'new_category':
@@ -697,21 +699,7 @@ function init()
 
     for ($i = 0, $n = sizeof($languages); $i < $n; $i++) {
       $category_inputs_string .= '<br />' . zen_image(DIR_WS_CATALOG_LANGUAGES . $languages[$i]['directory'] . '/images/' . $languages[$i]['image'], $languages[$i]['name']) . '&nbsp;';
-      if ($_SESSION['html_editor_preference_status']=='FCKEDITOR') {
-                $oFCKeditor = new FCKeditor('categories_description[' . $languages[$i]['id']  . ']') ;
-                $oFCKeditor->Value = zen_get_category_description($cInfo->categories_id, $languages[$i]['id']);
-                $oFCKeditor->Width  = '97%' ;
-                $oFCKeditor->Height = '200' ;
-//                $oFCKeditor->Config['ToolbarLocation'] = 'Out:xToolbar' ;
-//                $oFCKeditor->Create() ;
-                $output = $oFCKeditor->CreateHtml() ;
-        $category_inputs_string .= '<br />' . $output;
-
-//        $category_inputs_string .= '<IFRAME src= "' . DIR_WS_CATALOG . 'FCKeditor/fckeditor.html?FieldName=categories_description[' . $languages[$i]['id']  . ']&Upload=false&Browse=false&Toolbar=Short" width="97%" height="200" frameborder="no" scrolling="yes"></IFRAME>';
-//        $category_inputs_string .= '<INPUT type="hidden" name="categories_description[' . $languages[$i]['id']  . ']" ' . 'value=' . "'" . zen_get_category_description($cInfo->categories_id, $languages[$i]['id']) . "'>";
-      } else {
-        $category_inputs_string .= zen_draw_textarea_field('categories_description[' . $languages[$i]['id'] . ']', 'soft', '100%', '20', zen_get_category_description($cInfo->categories_id, $languages[$i]['id']));
-      }
+      $category_inputs_string .= zen_draw_textarea_field('categories_description[' . $languages[$i]['id'] . ']', 'soft', '100%', '20', htmlspecialchars(zen_get_category_description($cInfo->categories_id, $languages[$i]['id']), ENT_COMPAT, CHARSET, TRUE));
     }
     $contents[] = array('text' => '<br />' . TEXT_CATEGORIES_DESCRIPTION . $category_inputs_string);
     $contents[] = array('text' => '<br />' . TEXT_CATEGORIES_IMAGE . '<br />' . zen_draw_file_field('categories_image'));
@@ -739,7 +727,7 @@ function init()
     $off_image_delete = true;
     $heading[] = array('text' => '<b>' . TEXT_INFO_HEADING_EDIT_CATEGORY . '</b>');
 
-    $contents = array('form' => zen_draw_form('categories', FILENAME_CATEGORIES, 'action=update_category&cPath=' . $cPath . ((isset($_GET['search']) && !empty($_GET['search'])) ? '&search=' . $_GET['search'] : ''), 'post', 'enctype="multipart/form-data"') . zen_draw_hidden_field('categories_id', $cInfo->categories_id));
+    $contents[] = array('text' => zen_draw_form('categories', FILENAME_CATEGORIES, 'action=update_category&cPath=' . $cPath . ((isset($_GET['search']) && !empty($_GET['search'])) ? '&search=' . $_GET['search'] : ''), 'post', 'enctype="multipart/form-data"') . zen_draw_hidden_field('categories_id', $cInfo->categories_id));
     $contents[] = array('text' => TEXT_EDIT_INTRO);
 
     $languages = zen_get_languages();
@@ -752,20 +740,7 @@ function init()
     $category_inputs_string = '';
     for ($i = 0, $n = sizeof($languages); $i < $n; $i++) {
       $category_inputs_string .= '<br />' . zen_image(DIR_WS_CATALOG_LANGUAGES . $languages[$i]['directory'] . '/images/' . $languages[$i]['image'], $languages[$i]['name']) . '&nbsp;' ;
-      if ($_SESSION['html_editor_preference_status']=='FCKEDITOR') {
-                $oFCKeditor = new FCKeditor('categories_description[' . $languages[$i]['id']  . ']') ;
-                $oFCKeditor->Value = zen_get_category_description($cInfo->categories_id, $languages[$i]['id']);
-                $oFCKeditor->Width  = '97%' ;
-                $oFCKeditor->Height = '200' ;
-//                $oFCKeditor->Config['ToolbarLocation'] = 'Out:xToolbar' ;
-//                $oFCKeditor->Create() ;
-                $output = $oFCKeditor->CreateHtml() ;
-        $category_inputs_string .= '<br />' . $output;
-//        $category_inputs_string .= '<IFRAME src= "' . DIR_WS_CATALOG . 'FCKeditor/fckeditor.html?FieldName=categories_description[' . $languages[$i]['id']  . ']&Upload=false&Browse=false&Toolbar=Short" width="97%" height="200" frameborder="no" scrolling="yes"></IFRAME>';
-//        $category_inputs_string .= '<INPUT type="hidden" name="categories_description[' . $languages[$i]['id']  . ']" ' . 'value=' . "'" . zen_get_category_description($cInfo->categories_id, $languages[$i]['id']) . "'>";
-      } else {
-        $category_inputs_string .= zen_draw_textarea_field('categories_description[' . $languages[$i]['id'] . ']', 'soft', '100%', '20', htmlspecialchars(zen_get_category_description($cInfo->categories_id, $languages[$i]['id'])));
-      }
+      $category_inputs_string .= zen_draw_textarea_field('categories_description[' . $languages[$i]['id'] . ']', 'soft', '100%', '20', htmlspecialchars(zen_get_category_description($cInfo->categories_id, $languages[$i]['id']), ENT_COMPAT, CHARSET, TRUE));
     }
     $contents[] = array('text' => '<br />' . TEXT_CATEGORIES_DESCRIPTION . $category_inputs_string);
     $contents[] = array('text' => '<br />' . TEXT_EDIT_CATEGORIES_IMAGE . '<br />' . zen_draw_file_field('categories_image'));
@@ -791,17 +766,17 @@ function init()
 
     $contents[] = array('text' => '<br />' . TEXT_EDIT_SORT_ORDER . '<br />' . zen_draw_input_field('sort_order', $cInfo->sort_order, 'size="6"'));
     $contents[] = array('align' => 'center', 'text' => '<br />' . zen_image_submit('button_save.gif', IMAGE_SAVE) . ' <a href="' . zen_href_link(FILENAME_CATEGORIES, 'cPath=' . $cPath . '&cID=' . $cInfo->categories_id) . ((isset($_GET['search']) && !empty($_GET['search'])) ? '&search=' . $_GET['search'] : '') . '">' . zen_image_button('button_cancel.gif', IMAGE_CANCEL) . '</a>');
-    $contents[] = array('text' => TEXT_RESTRICT_PRODUCT_TYPE . ' ' . zen_draw_pull_down_menu('restrict_type', $type_array) . '&nbsp<input type="submit" name="add_type_all" value="' . BUTTON_ADD_PRODUCT_TYPES_SUBCATEGORIES_ON . '">' . '&nbsp<input type="submit" name="add_type" value="' . BUTTON_ADD_PRODUCT_TYPES_SUBCATEGORIES_OFF . '">');
+    $contents[] = array('text' => TEXT_RESTRICT_PRODUCT_TYPE . ' ' . zen_draw_pull_down_menu('restrict_type', $type_array) . '&nbsp<input type="submit" name="add_type_all" value="' . BUTTON_ADD_PRODUCT_TYPES_SUBCATEGORIES_ON . '">' . '&nbsp<input type="submit" name="add_type" value="' . BUTTON_ADD_PRODUCT_TYPES_SUBCATEGORIES_OFF . '"></form>');
     $sql = "select * from " . TABLE_PRODUCT_TYPES_TO_CATEGORY . "
-                           where category_id = '" . $cInfo->categories_id . "'";
+                           where category_id = '" . (int)$cInfo->categories_id . "'";
 
     $restrict_types = $db->Execute($sql);
     if ($restrict_types->RecordCount() > 0 ) {
       $contents[] = array('text' => '<br />' . TEXT_CATEGORY_HAS_RESTRICTIONS . '<br />');
       while (!$restrict_types->EOF) {
-        $sql = "select type_name from " . TABLE_PRODUCT_TYPES . " where type_id = '" . $restrict_types->fields['product_type_id'] . "'";
+        $sql = "select type_name from " . TABLE_PRODUCT_TYPES . " where type_id = '" . (int)$restrict_types->fields['product_type_id'] . "'";
         $type = $db->Execute($sql);
-        $contents[] = array('text' => '<a href="' . zen_href_link(FILENAME_CATEGORIES, 'action=remove_type&cPath=' . $cPath . '&cID='.$cInfo->categories_id.'&type_id='.$restrict_types->fields['product_type_id']) . '">' . zen_image_button('button_delete.gif', IMAGE_DELETE) . '</a>&nbsp;' . $type->fields['type_name'] . '<br />');
+        $contents[] = array('text' => zen_draw_form('remove_type', FILENAME_CATEGORIES, 'action=remove_type&cPath=' . $cPath . '&cID='.$cInfo->categories_id) . zen_draw_hidden_field('type_id', $restrict_types->fields['product_type_id']) . zen_image_submit('button_delete.gif', IMAGE_DELETE) . '</form>&nbsp;' . $type->fields['type_name'] . '<br />');
         $restrict_types->MoveNext();
       }
     }
@@ -837,21 +812,21 @@ function init()
 
     $category_inputs_string_metatags_title = '';
     for ($i = 0, $n = sizeof($languages); $i < $n; $i++) {
-      $category_inputs_string_metatags_title .= '<br />' . zen_image(DIR_WS_CATALOG_LANGUAGES . $languages[$i]['directory'] . '/images/' . $languages[$i]['image'], $languages[$i]['metatags_title']) . '&nbsp;' . zen_draw_input_field('metatags_title[' . $languages[$i]['id'] . ']', zen_get_category_metatags_title($cInfo->categories_id, $languages[$i]['id']), zen_set_field_length(TABLE_METATAGS_CATEGORIES_DESCRIPTION, 'metatags_title'));
+      $category_inputs_string_metatags_title .= '<br />' . zen_image(DIR_WS_CATALOG_LANGUAGES . $languages[$i]['directory'] . '/images/' . $languages[$i]['image'], $languages[$i]['metatags_title']) . '&nbsp;' . zen_draw_input_field('metatags_title[' . $languages[$i]['id'] . ']', htmlspecialchars(zen_get_category_metatags_title($cInfo->categories_id, $languages[$i]['id']), ENT_COMPAT, CHARSET, TRUE), zen_set_field_length(TABLE_METATAGS_CATEGORIES_DESCRIPTION, 'metatags_title'));
     }
     $contents[] = array('text' => '<br />' . TEXT_EDIT_CATEGORIES_META_TAGS_TITLE . $category_inputs_string_metatags_title);
 
     $category_inputs_string_metatags_keywords = '';
     for ($i = 0, $n = sizeof($languages); $i < $n; $i++) {
       $category_inputs_string_metatags_keywords .= '<br />' . zen_image(DIR_WS_CATALOG_LANGUAGES . $languages[$i]['directory'] . '/images/' . $languages[$i]['image'], $languages[$i]['metatags_keywords']) . '&nbsp;' ;
-      $category_inputs_string_metatags_keywords .= zen_draw_textarea_field('metatags_keywords[' . $languages[$i]['id'] . ']', 'soft', '100%', '20', zen_get_category_metatags_keywords($cInfo->categories_id, $languages[$i]['id']));
+      $category_inputs_string_metatags_keywords .= zen_draw_textarea_field('metatags_keywords[' . $languages[$i]['id'] . ']', 'soft', '100%', '20', htmlspecialchars(zen_get_category_metatags_keywords($cInfo->categories_id, $languages[$i]['id']), ENT_COMPAT, CHARSET, TRUE));
     }
     $contents[] = array('text' => '<br />' . TEXT_EDIT_CATEGORIES_META_TAGS_KEYWORDS . $category_inputs_string_metatags_keywords);
 
     $category_inputs_string_metatags_description = '';
     for ($i = 0, $n = sizeof($languages); $i < $n; $i++) {
       $category_inputs_string_metatags_description .= '<br />' . zen_image(DIR_WS_CATALOG_LANGUAGES . $languages[$i]['directory'] . '/images/' . $languages[$i]['image'], $languages[$i]['name']) . '&nbsp;' ;
-      $category_inputs_string_metatags_description .= zen_draw_textarea_field('metatags_description[' . $languages[$i]['id'] . ']', 'soft', '100%', '20', zen_get_category_metatags_description($cInfo->categories_id, $languages[$i]['id']));
+      $category_inputs_string_metatags_description .= zen_draw_textarea_field('metatags_description[' . $languages[$i]['id'] . ']', 'soft', '100%', '20', htmlspecialchars(zen_get_category_metatags_description($cInfo->categories_id, $languages[$i]['id']), ENT_COMPAT, CHARSET, TRUE));
     }
     $contents[] = array('text' => '<br />' . TEXT_EDIT_CATEGORIES_META_TAGS_DESCRIPTION . $category_inputs_string_metatags_description);
 

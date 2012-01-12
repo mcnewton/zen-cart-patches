@@ -15,21 +15,21 @@
 
 /**
  * SMTP Class
- * 
+ *
  * @package classes
  * @ignore
  * @author Chris Ryan
- * @version (within Zen Cart) $Id: class.smtp.php 7605 2007-12-10 16:24:48Z drbyte $
+ * @version (within Zen Cart) $Id: class.smtp.php 18695 2011-05-04 05:24:19Z drbyte $
  * @version Modified for Zen Cart added protocols to enable use with Gmail 2007-09-30 Chuck Redman
  */
 /**
  * SMTP Class
- * 
+ *
  * SMTP is rfc 821 compliant and implements all the rfc 821 SMTP
  * commands except TURN which will always return a not implemented
  * error. SMTP also provides some utility methods for sending mail
  * to an SMTP server.
- * 
+ *
  * @package classes
  */
 class SMTP
@@ -115,7 +115,7 @@ class SMTP
       $port = $this->SMTP_PORT;
     }
     //Added for Gmail support CER
-    if($this->Protocol != '') $host = $this->Protocol."://".$host; 
+    if($this->Protocol != '') $host = $this->Protocol."://".$host;
 
     #connect to the smtp server
     $this->smtp_conn = @fsockopen($host,    # the host of the server
@@ -1062,6 +1062,3 @@ class SMTP
   }
 
 }
-
-
- ?>

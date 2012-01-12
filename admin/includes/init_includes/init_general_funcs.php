@@ -1,10 +1,10 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2007 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: init_general_funcs.php 6027 2007-03-21 09:11:58Z drbyte $
+ * @version $Id: init_general_funcs.php 18736 2011-05-18 04:56:45Z drbyte $
  */
 if (!defined('IS_ADMIN_FLAG')) {
   die('Illegal Access');
@@ -13,16 +13,14 @@ if (!defined('IS_ADMIN_FLAG')) {
  * load the system wide functions
  *
  * @package admin
- * @copyright Copyright 2003-2005 zen-cart Development Team
- * @copyright Portions Copyright 2003 osCommerce
 **/
 // customization for the design layout
   define('BOX_WIDTH', 125); // how wide the boxes should be in pixels (default: 125)
 
 // Define how do we update currency exchange rates
-// Possible values are 'oanda' 'xe' or ''
-  define('CURRENCY_SERVER_PRIMARY', 'oanda');
-  define('CURRENCY_SERVER_BACKUP', 'xe');
+// Possible values are 'ecb', 'boc', 'oanda', 'xe', or '' (to disable the option).  HOWEVER: Note that using "xe" or "oanda" subjects you to TOS terms requiring you to subscribe to their services. Use at your own risk.
+  define('CURRENCY_SERVER_PRIMARY', 'ecb');
+  define('CURRENCY_SERVER_BACKUP', 'boc');
 
 // include the database functions
   require(DIR_WS_FUNCTIONS . 'database.php');
@@ -43,7 +41,7 @@ require(DIR_WS_FUNCTIONS . 'functions_metatags.php');
 // include the list of extra functions
   if ($za_dir = @dir(DIR_WS_FUNCTIONS . 'extra_functions')) {
     while ($zv_file = $za_dir->read()) {
-      if (strstr($zv_file, '.php')) {
+      if (preg_match('/\.php$/', $zv_file) > 0) {
         require(DIR_WS_FUNCTIONS . 'extra_functions/' . $zv_file);
       }
     }
@@ -54,4 +52,33 @@ if (isset($_GET) & sizeof($_GET) > 0 ) {
     $_GET[$key] = strip_tags($value);
   }
 }
-?>
+
+// check for SSL configuration changes:
+if (!defined('SSLPWSTATUSCHECK')) die('database upgrade required. please run the 1.3.9-to-1.5.0 upgrade via zc_install');
+list($a, $b, $c) = explode(':', SSLPWSTATUSCHECK); $a = (int)$a; $b = (int)$b; $c = (int)$c;
+$d = (ENABLE_SSL_ADMIN == 'true') ? '1' : '0';
+$e = (substr(HTTP_SERVER, 0, 5) == 'https') ? '1' : '0';
+$f = ':'.$d.':'.$e;
+if ($a == 0) {
+  if (($b == 0 && $d == 1) || ($c == 0 && $e == 1)) {
+    $sql = "UPDATE " . TABLE_CONFIGURATION . " set configuration_value = '1" . $f . "', last_modified = now() where configuration_key = 'SSLPWSTATUSCHECK'";
+    $db->Execute($sql);
+    $sql = "UPDATE " . TABLE_ADMIN . " set pwd_last_change_date = '1990-01-01 14:02:22'";
+    $db->Execute($sql);
+  }
+  if (($b == 1 && $d == 0) || ($c == 1 && $e == 0)) {
+    $sql = "UPDATE " . TABLE_CONFIGURATION . " set configuration_value = '0". $f . "', last_modified = now() where configuration_key = 'SSLPWSTATUSCHECK'";
+    $db->Execute($sql);
+  }
+} else if ($a == 1) {  // == 1
+  if (($b == 1 && $d == 0) || ($c == 1 && $e == 0)) {
+    $sql = "UPDATE " . TABLE_CONFIGURATION . " set configuration_value = '0". $f . "', last_modified = now() where configuration_key = 'SSLPWSTATUSCHECK'";
+    $db->Execute($sql);
+  }
+  if (($b == 0 && $d == 1) || ($c == 0 && $e == 1)) {
+    $sql = "UPDATE " . TABLE_CONFIGURATION . " set configuration_value = '1" . $f . "', last_modified = now() where configuration_key = 'SSLPWSTATUSCHECK'";
+    $db->Execute($sql);
+  }
+}
+unset($a,$b,$c,$d,$e,$f);
+// end ssl config change detection

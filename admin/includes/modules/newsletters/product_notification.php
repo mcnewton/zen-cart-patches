@@ -1,10 +1,10 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2009 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: product_notification.php 14780 2009-11-11 03:32:33Z drbyte $
+ * @version $Id: product_notification.php 18695 2011-05-04 05:24:19Z drbyte $
  */
 if (!defined('IS_ADMIN_FLAG')) {
   die('Illegal Access');
@@ -25,7 +25,7 @@ if (!defined('IS_ADMIN_FLAG')) {
       $products_array = array();
       $products = $db->Execute("select pd.products_id, pd.products_name
                                 from " . TABLE_PRODUCTS . " p, " . TABLE_PRODUCTS_DESCRIPTION . " pd
-                                where pd.language_id = '" . $_SESSION['languages_id'] . "'
+                                where pd.language_id = '" . (int)$_SESSION['languages_id'] . "'
                                 and pd.products_id = p.products_id
                                 and p.products_status = '1'
                                 order by pd.products_name");
@@ -88,7 +88,7 @@ function selectAll(FormName, SelectBox) {
                        'document.write(\'<input type="button" value="' . BUTTON_CANCEL . '" style="width: 8em;" onclick="document.location=\\\'' . zen_href_link(FILENAME_NEWSLETTERS, 'page=' . $_GET['page'] . '&nID=' . $_GET['nID']) . '\\\'">\');' . "\n" .
                        '//--></script><noscript><a href="' . zen_href_link(FILENAME_NEWSLETTERS, 'page=' . $_GET['page'] . '&nID=' . $_GET['nID']) . '">[ ' . BUTTON_CANCEL . ' ]</a></noscript>';
 
-      $choose_audience_string .= '<form name="notifications" action="' . zen_href_link(FILENAME_NEWSLETTERS, 'page=' . $_GET['page'] . '&nID=' . $_GET['nID'] . '&action=confirm') . '" method="post" onSubmit="return selectAll(\'notifications\', \'chosen[]\')"><table border="0" width="100%" cellspacing="0" cellpadding="2">' . "\n" .
+      $choose_audience_string .= '<form name="notifications" action="' . zen_href_link(FILENAME_NEWSLETTERS, 'page=' . $_GET['page'] . '&nID=' . $_GET['nID'] . '&action=confirm') . '" method="post" onSubmit="return selectAll(\'notifications\', \'chosen[]\')"><table border="0" width="100%" cellspacing="0" cellpadding="2">' . "\n" . '<input type="hidden" name="securityToken" value="' . $_SESSION['securityToken'] . '" />' . 
                                  '  <tr>' . "\n" .
                                  '    <td align="center" class="main"><b>' . TEXT_PRODUCTS . '</b><br />' . zen_draw_pull_down_menu('products', $products_array, '', 'size="20" style="width: 20em;" multiple') . '</td>' . "\n" .
                                  '    <td align="center" class="main">&nbsp;<br />' . $global_button . '<br /><br /><br /><input type="button" value="' . BUTTON_SELECT . '" style="width: 8em;" onClick="mover(\'remove\');"><br /><br /><input type="button" value="' . BUTTON_UNSELECT . '" style="width: 8em;" onClick="mover(\'add\');"><br /><br /><br /><input type="submit" value="' . BUTTON_SUBMIT . '" style="width: 8em;"><br /><br />' . $cancel_button . '</td>' . "\n" .
@@ -124,7 +124,7 @@ function selectAll(FormName, SelectBox) {
       } else {
         $chosen = $_POST['chosen'];
 
-        $ids = implode(',', $chosen);
+        $ids = zen_db_input(implode(',', $chosen));
 
         $products = $db->Execute("select distinct customers_id
                                   from " . TABLE_PRODUCTS_NOTIFICATIONS . "
@@ -222,7 +222,7 @@ function selectAll(FormName, SelectBox) {
       } else {  //not global==true; instead, process all selected products
         $chosen = $_POST['chosen'];
 
-        $ids = implode(',', $chosen);
+        $ids = zen_db_input(implode(',', $chosen));
 
         $products = $db->Execute("select distinct pn.customers_id, c.customers_firstname,
                                                   c.customers_lastname, c.customers_email_address

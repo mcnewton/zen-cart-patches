@@ -1,13 +1,13 @@
 #
 # The following commands are used to upgrade the Zen Cart v1.0.4 database structure to v1.1.1 format.
-# $Id: mysql_upgrade_zencart_104_to_111.sql 4243 2006-08-24 10:55:28Z drbyte $
+# $Id: mysql_upgrade_zencart_104_to_111.sql 18695 2011-05-04 05:24:19Z drbyte $
 #
 
-CREATE TABLE files_uploaded (files_uploaded_id int(11) NOT NULL auto_increment, sesskey varchar(32) NULL DEFAULT NULL, customers_id int(11) NULL DEFAULT NULL,files_uploaded_name varchar(64) NOT NULL DEFAULT '', PRIMARY KEY (files_uploaded_id)) TYPE=MyISAM;
+CREATE TABLE files_uploaded (files_uploaded_id int(11) NOT NULL auto_increment, sesskey varchar(32) NULL DEFAULT NULL, customers_id int(11) NULL DEFAULT NULL,files_uploaded_name varchar(64) NOT NULL DEFAULT '', PRIMARY KEY (files_uploaded_id)) ;
 
-CREATE TABLE products_options_types (products_options_types_id int(11) NOT NULL DEFAULT '0', products_options_types_name varchar(32) NULL DEFAULT NULL, language_id int(11) NOT NULL DEFAULT '0', PRIMARY KEY (products_options_types_id, language_id)) TYPE=MyISAM COMMENT='Track products_options_types';
+CREATE TABLE products_options_types (products_options_types_id int(11) NOT NULL DEFAULT '0', products_options_types_name varchar(32) NULL DEFAULT NULL, language_id int(11) NOT NULL DEFAULT '0', PRIMARY KEY (products_options_types_id, language_id)) COMMENT='Track products_options_types';
 
-CREATE TABLE salemaker_sales (sale_id int(11) NOT NULL auto_increment, sale_status tinyint(4) NOT NULL DEFAULT '0', sale_name varchar(30) NOT NULL DEFAULT '', sale_deduction_value decimal(15,4) NOT NULL DEFAULT '0.0000', sale_deduction_type tinyint(4) NOT NULL DEFAULT '0', sale_pricerange_from decimal(15,4) NOT NULL DEFAULT '0.0000', sale_pricerange_to decimal(15,4) NOT NULL DEFAULT '0.0000', sale_specials_condition tinyint(4) NOT NULL DEFAULT '0', sale_categories_selected varchar(255) NULL DEFAULT NULL, sale_categories_all varchar(255) NULL DEFAULT NULL, sale_date_start date NOT NULL DEFAULT '0000-00-00', sale_date_end date NOT NULL DEFAULT '0000-00-00', sale_date_added date NOT NULL DEFAULT '0000-00-00', sale_date_last_modified date NOT NULL DEFAULT '0000-00-00', sale_date_status_change date NOT NULL DEFAULT '0000-00-00', PRIMARY KEY (sale_id)) TYPE=MyISAM;
+CREATE TABLE salemaker_sales (sale_id int(11) NOT NULL auto_increment, sale_status tinyint(4) NOT NULL DEFAULT '0', sale_name varchar(30) NOT NULL DEFAULT '', sale_deduction_value decimal(15,4) NOT NULL DEFAULT '0.0000', sale_deduction_type tinyint(4) NOT NULL DEFAULT '0', sale_pricerange_from decimal(15,4) NOT NULL DEFAULT '0.0000', sale_pricerange_to decimal(15,4) NOT NULL DEFAULT '0.0000', sale_specials_condition tinyint(4) NOT NULL DEFAULT '0', sale_categories_selected varchar(255) NULL DEFAULT NULL, sale_categories_all varchar(255) NULL DEFAULT NULL, sale_date_start date NOT NULL DEFAULT '0000-00-00', sale_date_end date NOT NULL DEFAULT '0000-00-00', sale_date_added date NOT NULL DEFAULT '0000-00-00', sale_date_last_modified date NOT NULL DEFAULT '0000-00-00', sale_date_status_change date NOT NULL DEFAULT '0000-00-00', PRIMARY KEY (sale_id));
 
 ALTER TABLE admin ADD admin_level tinyint(1) NOT NULL DEFAULT '1' AFTER admin_pass;
 

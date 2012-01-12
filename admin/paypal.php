@@ -1,11 +1,11 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2007 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @copyright Portions Copyright (c) 2004 DevosC.com    
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: paypal.php 6730 2007-08-19 08:25:07Z drbyte $
+ * @version $Id: paypal.php 18799 2011-05-25 12:29:41Z wilt $
  */
 
   require('includes/application_top.php');
@@ -127,7 +127,8 @@
               </tr>
 <?php
   if (zen_not_null($selected_status)) {
-    $ipn_search = "and p.payment_status = '" . zen_db_prepare_input($selected_status) . "'";
+    $ipn_search = "and p.payment_status = :selectedStatus: ";
+    $ipn_search = $db->bindVars($ipn_search, ':selectedStatus:', $selected_status, 'string');
     switch ($selected_status) {
       case 'Pending':
       case 'Completed':

@@ -1,10 +1,10 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2007 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: template_select.php 6131 2007-04-08 06:56:51Z drbyte $
+ * @version $Id: template_select.php 19294 2011-07-28 18:15:46Z drbyte $
  */
 
   require('includes/application_top.php');
@@ -30,20 +30,29 @@
   if (zen_not_null($action)) {
     switch ($action) {
       case 'insert':
-        $check_query = $db->Execute("select * from " . TABLE_TEMPLATE_SELECT . " where template_language = '" . $_POST['lang'] . "'");
+        // @TODO: add duplicate-detection and empty-submission detection
+        $sql = "select * from " . TABLE_TEMPLATE_SELECT . " where template_language = :lang:";
+        $sql = $db->bindVars($sql, ':lang:', $_POST['lang'], 'string');
+        $check_query = $db->Execute($sql);
         if ($check_query->RecordCount() < 1 ) {
-          $db->Execute("insert into " . TABLE_TEMPLATE_SELECT . " (template_dir, template_language) values ('" . $_POST['ln'] . "', '" . $_POST['lang'] . "')");
+          $sql = "insert into " . TABLE_TEMPLATE_SELECT . " (template_dir, template_language) values (:tpl:, :lang:)";
+          $sql = $db->bindVars($sql, ':tpl:', $_POST['ln'], 'string');
+          $sql = $db->bindVars($sql, ':lang:', $_POST['lang'], 'string');
+          $db->Execute($sql);
           $_GET['tID'] = $db->Insert_ID();
         }
         $action="";
         break;
       case 'save':
-        $db->Execute("update " . TABLE_TEMPLATE_SELECT . " set template_dir = '" . $_POST['ln'] . "' where template_id = '" . $_GET['tID'] . "'");
+        $sql = "update " . TABLE_TEMPLATE_SELECT . " set template_dir = :tpl: where template_id = :id:";
+        $sql = $db->bindVars($sql, ':tpl:', $_POST['ln'], 'string');
+        $sql = $db->bindVars($sql, ':id:', $_GET['tID'], 'integer');
+        $db->Execute($sql);
         break;
       case 'deleteconfirm':
-        $check_query = $db->Execute("select template_language from " . TABLE_TEMPLATE_SELECT . " where template_id = '" . $_GET['tID'] . "'");
+        $check_query = $db->Execute("select template_language from " . TABLE_TEMPLATE_SELECT . " where template_id = '" . (int)$_POST['tID'] . "'");
         if ( $check_query->fields['template_language'] != 0 ) {
-          $db->Execute("delete from " . TABLE_TEMPLATE_SELECT . " where template_id = '" . $_GET['tID'] . "'");
+          $db->Execute("delete from " . TABLE_TEMPLATE_SELECT . " where template_id = '" . (int)$_POST['tID'] . "'");
           zen_redirect(zen_href_link(FILENAME_TEMPLATE_SELECT, 'page=' . $_GET['page']));
         }
         $action="";
@@ -170,7 +179,7 @@
       while (!$lns->EOF) {
         $language_array[] = array('text' => $lns->fields['name'], 'id' => $lns->fields['languages_id']);
         $lns->MoveNext();
-      } 
+      }
       $contents[] = array('text' => '<br>' . TEXT_INFO_TEMPLATE_NAME . '<br>' . zen_draw_pull_down_menu('ln', $template_array));
       $contents[] = array('text' => '<br>' . TEXT_INFO_LANGUAGE_NAME . '<br>' . zen_draw_pull_down_menu('lang', $language_array, $_POST['lang']));
       $contents[] = array('align' => 'center', 'text' => '<br>' . zen_image_submit('button_insert.gif', IMAGE_INSERT) . '&nbsp;<a href="' . zen_href_link(FILENAME_TEMPLATE_SELECT, 'page=' . $_GET['page']) . '">' . zen_image_button('button_cancel.gif', IMAGE_CANCEL) . '</a>');
@@ -190,7 +199,7 @@
     case 'delete':
       $heading[] = array('text' => '<b>' . TEXT_INFO_HEADING_DELETE_TEMPLATE . '</b>');
 
-      $contents = array('form' => zen_draw_form('zones', FILENAME_TEMPLATE_SELECT, 'page=' . $_GET['page'] . '&tID=' . $tInfo->template_id . '&action=deleteconfirm'));
+      $contents = array('form' => zen_draw_form('zones', FILENAME_TEMPLATE_SELECT, 'page=' . $_GET['page'] . '&action=deleteconfirm') . zen_draw_hidden_field('tID', $tInfo->template_id));
       $contents[] = array('text' => TEXT_INFO_DELETE_INTRO);
       $contents[] = array('text' => '<br><b>' . $template_info[$tInfo->template_dir]['name'] . '</b>');
       $contents[] = array('align' => 'center', 'text' => '<br>' . zen_image_submit('button_delete.gif', IMAGE_DELETE) . '&nbsp;<a href="' . zen_href_link(FILENAME_TEMPLATE_SELECT, 'page=' . $_GET['page'] . '&tID=' . $tInfo->template_id) . '">' . zen_image_button('button_cancel.gif', IMAGE_CANCEL) . '</a>');

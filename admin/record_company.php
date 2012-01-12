@@ -1,10 +1,10 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2007 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: record_company.php 6131 2007-04-08 06:56:51Z drbyte $
+ * @version $Id: record_company.php 19330 2011-08-07 06:32:56Z drbyte $
  */
 
   require('includes/application_top.php');
@@ -37,7 +37,7 @@
 
       if ($_POST['record_company_image_manual'] != '') {
         // add image manually
-        $artists_image_name = $_POST['img_dir'] . $_POST['record_company_image_manual'];
+        $artists_image_name = zen_db_input($_POST['img_dir'] . $_POST['record_company_image_manual']);
         $db->Execute("update " . TABLE_RECORD_COMPANY . "
                       set record_company_image = '" .  $artists_image_name . "'
                       where record_company_id = '" . (int)$record_company_id . "'");
@@ -49,7 +49,7 @@
           if ($record_company_image->filename != 'none') {
           // remove image from database if none
             $db->Execute("update " . TABLE_RECORD_COMPANY . "
-                          set record_company_image = '" .  $_POST['img_dir'] . $record_company_image->filename . "'
+                          set record_company_image = '" .  zen_db_input($_POST['img_dir'] . $record_company_image->filename) . "'
                           where record_company_id = '" . (int)$record_company_id . "'");
           } else {
             $db->Execute("update " . TABLE_RECORD_COMPANY . "
@@ -87,7 +87,7 @@
           $messageStack->add_session(ERROR_ADMIN_DEMO, 'caution');
           zen_redirect(zen_href_link(FILENAME_RECORD_COMPANY, 'page=' . $_GET['page']));
         }
-        $record_company_id = zen_db_prepare_input($_GET['mID']);
+        $record_company_id = zen_db_prepare_input($_POST['mID']);
 
         if (isset($_POST['delete_image']) && ($_POST['delete_image'] == 'on')) {
           $record_company = $db->Execute("select record_company_image
@@ -264,7 +264,7 @@
 
       $contents = array('form' => zen_draw_form('record_company', FILENAME_RECORD_COMPANY, 'page=' . $_GET['page'] . '&mID=' . $aInfo->record_company_id . '&action=save', 'post', 'enctype="multipart/form-data"'));
       $contents[] = array('text' => TEXT_EDIT_INTRO);
-      $contents[] = array('text' => '<br />' . TEXT_RECORD_COMPANY_NAME . '<br>' . zen_draw_input_field('record_company_name', $aInfo->record_company_name, zen_set_field_length(TABLE_RECORD_COMPANY, 'record_company_name')));
+      $contents[] = array('text' => '<br />' . TEXT_RECORD_COMPANY_NAME . '<br>' . zen_draw_input_field('record_company_name', htmlspecialchars($aInfo->record_company_name, ENT_COMPAT, CHARSET, TRUE), zen_set_field_length(TABLE_RECORD_COMPANY, 'record_company_name')));
       $contents[] = array('text' => '<br />' . TEXT_RECORD_COMPANY_IMAGE . '<br>' . zen_draw_file_field('record_company_image') . '<br />' . $aInfo->record_company_image);
       $dir = @dir(DIR_FS_CATALOG_IMAGES);
       $dir_info[] = array('id' => '', 'text' => "Main Directory");
@@ -290,7 +290,7 @@
     case 'delete':
       $heading[] = array('text' => '<b>' . TEXT_HEADING_DELETE_RECORD_COMPANY . '</b>');
 
-      $contents = array('form' => zen_draw_form('record_company', FILENAME_RECORD_COMPANY, 'page=' . $_GET['page'] . '&mID=' . $aInfo->record_company_id . '&action=deleteconfirm'));
+      $contents = array('form' => zen_draw_form('record_company', FILENAME_RECORD_COMPANY, 'page=' . $_GET['page'] . '&action=deleteconfirm') . zen_draw_hidden_field('mID', $aInfo->record_company_id));
       $contents[] = array('text' => TEXT_DELETE_INTRO);
       $contents[] = array('text' => '<br><b>' . $aInfo->record_company_name . '</b>');
       $contents[] = array('text' => '<br>' . zen_draw_checkbox_field('delete_image', '', true) . ' ' . TEXT_DELETE_IMAGE);

@@ -3,10 +3,10 @@
  * authorize.net SIM payment method class
  *
  * @package paymentMethod
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: authorizenet.php 17478 2010-09-05 20:21:49Z ajeh $
+ * @version $Id: authorizenet.php 19511 2011-09-14 18:45:01Z drbyte $
  */
 /**
  * authorize.net SIM payment method class
@@ -256,7 +256,7 @@ class authorizenet extends base {
                                                'tag' => $this->code.'-cc-expires-month')));
       if (MODULE_PAYMENT_AUTHORIZENET_USE_CVV == 'True') {
         $selection['fields'][] = array('title' => MODULE_PAYMENT_AUTHORIZENET_TEXT_CVV,
-                                       'field' => zen_draw_input_field('authorizenet_cc_cvv', '', 'size="4", maxlength="4"' . ' id="'.$this->code.'-cc-cvv"' . $onFocus . ' autocomplete="off"') . ' ' . '<a href="javascript:popupWindow(\'' . zen_href_link(FILENAME_POPUP_CVV_HELP) . '\')">' . MODULE_PAYMENT_AUTHORIZENET_TEXT_POPUP_CVV_LINK . '</a>',
+                                       'field' => zen_draw_input_field('authorizenet_cc_cvv', '', 'size="4" maxlength="4"' . ' id="'.$this->code.'-cc-cvv"' . $onFocus . ' autocomplete="off"') . ' ' . '<a href="javascript:popupWindow(\'' . zen_href_link(FILENAME_POPUP_CVV_HELP) . '\')">' . MODULE_PAYMENT_AUTHORIZENET_TEXT_POPUP_CVV_LINK . '</a>',
                                        'tag' => $this->code.'-cc-cvv');
       }
     }
@@ -416,7 +416,7 @@ class authorizenet extends base {
     $this->reportable_submit_data['x_login'] = '*******';
     if (isset($this->reportable_submit_data['x_tran_key'])) $this->reportable_submit_data['x_tran_key'] = '*******';
     if (isset($this->reportable_submit_data['x_card_num'])) $this->reportable_submit_data['x_card_num'] = str_repeat('X', strlen($this->reportable_submit_data['x_card_num'] - 4)) . substr($this->reportable_submit_data['x_card_num'], -4);
-//    if (isset($this->reportable_submit_data['x_card_code'])) $this->reportable_submit_data['x_card_code'] = '*******';
+    if (isset($this->reportable_submit_data['x_card_code'])) $this->reportable_submit_data['x_card_code'] = '*******';
     $this->reportable_submit_data['url'] = $url;
 
     $this->_debugActions($this->reportable_submit_data, 'Submit-Data', '', zen_session_id());

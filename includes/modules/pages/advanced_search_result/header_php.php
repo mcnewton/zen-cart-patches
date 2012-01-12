@@ -3,10 +3,10 @@
  * Header code file for the Advanced Search Results page
  *
  * @package page
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: header_php.php 17600 2010-09-22 00:45:20Z drbyte $
+ * @version $Id: header_php.php 19702 2011-10-05 20:33:06Z wilt $
  */
 
 // This should be first line of the script:
@@ -110,7 +110,7 @@ if ( (isset($_GET['keyword']) && (empty($_GET['keyword']) || $_GET['keyword']==H
   }
 
   if (zen_not_null($keywords)) {
-    if (!zen_parse_search_string($keywords, $search_keywords)) {
+    if (!zen_parse_search_string(stripslashes($keywords), $search_keywords)) {
       $error = true;
 
       $messageStack->add_session('search', ERROR_INVALID_KEYWORDS);

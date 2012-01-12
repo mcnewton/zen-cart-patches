@@ -7,11 +7,11 @@
  * - Shows Free Shipping on Virtual products
  *
  * @package modules
- * @copyright Copyright 2003-2009 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * portions Copyright (c) 2003 Edwin Bekaert (edwin@ednique.com)
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: shipping_estimator.php 14728 2009-11-01 15:40:59Z ajeh $
+ * @version $Id: shipping_estimator.php 19954 2011-11-03 18:09:36Z drbyte $
  */
 if (!defined('IS_ADMIN_FLAG')) {
   die('Illegal Access');
@@ -38,7 +38,7 @@ if ($_SESSION['cart']->count_contents() > 0) {
    $zip_code = (isset($_POST['zip_code'])) ? strip_tags(addslashes($_POST['zip_code'])) : $zip_code;
    $state_zone_id = (isset($_SESSION['cart_zone'])) ? (int)$_SESSION['cart_zone'] : '';
    $state_zone_id = (isset($_POST['zone_id'])) ? (int)$_POST['zone_id'] : $state_zone_id;
-   $selectedState = zen_db_input($_POST['state']);
+   $selectedState = zen_output_string_protected($_POST['state']);
   // Could be placed in english.php
   // shopping cart quotes
   // shipping cost

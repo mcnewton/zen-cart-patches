@@ -3,9 +3,9 @@
  * paypal EC button display template
  *
  * @package paymentMethod
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: tpl_ec_button.php 17642 2010-09-28 19:06:13Z drbyte $
+ * @version $Id: tpl_ec_button.php 18697 2011-05-04 14:35:20Z wilt $
  */
 
 $paypalec_enabled = (defined('MODULE_PAYMENT_PAYPALWPP_STATUS') && MODULE_PAYMENT_PAYPALWPP_STATUS == 'True');

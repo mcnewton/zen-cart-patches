@@ -5,7 +5,7 @@
  * @copyright Copyright 2003-2010 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: header_php.php 17422 2010-08-31 08:42:09Z drbyte $
+ * @version $Id: header_php.php 18235 2010-11-23 22:41:05Z drbyte $
  */
 
   @define('SQL_CACHE_METHOD', 'none');

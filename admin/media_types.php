@@ -1,24 +1,11 @@
 <?php
-//
-// +----------------------------------------------------------------------+
-// |zen-cart Open Source E-commerce                                       |
-// +----------------------------------------------------------------------+
-// | Copyright (c) 2004 The zen-cart developers                           |
-// |                                                                      |
-// | http://www.zen-cart.com/index.php                                    |
-// |                                                                      |
-// | Portions Copyright (c) 2003 osCommerce                               |
-// +----------------------------------------------------------------------+
-// | This source file is subject to version 2.0 of the GPL license,       |
-// | that is bundled with this package in the file LICENSE, and is        |
-// | available through the world-wide-web at the following url:           |
-// | http://www.zen-cart.com/license/2_0.txt.                             |
-// | If you did not receive a copy of the zen-cart license and are unable |
-// | to obtain it through the world-wide-web, please send a note to       |
-// | license@zen-cart.com so we can mail you a copy immediately.          |
-// +----------------------------------------------------------------------+
-//  $Id: media_types.php 3297 2006-03-28 08:35:01Z drbyte $
-//
+/**
+ * @package admin
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
+ * @copyright Portions Copyright 2003 osCommerce
+ * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
+ * @version $Id: media_types.php 19294 2011-07-28 18:15:46Z drbyte $
+ */
 
   require('includes/application_top.php');
 
@@ -57,7 +44,7 @@
           $messageStack->add_session(ERROR_ADMIN_DEMO, 'caution');
           zen_redirect(zen_href_link(FILENAME_MEDIA_TYPES, 'page=' . $_GET['page']));
         }
-        $type_id = zen_db_prepare_input($_GET['mID']);
+        $type_id = zen_db_prepare_input($_POST['mID']);
 
         $db->Execute("delete from " . TABLE_MEDIA_TYPES . "
                       where type_id = '" . (int)$type_id . "'");
@@ -192,7 +179,7 @@
     case 'delete':
       $heading[] = array('text' => '<b>' . TEXT_HEADING_DELETE_MEDIA_TYPES . '</b>');
 
-      $contents = array('form' => zen_draw_form('media_type', FILENAME_MEDIA_TYPES, 'page=' . $_GET['page'] . '&mID=' . $mInfo->type_id . '&action=deleteconfirm'));
+      $contents = array('form' => zen_draw_form('media_type', FILENAME_MEDIA_TYPES, 'page=' . $_GET['page'] . '&action=deleteconfirm') . zen_draw_hidden_field('mID', $mInfo->type_id));
       $contents[] = array('text' => TEXT_DELETE_INTRO);
       $contents[] = array('text' => '<br><b>' . $mInfo->type_name . '</b>');
 

@@ -1,10 +1,10 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: coupon_restrict.php 17889 2010-10-08 21:24:16Z wilt $
+ * @version $Id: coupon_restrict.php 18695 2011-05-04 05:24:19Z drbyte $
  */
   //define('MAX_DISPLAY_RESTRICT_ENTRIES', 10);
   require('includes/application_top.php');
@@ -12,17 +12,26 @@
   $restrict_array[] = array('id'=>'Deny', text=>'Deny');
   $restrict_array[] = array('id'=>'Allow', text=>'Allow');
 
-  $the_path = $_POST['cPath'];
-  if ($_GET['action']=='switch_status') {
-    $status = $db->Execute("select coupon_restrict
-                            from " . TABLE_COUPON_RESTRICT . "
-                            where restrict_id = '" . $_GET['info'] . "'");
+  if (isset($_GET['cid'])) $_GET['cid'] = (int)$_GET['cid'];
+  if (isset($_GET['info'])) $_GET['info'] = (int)$_GET['info'];
+  if (isset($_POST['cPath'])) $_POST['cPath'] = (int)$_POST['cPath'];
+  if (isset($_POST['cPath_prod'])) $_POST['cPath_prod'] = (int)$_POST['cPath_prod'];
+  if (isset($_GET['build_cat'])) $_GET['build_cat'] = (int)$_GET['build_cat'];
 
-    $new_status = 'N';
-    if ($status->fields['coupon_restrict'] == 'N') $new_status = 'Y';
-    $db->Execute("update " . TABLE_COUPON_RESTRICT . "
-                  set coupon_restrict = '" . $new_status . "'
-                  where restrict_id = '" . $_GET['info'] . "'");
+  $the_path = $_POST['cPath'];
+  if (isset($_GET['action']) && $_GET['action']=='switch_status') {
+    if (isset($_POST['switchStatusProto']))
+    {
+      $status = $db->Execute("select coupon_restrict
+                              from " . TABLE_COUPON_RESTRICT . "
+                              where restrict_id = '" . $_GET['info'] . "'");
+
+      $new_status = 'N';
+      if ($status->fields['coupon_restrict'] == 'N') $new_status = 'Y';
+      $db->Execute("update " . TABLE_COUPON_RESTRICT . "
+                    set coupon_restrict = '" . $new_status . "'
+                    where restrict_id = '" . $_GET['info'] . "'");
+    }
   }
   if ($_GET['action']=='add_category' && isset($_POST['cPath'])) {
   	if ($_POST['cPath'] == 0) $_POST['cPath'] = -1;
@@ -45,7 +54,7 @@
 
 // from products dropdown selection
   if ($_GET['action']=='add_product' && $_POST['products_drop']) {
-    $test_query=$db->Execute("select * from " . TABLE_COUPON_RESTRICT . " where coupon_id = '" . $_GET['cid'] . "' and product_id = '" . $_POST['products_drop'] . "'");
+    $test_query=$db->Execute("select * from " . TABLE_COUPON_RESTRICT . " where coupon_id = '" . $_GET['cid'] . "' and product_id = '" . (int)$_POST['products_drop'] . "'");
     if ($test_query->RecordCount() < 1) {
       $status = 'N';
       if ($_POST['restrict_status']=='Deny') $status = 'Y';
@@ -57,14 +66,14 @@
           if ($_POST['products_drop'] == -1) {
           // to insert new products from a given categories_id for a coupon_code that are not already in the table
           // products in the table from the catategories_id are skipped
-            $new_products_query = "select products_id from products_to_categories where categories_id = '" . $_GET['build_cat'] . "' and products_id not in (select product_id from coupon_restrict where coupon_id = '" . $_GET['cid'] . "')";
+            $new_products_query = "select products_id from " . TABLE_PRODUCTS_TO_CATEGORIES . " where categories_id = '" . $_GET['build_cat'] . "' and products_id not in (select product_id from " . TABLE_COUPON_RESTRICT . " where coupon_id = '" . $_GET['cid'] . "')";
             $new_products = $db->Execute($new_products_query);
           }
 
           if ($_POST['products_drop'] == -2) {
           // to delete existing products from a given categories_id for a coupon_code that are already in the table
           // products in the table from the catategories_id are skipped
-            $new_products_query = "select products_id from products_to_categories where categories_id = '" . $_GET['build_cat'] . "' and products_id in (select product_id from coupon_restrict where coupon_restrict = '" . $status . "' and coupon_id = '" . $_GET['cid'] . "')";
+            $new_products_query = "select products_id from " . TABLE_PRODUCTS_TO_CATEGORIES . " where categories_id = '" . $_GET['build_cat'] . "' and products_id in (select product_id from " . TABLE_COUPON_RESTRICT . " where coupon_restrict = '" . $status . "' and coupon_id = '" . $_GET['cid'] . "')";
             $new_products = $db->Execute($new_products_query);
           }
 
@@ -96,14 +105,16 @@
 // normal insert of product one by one allow/deny to coupon
       $db->Execute("insert into " . TABLE_COUPON_RESTRICT . "
                   (coupon_id, product_id, coupon_restrict)
-                  values ('" . $_GET['cid'] . "', '" . $_POST['products_drop'] . "', '" . $status . "')");
+                  values ('" . $_GET['cid'] . "', '" . (int)$_POST['products_drop'] . "', '" . $status . "')");
       } // not all deny allow
     } else {
-      $messageStack->add(ERROR_DISCOUNT_COUPON_DEFINED_PRODUCT . ' ' . $_POST['products_drop'], 'caution');
+      $messageStack->add(ERROR_DISCOUNT_COUPON_DEFINED_PRODUCT . ' ' . (int)$_POST['products_drop'], 'caution');
     }
   }
-  if ($_GET['action']=='remove' && $_GET['info']) {
-    $db->Execute("delete from " . TABLE_COUPON_RESTRICT . " where restrict_id = '" . $_GET['info'] . "'");
+  if ($_GET['action']=='remove') { 
+    if (isset($_GET['info']) && isset($_POST['actionRemoveProto'])) {
+      $db->Execute("delete from " . TABLE_COUPON_RESTRICT . " where restrict_id = '" . $_GET['info'] . "'");
+    }
   }
 ?>
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN">
@@ -183,7 +194,7 @@
         echo '          <tr class="dataTableRow">' . "\n";
      if ($cr_list->fields['category_id'] != -1) {
      $coupon = $db->Execute("select coupon_name from " . TABLE_COUPONS_DESCRIPTION . "
-                             where coupon_id = '" . $_GET['cid'] . "' and language_id = '" . $_SESSION['languages_id'] . "'");
+                             where coupon_id = '" . $_GET['cid'] . "' and language_id = '" . (int)$_SESSION['languages_id'] . "'");
      $category_name = zen_get_category_name($cr_list->fields['category_id'], $_SESSION['languages_id']);
      } else {
      	$category_name = TEXT_ALL_CATEGORIES;
@@ -195,16 +206,16 @@
                 <td class="dataTableContent" align="center"><?php echo $category_name; ?></td>
 <?php
 		if ($cr_list->fields['coupon_restrict']=='N') {
-		  echo '<td class="dataTableContent" align="center"><a href="' . zen_href_link('coupon_restrict.php', zen_get_all_get_params(array('info', 'action', 'x', 'y')) . 'action=switch_status&info=' . $cr_list->fields['restrict_id'], 'NONSSL') . '">' . zen_image(DIR_WS_IMAGES . 'icon_status_green.gif', IMAGE_ALLOW) . '</a></td>';
+		  echo '<td class="dataTableContent" align="center"><a href="' . zen_href_link('coupon_restrict.php', zen_get_all_get_params(array('info', 'action', 'x', 'y')) . 'action=switch_status&info=' . $cr_list->fields['restrict_id'], 'NONSSL') . '" onClick="divertClickSwitchStatus(this.href);return false;" >' . zen_image(DIR_WS_IMAGES . 'icon_status_green.gif', IMAGE_ALLOW) . '</a></td>';
 		} else {
-		  echo '<td class="dataTableContent" align="center"><a href="' . zen_href_link('coupon_restrict.php', zen_get_all_get_params(array('info', 'action', 'x', 'y')) . 'action=switch_status&info=' . $cr_list->fields['restrict_id'], 'NONSSL') . '">' . zen_image(DIR_WS_IMAGES . 'icon_status_red.gif', IMAGE_DENY) . '</a></td>';
+		  echo '<td class="dataTableContent" align="center"><a href="' . zen_href_link('coupon_restrict.php', zen_get_all_get_params(array('info', 'action', 'x', 'y')) . 'action=switch_status&info=' . $cr_list->fields['restrict_id'], 'NONSSL') . '" onClick="divertClickSwitchStatus(this.href);return false;" >' . zen_image(DIR_WS_IMAGES . 'icon_status_red.gif', IMAGE_DENY) . '</a></td>';
 		}
 		if ($cr_list->fields['coupon_restrict']=='Y') {
-		  echo '<td class="dataTableContent" align="center"><a href="' . zen_href_link('coupon_restrict.php', zen_get_all_get_params(array('info', 'action', 'x', 'y')) . 'action=switch_status&info=' . $cr_list->fields['restrict_id'], 'NONSSL') . '">' . zen_image(DIR_WS_IMAGES . 'icon_status_green.gif', IMAGE_ALLOW) . '</a></td>';
+		  echo '<td class="dataTableContent" align="center"><a href="' . zen_href_link('coupon_restrict.php', zen_get_all_get_params(array('info', 'action', 'x', 'y')) . 'action=switch_status&info=' . $cr_list->fields['restrict_id'], 'NONSSL') . '"  onClick="divertClickSwitchStatus(this.href);return false;" >' . zen_image(DIR_WS_IMAGES . 'icon_status_green.gif', IMAGE_ALLOW) . '</a></td>';
 		} else {
-		  echo '<td class="dataTableContent" align="center"><a href="' . zen_href_link('coupon_restrict.php', zen_get_all_get_params(array('info', 'action', 'x', 'y')) . 'action=switch_status&info=' . $cr_list->fields['restrict_id'], 'NONSSL') . '">' . zen_image(DIR_WS_IMAGES . 'icon_status_red.gif', IMAGE_DENY) . '</a></td>';
+		  echo '<td class="dataTableContent" align="center"><a href="' . zen_href_link('coupon_restrict.php', zen_get_all_get_params(array('info', 'action', 'x', 'y')) . 'action=switch_status&info=' . $cr_list->fields['restrict_id'], 'NONSSL') . '"  onClick="divertClickSwitchStatus(this.href);return false;" >' . zen_image(DIR_WS_IMAGES . 'icon_status_red.gif', IMAGE_DENY) . '</a></td>';
 		}
-		  echo '<td class="dataTableContent" align="center"><a href="' . zen_href_link('coupon_restrict.php', zen_get_all_get_params(array('info', 'action', 'x', 'y')) . 'action=remove&info=' . $cr_list->fields['restrict_id'], 'NONSSL') . '">' . zen_image(DIR_WS_IMAGES . 'icons/delete.gif', IMAGE_REMOVE) . '</a></td>';
+		  echo '<td class="dataTableContent" align="center"><a href="' . zen_href_link('coupon_restrict.php', zen_get_all_get_params(array('info', 'action', 'x', 'y')) . 'action=remove&info=' . $cr_list->fields['restrict_id'], 'NONSSL') . '" onClick="divertClickActionRemove(this.href);return false;" >' . zen_image(DIR_WS_IMAGES . 'icons/delete.gif', IMAGE_REMOVE) . '</a></td>';
 ?>
               </tr>
 <?php
@@ -276,7 +287,7 @@
       }
         echo '          <tr class="dataTableRow">' . "\n";
 
-     $coupon = $db->Execute("select coupon_name from " . TABLE_COUPONS_DESCRIPTION . " where coupon_id = '" . $_GET['cid'] . "' and language_id = '" . $_SESSION['languages_id'] . "'");
+     $coupon = $db->Execute("select coupon_name from " . TABLE_COUPONS_DESCRIPTION . " where coupon_id = '" . $_GET['cid'] . "' and language_id = '" . (int)$_SESSION['languages_id'] . "'");
      $product_name = zen_get_products_name($pr_list->fields['product_id'], $_SESSION['languages_id']);
 ?>
                 <td class="dataTableContent"><?php echo $_GET['cid']; ?></td>
@@ -285,16 +296,16 @@
                 <td class="dataTableContent" align="left"><?php echo '<strong>' . $product_name . '</strong><br />' . TEXT_CATEGORY . zen_get_categories_name_from_product($pr_list->fields['product_id']) . '<br />' . TEXT_MANUFACTURER . zen_get_products_manufacturers_name($pr_list->fields['product_id']); ?></td>
 <?php
 		if ($pr_list->fields['coupon_restrict']=='N') {
-		  echo '<td class="dataTableContent" align="center"><a href="' . zen_href_link('coupon_restrict.php', zen_get_all_get_params(array('info', 'action', 'x', 'y')) . 'action=switch_status&info=' . $pr_list->fields['restrict_id'], 'NONSSL') . '">' . zen_image(DIR_WS_IMAGES . 'icon_status_green.gif', IMAGE_ALLOW) . '</a></td>';
+		  echo '<td class="dataTableContent" align="center"><a href="' . zen_href_link('coupon_restrict.php', zen_get_all_get_params(array('info', 'action', 'x', 'y')) . 'action=switch_status&info=' . $pr_list->fields['restrict_id'], 'NONSSL') . '" onClick="divertClickSwitchStatus(this.href);return false;" >' . zen_image(DIR_WS_IMAGES . 'icon_status_green.gif', IMAGE_ALLOW) . '</a></td>';
 		} else {
-		  echo '<td class="dataTableContent" align="center"><a href="' . zen_href_link('coupon_restrict.php', zen_get_all_get_params(array('info', 'action', 'x', 'y')) . 'action=switch_status&info=' . $pr_list->fields['restrict_id'], 'NONSSL') . '">' . zen_image(DIR_WS_IMAGES . 'icon_status_red.gif', IMAGE_DENY) . '</a></td>';
+		  echo '<td class="dataTableContent" align="center"><a href="' . zen_href_link('coupon_restrict.php', zen_get_all_get_params(array('info', 'action', 'x', 'y')) . 'action=switch_status&info=' . $pr_list->fields['restrict_id'], 'NONSSL') . '" onClick="divertClickSwitchStatus(this.href);return false;" >' . zen_image(DIR_WS_IMAGES . 'icon_status_red.gif', IMAGE_DENY) . '</a></td>';
 		}
 		if ($pr_list->fields['coupon_restrict']=='Y') {
-		  echo '<td class="dataTableContent" align="center"><a href="' . zen_href_link('coupon_restrict.php', zen_get_all_get_params(array('info', 'action', 'x', 'y')) . 'action=switch_status&info=' . $pr_list->fields['restrict_id'], 'NONSSL') . '">' . zen_image(DIR_WS_IMAGES . 'icon_status_green.gif', IMAGE_DENY) . '</a></td>';
+		  echo '<td class="dataTableContent" align="center"><a href="' . zen_href_link('coupon_restrict.php', zen_get_all_get_params(array('info', 'action', 'x', 'y')) . 'action=switch_status&info=' . $pr_list->fields['restrict_id'], 'NONSSL') . '" onClick="divertClickSwitchStatus(this.href);return false;" >' . zen_image(DIR_WS_IMAGES . 'icon_status_green.gif', IMAGE_DENY) . '</a></td>';
 		} else {
-		  echo '<td class="dataTableContent" align="center"><a href="' . zen_href_link('coupon_restrict.php', zen_get_all_get_params(array('info', 'action', 'x', 'y')) . 'action=switch_status&info=' . $pr_list->fields['restrict_id'], 'NONSSL') . '">' . zen_image(DIR_WS_IMAGES . 'icon_status_red.gif', IMAGE_ALLOW) . '</a></td>';
+		  echo '<td class="dataTableContent" align="center"><a href="' . zen_href_link('coupon_restrict.php', zen_get_all_get_params(array('info', 'action', 'x', 'y')) . 'action=switch_status&info=' . $pr_list->fields['restrict_id'], 'NONSSL') . '" onClick="divertClickSwitchStatus(this.href);return false;" >' . zen_image(DIR_WS_IMAGES . 'icon_status_red.gif', IMAGE_ALLOW) . '</a></td>';
 		}
-		  echo '<td class="dataTableContent" align="center"><a href="' . zen_href_link('coupon_restrict.php', zen_get_all_get_params(array('info', 'action', 'x', 'y')) . 'action=remove&info=' . $pr_list->fields['restrict_id'], 'NONSSL') . '">' . zen_image(DIR_WS_IMAGES . 'icons/delete.gif', IMAGE_REMOVE) . '</a></td>';
+		  echo '<td class="dataTableContent" align="center"><a href="' . zen_href_link('coupon_restrict.php', zen_get_all_get_params(array('info', 'action', 'x', 'y')) . 'action=remove&info=' . $pr_list->fields['restrict_id'], 'NONSSL') . '" onClick="divertClickActionRemove(this.href);return false;" >' . zen_image(DIR_WS_IMAGES . 'icons/delete.gif', IMAGE_REMOVE) . '</a></td>';
 ?>
               </tr>
 <?php
@@ -316,7 +327,7 @@
       if (isset($_POST['cPath_prod'])) $current_category_id = $_POST['cPath_prod'];
       $products = $db->Execute("select p.products_id, pd.products_name from " .
       TABLE_PRODUCTS . " p, " . TABLE_PRODUCTS_DESCRIPTION . " pd, " . TABLE_PRODUCTS_TO_CATEGORIES . " p2c
-      where p.products_id = pd.products_id and pd.language_id = '" . $_SESSION['languages_id'] . "'
+      where p.products_id = pd.products_id and pd.language_id = '" . (int)$_SESSION['languages_id'] . "'
       and p.products_id = p2c.products_id and p2c.categories_id = '" . $_POST['cPath_prod'] . "'
       order by pd.products_name");
       $products_array = array();
@@ -380,6 +391,28 @@
 <?php require(DIR_WS_INCLUDES . 'footer.php'); ?>
 <!-- footer_eof //-->
 <br>
+<form name="actionRemove" id="actionRemove" action="#" method="post">
+<input type="hidden" name="securityToken" value="<?php echo $_SESSION['securityToken']; ?>" />
+<input type="hidden" name="actionRemoveProto" value="" />
+</form>
+<form name="switchStatus" id="switchStatus" action="#" method="post">
+<input type="hidden" name="securityToken" value="<?php echo $_SESSION['securityToken']; ?>" />
+<input type="hidden" name="switchStatusProto" value="" />
+</form>
+<script type="text/javascript">
+function divertClickActionRemove(href)
+{
+	document.getElementById('actionRemove').action = href;
+	document.getElementById('actionRemove').submit();
+	return false;
+}
+function divertClickSwitchStatus(href)
+{
+	document.getElementById('switchStatus').action = href;
+	document.getElementById('switchStatus').submit();
+	return false;
+}
+</script>
 </body>
 </html>
 <?php require(DIR_WS_INCLUDES . 'application_bottom.php'); ?>

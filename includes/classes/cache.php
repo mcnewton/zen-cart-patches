@@ -3,10 +3,10 @@
  * cache Class.
  *
  * @package classes
- * @copyright Copyright 2003-2009 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: cache.php 14864 2009-11-18 16:22:05Z wilt $
+ * @version $Id: cache.php 18695 2011-05-04 05:24:19Z drbyte $
  */
 if (!defined('IS_ADMIN_FLAG')) {
   die('Illegal Access');
@@ -19,14 +19,14 @@ if (!defined('IS_ADMIN_FLAG')) {
  */
 class cache extends base {
 
-  function sql_cache_exists($zf_query) {
+  function sql_cache_exists($zf_query, $zf_cachetime) {
     global $db;
     $zp_cache_name = $this->cache_generate_cache_name($zf_query);
     switch (SQL_CACHE_METHOD) {
       case 'file':
       // where using a single directory at the moment. Need to look at splitting into subdirectories
       // like adodb
-      if (file_exists(DIR_FS_SQL_CACHE . '/' . $zp_cache_name . '.sql')) {
+      if (file_exists(DIR_FS_SQL_CACHE . '/' . $zp_cache_name . '.sql') && !$this->sql_cache_is_expired($zf_query, $zf_cachetime)) {
         return true;
       } else {
         return false;
@@ -35,7 +35,7 @@ class cache extends base {
       case 'database':
       $sql = "select * from " . TABLE_DB_CACHE . " where cache_entry_name = '" . $zp_cache_name . "'";
       $zp_cache_exists = $db->Execute($sql);
-      if ($zp_cache_exists->RecordCount() > 0) {
+      if ($zp_cache_exists->RecordCount() > 0 && !$this->sql_cache_is_expired($zf_query, $zf_cachetime)) {
         return true;
       } else {
         return false;
@@ -56,7 +56,7 @@ class cache extends base {
     $zp_cache_name = $this->cache_generate_cache_name($zf_query);
     switch (SQL_CACHE_METHOD) {
       case 'file':
-      if (filemtime(DIR_FS_SQL_CACHE . '/' . $zp_cache_name . '.sql') > (time() - $zf_cachetime)) {
+      if (@filemtime(DIR_FS_SQL_CACHE . '/' . $zp_cache_name . '.sql') > (time() - $zf_cachetime)) {
         return false;
       } else {
         return true;
@@ -126,8 +126,8 @@ class cache extends base {
       }
       $result_serialize = $db->prepare_input(base64_encode(serialize($zf_result_array)));
       $sql = "insert into " . TABLE_DB_CACHE . " set cache_entry_name = '" . $zp_cache_name . "',
-	                                               cache_data = '" . $result_serialize . "',
-						       cache_entry_created = '" . time() . "'";
+                                                 cache_data = '" . $result_serialize . "',
+                   cache_entry_created = '" . time() . "'";
       $db->Execute($sql);
       return true;
       break;

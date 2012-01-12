@@ -3,10 +3,10 @@
  * Page Template
  *
  * @package templateSystem
- * @copyright Copyright 2003-2005 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: tpl_discount_coupon_default.php 3464 2006-04-19 00:07:26Z ajeh $
+ * @version $Id: tpl_discount_coupon_default.php 18695 2011-05-04 05:24:19Z drbyte $
  */
 ?>
 <div class="centerColumn" id="discountcouponInfo">
@@ -20,7 +20,7 @@
 } ?>
 </div>
 
-<form action="<?php echo zen_href_link(FILENAME_DISCOUNT_COUPON, 'action=lookup', 'NONSSL', false); ?>" method="post">
+<?php echo zen_draw_form('discount_coupon', zen_href_link(FILENAME_DISCOUNT_COUPON, 'action=lookup', 'NONSSL', false)); ?>
 <fieldset>
 <legend><?php echo TEXT_DISCOUNT_COUPON_ID_INFO; ?></legend>
 <label class="inputLabel" for="lookup-discount-coupon"><?php echo TEXT_DISCOUNT_COUPON_ID; ?></label>

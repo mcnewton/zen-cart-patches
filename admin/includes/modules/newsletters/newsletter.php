@@ -1,10 +1,10 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2006 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: newsletter.php 3009 2006-02-11 15:41:10Z wilt $
+ * @version $Id: newsletter.php 18695 2011-05-04 05:24:19Z drbyte $
  */
 if (!defined('IS_ADMIN_FLAG')) {
   die('Illegal Access');
@@ -24,7 +24,8 @@ if (!defined('IS_ADMIN_FLAG')) {
     function choose_audience() {
       global $_GET;
 
-      $choose_audience_string = '<form name="audience" action="' . zen_href_link(FILENAME_NEWSLETTERS, 'page=' . $_GET['page'] . '&nID=' . $_GET['nID'] . '&action=confirm') .'" method="post" onsubmit="return check_form(audience);">' .
+      $choose_audience_string = '<form name="audience" action="' . zen_href_link(FILENAME_NEWSLETTERS, 'page=' . $_GET['page'] . '&nID=' . $_GET['nID'] . '&action=confirm') .'" method="post" onsubmit="return check_form(audience);">' . 
+                 '<input type="hidden" name="securityToken" value="' . $_SESSION['securityToken'] . '" />' .
                  ' <table border="0" cellspacing="0" cellpadding="2">' . "\n" .
                                  '  <tr>' . "\n" .
                  '<td class="main">' . TEXT_PLEASE_SELECT_AUDIENCE .'<br />' .
@@ -76,7 +77,8 @@ if (!defined('IS_ADMIN_FLAG')) {
                         '  </tr>' . "\n" .
                         '  <tr>' . "\n" .
             '<form name="ready_to_send" action="' . zen_href_link(FILENAME_NEWSLETTERS, 'page=' . $_GET['page'] . '&nID=' . $_GET['nID'] . '&action=confirm_send') .'" method="post" >' .
-                        '    <td align="right"> ' . zen_draw_hidden_field('audience_selected',$this->query_name).
+                 '<input type="hidden" name="securityToken" value="' . $_SESSION['securityToken'] . '" />' .
+      '    <td align="right"> ' . zen_draw_hidden_field('audience_selected',$this->query_name).
             zen_image_submit('button_send_mail.gif', IMAGE_SEND_EMAIL) .
             '<a href="' . zen_href_link(FILENAME_NEWSLETTERS, 'page=' . $_GET['page'] . '&nID=' . $_GET['nID']) . '">' . zen_image_button('button_cancel.gif', IMAGE_CANCEL) . '</a></td>' . "\n" .
                         '</form>' .

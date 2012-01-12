@@ -1,10 +1,10 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: products_to_categories.php 17905 2010-10-09 21:49:07Z wilt $
+ * @version $Id: products_to_categories.php 18695 2011-05-04 05:24:19Z drbyte $
  */
 
   require('includes/application_top.php');
@@ -17,7 +17,7 @@
   }
 
   // verify product has a master_categories_id
-  $chk_products = $db->Execute("select master_categories_id from " . TABLE_PRODUCTS . " where products_id='" . $_GET['products_filter'] . "'");
+  $chk_products = $db->Execute("select master_categories_id from " . TABLE_PRODUCTS . " where products_id='" . (int)$_GET['products_filter'] . "'");
   if ($chk_products->fields['master_categories_id'] <= 0) {
     $messageStack->add(ERROR_DEFINE_PRODUCTS_MASTER_CATEGORIES_ID, 'caution');
 //    zen_redirect(zen_href_link(FILENAME_PRODUCTS_TO_CATEGORIES, 'products_filter=' . $products_filter . '&current_category_id=' . $current_category_id));
@@ -34,14 +34,14 @@ function array_minus_array($a, $b) {
        return $c;
 }
 
-  $products_filter = ((isset($_GET['products_filter']) and $_GET['products_filter'] > 0) ? $_GET['products_filter'] : $_POST['products_filter']);
+  $_GET['products_filter'] = $products_filter = ((isset($_GET['products_filter']) and $_GET['products_filter'] > 0) ? (int)$_GET['products_filter'] : (int)$_POST['products_filter']);
 
   $action = (isset($_GET['action']) ? $_GET['action'] : '');
 
-  $current_category_id = (isset($_GET['current_category_id']) ? $_GET['current_category_id'] : $current_category_id);
+  $current_category_id = (isset($_GET['current_category_id']) ? (int)$_GET['current_category_id'] : (int)$current_category_id);
 
   if ($action == 'new_cat') {
-    $current_category_id = (isset($_GET['current_category_id']) ? $_GET['current_category_id'] : $current_category_id);
+    $current_category_id = (isset($_GET['current_category_id']) ? (int)$_GET['current_category_id'] : $current_category_id);
     $new_product_query = $db->Execute("select ptc.* from " . TABLE_PRODUCTS_TO_CATEGORIES . " ptc  left join " . TABLE_PRODUCTS_DESCRIPTION . " pd on ptc.products_id = pd.products_id and pd.language_id = '" . (int)$_SESSION['languages_id'] . "' where ptc.categories_id='" . $current_category_id . "' order by pd.products_name");
     $products_filter = $new_product_query->fields['products_id'];
 //    $messageStack->add_session('SUCCESSFUL! SWITCHED CATEGORIES', 'success');
@@ -79,8 +79,8 @@ function array_minus_array($a, $b) {
       case 'copy_categories_products_to_another_category_linked':
         $zv_invalid_copy_linked = 'false';
         $zv_complete_message_linked = '';
-        $copy_from_linked = $_POST['copy_categories_id_from_linked'];
-        $copy_to_linked = $_POST['copy_categories_id_to_linked'];
+        $copy_from_linked = (int)$_POST['copy_categories_id_from_linked'];
+        $copy_to_linked = (int)$_POST['copy_categories_id_to_linked'];
 
         // do not proceed unless categories are different
         if ($copy_from_linked == $copy_to_linked) {
@@ -105,6 +105,7 @@ function array_minus_array($a, $b) {
             $zv_invalid_copy_linked = 'true';
             $zv_complete_message_linked .= WARNING_COPY_ALL_PRODUCTS_TO_CATEGORY_TO_LINKED . $copy_to_linked . '&nbsp;';
           }
+          $zv_complete_message_linked .= WARNING_COPY_ALL_PRODUCTS_TO_CATEGORY_TO_LINKED_MISSING . $copy_to_linked . '&nbsp;';
         } else {
           $zv_complete_message_linked .= SUCCESS_COPY_ALL_PRODUCTS_TO_CATEGORY_TO_LINKED . $copy_to_linked . '&nbsp;';
         }
@@ -185,8 +186,8 @@ function array_minus_array($a, $b) {
       case 'remove_categories_products_to_another_category_linked':
         $zv_invalid_remove_linked = 'false';
         $zv_complete_message_linked = '';
-        $remove_from_linked = $_POST['remove_categories_id_from_linked'];
-        $remove_to_linked = $_POST['remove_categories_id_to_linked'];
+        $remove_from_linked = (int)$_POST['remove_categories_id_from_linked'];
+        $remove_to_linked = (int)$_POST['remove_categories_id_to_linked'];
 
         // do not proceed unless categories are different
         if ($remove_from_linked == $remove_to_linked) {
@@ -309,7 +310,7 @@ function array_minus_array($a, $b) {
 
         $zv_invalid_reset_master= 'false';
         $zv_complete_message_master = '';
-        $reset_from_master = $_POST['reset_categories_id_from_master'];
+        $reset_from_master = (int)$_POST['reset_categories_id_from_master'];
 
         $check_category_from = $db->Execute("select products_id from " . TABLE_PRODUCTS_TO_CATEGORIES . " where categories_id='" . $reset_from_master . "' limit 1");
 
@@ -333,7 +334,7 @@ function array_minus_array($a, $b) {
         $reset_master_categories_id = $db->Execute("select p.products_id, p.master_categories_id, ptoc.categories_id from " . TABLE_PRODUCTS . " p left join " . TABLE_PRODUCTS_TO_CATEGORIES . " ptoc on ptoc.products_id= p.products_id and ptoc.categories_id='" . $reset_from_master . "' where ptoc.categories_id='" . $reset_from_master . "'");
 
         while (!$reset_master_categories_id->EOF) {
-          $db->Execute("update " . TABLE_PRODUCTS . " set master_categories_id='" . $reset_from_master . "' where products_id='" . $reset_master_categories_id->fields['products_id'] . "'");
+          $db->Execute("update " . TABLE_PRODUCTS . " set master_categories_id='" . (int)$reset_from_master . "' where products_id='" . $reset_master_categories_id->fields['products_id'] . "'");
           // reset products_price_sorter for searches etc.
           zen_update_products_price_sorter($reset_master_categories_id->fields['products_id']);
           $reset_master_categories_id->MoveNext();
@@ -344,11 +345,11 @@ function array_minus_array($a, $b) {
         break;
 
       case 'set_master_categories_id':
-        $db->Execute("update " . TABLE_PRODUCTS . " set master_categories_id='" . $_GET['master_category'] . "' where products_id='" . $products_filter . "'");
+        $db->Execute("update " . TABLE_PRODUCTS . " set master_categories_id='" . (int)$_GET['master_category'] . "' where products_id='" . $products_filter . "'");
         // reset products_price_sorter for searches etc.
         zen_update_products_price_sorter($products_filter);
 
-        zen_redirect(zen_href_link(FILENAME_PRODUCTS_TO_CATEGORIES, 'products_filter=' . $_GET['products_filter'] . '&current_category_id=' . $current_category_id));
+        zen_redirect(zen_href_link(FILENAME_PRODUCTS_TO_CATEGORIES, 'products_filter=' . (int)$_GET['products_filter'] . '&current_category_id=' . $current_category_id));
         break;
 
       case 'update_product':
@@ -363,7 +364,7 @@ function array_minus_array($a, $b) {
             $zv_check_master_categories_id = 'true';
             // array is set above to master category
           } else {
-            $new_categories_sort_array[] = $_POST['categories_add'][$i];
+            $new_categories_sort_array[] = (int)$_POST['categories_add'][$i];
           }
         }
 
@@ -384,7 +385,7 @@ function array_minus_array($a, $b) {
             }
             $db->Execute("insert into " . TABLE_PRODUCTS_TO_CATEGORIES . "
                     (products_id, categories_id)
-                    values ($products_filter, $new_categories_sort_array[$i])");
+                    values (" . $products_filter . ", " . (int)$new_categories_sort_array[$i] . ")");
             if ($reset_master_categories_id == '') {
               $reset_master_categories_id = $new_categories_sort_array[$i];
             }
@@ -397,10 +398,10 @@ function array_minus_array($a, $b) {
         // reset master_categories_id in products table
         if ($zv_check_master_categories_id == 'true') {
           // make sure master_categories_id is set to current master_categories_id
-          $db->Execute("update " . TABLE_PRODUCTS . " set master_categories_id='" . $current_master_categories_id . "' where products_id='" . $products_filter . "'");
+          $db->Execute("update " . TABLE_PRODUCTS . " set master_categories_id='" . (int)$current_master_categories_id . "' where products_id='" . $products_filter . "'");
         } else {
           // reset master_categories_id to current_category_id because it was unselected
-          $db->Execute("update " . TABLE_PRODUCTS . " set master_categories_id='" . $reset_master_categories_id . "' where products_id='" . $products_filter . "'");
+          $db->Execute("update " . TABLE_PRODUCTS . " set master_categories_id='" . (int)$reset_master_categories_id . "' where products_id='" . $products_filter . "'");
         }
 
         // recalculate price based on new master_categories_id
@@ -488,7 +489,7 @@ function go_option() {
     require(DIR_WS_MODULES . FILENAME_PREV_NEXT_DISPLAY);
 ?>
 
-      <tr><form name="set_products_filter_id" <?php echo 'action="' . zen_href_link(FILENAME_PRODUCTS_TO_CATEGORIES, 'action=set_products_filter') . '"'; ?> method="post"><?php echo zen_draw_hidden_field('products_filter', $_GET['products_filter']); ?><?php echo zen_draw_hidden_field('current_category_id', $_GET['current_category_id']); ?>
+      <tr><form name="set_products_filter_id" <?php echo 'action="' . zen_href_link(FILENAME_PRODUCTS_TO_CATEGORIES, 'action=set_products_filter') . '"'; ?> method="post"><?php echo zen_draw_hidden_field('securityToken', $_SESSION['securityToken']); ?><?php echo zen_draw_hidden_field('products_filter', $_GET['products_filter']); ?><?php echo zen_draw_hidden_field('current_category_id', $_GET['current_category_id']); ?>
         <td colspan="2"><table border="0" cellspacing="0" cellpadding="2">
 
 <?php
@@ -810,7 +811,7 @@ if ($_GET['products_filter'] != '') {
           $contents[] = array('text' => '<br /><span class="alert">' . WARNING_MASTER_CATEGORIES_ID . '</span><br />&nbsp;');
           break;
         default:
-          $contents[] = array('text' => '<form action="' . FILENAME_PRODUCTS_TO_CATEGORIES . '.php' . '?action=edit&products_filter=' . $products_filter . '&current_category_id=' . $current_category_id . '" method="post">');
+          $contents[] = array('text' => '<form action="' . FILENAME_PRODUCTS_TO_CATEGORIES . '.php' . '?action=edit&current_category_id=' . $current_category_id . '" method="post"><input type="hidden" name="securityToken" value="' . $_SESSION['securityToken'] . '" /><input type="hidden" name="products_filter" value="' . $products_filter . '" />');
           $contents[] = array('align' => 'center', 'text' => '<input type="submit" value="' . BUTTON_NEW_PRODUCTS_TO_CATEGORIES . '"></form>');
           $contents[] = array('text' => '<br />' . zen_image(DIR_WS_IMAGES . 'pixel_black.gif','','100%','3') . '<br />&nbsp;');
           $contents[] = array('align' => 'center', 'text' =>

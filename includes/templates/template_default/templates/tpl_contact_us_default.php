@@ -6,10 +6,10 @@
  * Displays contact us page form.
  *
  * @package templateSystem
- * @copyright Copyright 2003-2009 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: tpl_contact_us_default.php 16307 2010-05-21 21:50:06Z wilt $
+ * @version $Id: tpl_contact_us_default.php 18695 2011-05-04 05:24:19Z drbyte $
  */
 ?>
 <div class="centerColumn" id="contactUsDefault">

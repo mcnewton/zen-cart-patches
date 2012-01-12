@@ -1,10 +1,10 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: english.php 15621 2010-03-06 10:01:29Z drbyte $
+ * @version $Id: english.php 19537 2011-09-20 17:14:44Z drbyte $
  */
 if (!defined('IS_ADMIN_FLAG'))
 {
@@ -18,10 +18,7 @@ define('HEADER_LOGO_HEIGHT', '70px');
 define('HEADER_LOGO_IMAGE', 'logo.gif');
 
 // look in your $PATH_LOCALE/locale directory for available locales..
-// on RedHat6.0 I used 'en_US'
-// on FreeBSD 4.0 I use 'en_US.ISO_8859-1'
-// this may not work under win32 environments..
-setlocale(LC_TIME, 'en_US.ISO_8859-1');
+setlocale(LC_TIME, 'en_US');
 define('DATE_FORMAT_SHORT', '%m/%d/%Y');  // this is used for strftime()
 define('DATE_FORMAT_LONG', '%A %d %B, %Y'); // this is used for strftime()
 define('DATE_FORMAT', 'm/d/Y'); // this is used for date()
@@ -63,13 +60,14 @@ define('TEXT_INFO_META_TAGS_USAGE', '<strong>NOTE:</strong> The Site/Tagline is 
 define('HTML_PARAMS','dir="ltr" lang="en"');
 
 // charset for web pages and emails
-define('CHARSET', 'iso-8859-1');
+define('CHARSET', 'utf-8');
 
 // header text in includes/header.php
 define('HEADER_TITLE_TOP', 'Admin Home');
 define('HEADER_TITLE_SUPPORT_SITE', 'Support Site');
 define('HEADER_TITLE_ONLINE_CATALOG', 'Online Catalog');
 define('HEADER_TITLE_VERSION', 'Version');
+define('HEADER_TITLE_ACCOUNT', 'Account');
 define('HEADER_TITLE_LOGOFF', 'Logoff');
 //define('HEADER_TITLE_ADMINISTRATION', 'Administration');
 
@@ -88,20 +86,42 @@ define('FEMALE', 'Female');
 // text for date of birth example
 define('DOB_FORMAT_STRING', 'mm/dd/yyyy');
 
-// configuration box text in includes/boxes/configuration.php
+// configuration box text
 define('BOX_HEADING_CONFIGURATION', 'Configuration');
-define('BOX_CONFIGURATION_MYSTORE', 'My Store');
+define('BOX_CONFIGURATION_MY_STORE', 'My Store');
+define('BOX_CONFIGURATION_MINIMUM_VALUES', 'Minimum Values');
+define('BOX_CONFIGURATION_MAXIMUM_VALUES', 'Maximum Values');
+define('BOX_CONFIGURATION_IMAGES', 'Images');
+define('BOX_CONFIGURATION_CUSTOMER_DETAILS', 'Customer Details');
+define('BOX_CONFIGURATION_SHIPPING_PACKAGING', 'Shipping/Packaging');
+define('BOX_CONFIGURATION_PRODUCT_LISTING', 'Product Listing');
+define('BOX_CONFIGURATION_STOCK', 'Stock');
 define('BOX_CONFIGURATION_LOGGING', 'Logging');
-define('BOX_CONFIGURATION_CACHE', 'Cache');
+define('BOX_CONFIGURATION_EMAIL_OPTIONS', 'E-Mail Options');
+define('BOX_CONFIGURATION_ATTRIBUTE_OPTIONS', 'Attribute Settings');
+define('BOX_CONFIGURATION_GZIP_COMPRESSION', 'GZip Compression');
+define('BOX_CONFIGURATION_SESSIONS', 'Sessions');
+define('BOX_CONFIGURATION_REGULATIONS', 'Regulations');
+define('BOX_CONFIGURATION_GV_COUPONS', 'GV Coupons');
+define('BOX_CONFIGURATION_CREDIT_CARDS', 'Credit Cards');
+define('BOX_CONFIGURATION_PRODUCT_INFO', 'Product Info');
+define('BOX_CONFIGURATION_LAYOUT_SETTINGS', 'Layout Settings');
+define('BOX_CONFIGURATION_WEBSITE_MAINTENANCE', 'Website Maintenance');
+define('BOX_CONFIGURATION_NEW_LISTING', 'New Listing');
+define('BOX_CONFIGURATION_FEATURED_LISTING', 'Featured Listing');
+define('BOX_CONFIGURATION_ALL_LISTING', 'All Listing');
+define('BOX_CONFIGURATION_INDEX_LISTING', 'Index Listing');
+define('BOX_CONFIGURATION_DEFINE_PAGE_STATUS', 'Define Page Status');
+define('BOX_CONFIGURATION_EZPAGES_SETTINGS', 'EZ-Pages Settings');
 
-// modules box text in includes/boxes/modules.php
+// modules box text
 define('BOX_HEADING_MODULES', 'Modules');
 define('BOX_MODULES_PAYMENT', 'Payment');
 define('BOX_MODULES_SHIPPING', 'Shipping');
 define('BOX_MODULES_ORDER_TOTAL', 'Order Total');
 define('BOX_MODULES_PRODUCT_TYPES', 'Product Types');
 
-// categories box text in includes/boxes/catalog.php
+// categories box text
 define('BOX_HEADING_CATALOG', 'Catalog');
 define('BOX_CATALOG_CATEGORIES_PRODUCTS', 'Categories/Products');
 define('BOX_CATALOG_PRODUCT_TYPES', 'Product Types');
@@ -113,15 +133,19 @@ define('BOX_CATALOG_SPECIALS', 'Specials');
 define('BOX_CATALOG_PRODUCTS_EXPECTED', 'Products Expected');
 define('BOX_CATALOG_SALEMAKER', 'SaleMaker');
 define('BOX_CATALOG_PRODUCTS_PRICE_MANAGER', 'Products Price Manager');
+define('BOX_CATALOG_PRODUCT', 'Product');
+define('BOX_CATALOG_PRODUCTS_TO_CATEGORIES', 'Products to Categories');
 
-// customers box text in includes/boxes/customers.php
+// customers box text
 define('BOX_HEADING_CUSTOMERS', 'Customers');
 define('BOX_CUSTOMERS_CUSTOMERS', 'Customers');
 define('BOX_CUSTOMERS_ORDERS', 'Orders');
 define('BOX_CUSTOMERS_GROUP_PRICING', 'Group Pricing');
 define('BOX_CUSTOMERS_PAYPAL', 'PayPal IPN');
+define('BOX_CUSTOMERS_INVOICE', 'Invoice');
+define('BOX_CUSTOMERS_PACKING_SLIP', 'Packing Slip');
 
-// taxes box text in includes/boxes/taxes.php
+// taxes box text
 define('BOX_HEADING_LOCATION_AND_TAXES', 'Locations / Taxes');
 define('BOX_TAXES_COUNTRIES', 'Countries');
 define('BOX_TAXES_ZONES', 'Zones');
@@ -129,7 +153,7 @@ define('BOX_TAXES_GEO_ZONES', 'Zones Definitions');
 define('BOX_TAXES_TAX_CLASSES', 'Tax Classes');
 define('BOX_TAXES_TAX_RATES', 'Tax Rates');
 
-// reports box text in includes/boxes/reports.php
+// reports box text
 define('BOX_HEADING_REPORTS', 'Reports');
 define('BOX_REPORTS_PRODUCTS_VIEWED', 'Products Viewed');
 define('BOX_REPORTS_PRODUCTS_PURCHASED', 'Products Purchased');
@@ -137,9 +161,8 @@ define('BOX_REPORTS_ORDERS_TOTAL', 'Customer Orders-Total');
 define('BOX_REPORTS_PRODUCTS_LOWSTOCK', 'Products Low Stock');
 define('BOX_REPORTS_CUSTOMERS_REFERRALS', 'Customers Referral');
 
-// tools text in includes/boxes/tools.php
+// tools text
 define('BOX_HEADING_TOOLS', 'Tools');
-define('BOX_TOOLS_ADMIN', 'Admin Settings');
 define('BOX_TOOLS_TEMPLATE_SELECT', 'Template Selection');
 define('BOX_TOOLS_BACKUP', 'Database Backup');
 define('BOX_TOOLS_BANNER_MANAGER', 'Banner Manager');
@@ -169,19 +192,26 @@ define('BOX_TOOLS_DEFINE_PAGE_2','Page 2');
 define('BOX_TOOLS_DEFINE_PAGE_3','Page 3');
 define('BOX_TOOLS_DEFINE_PAGE_4','Page 4');
 
-
-// localizaion box text in includes/boxes/localization.php
+// localization box text
 define('BOX_HEADING_LOCALIZATION', 'Localization');
 define('BOX_LOCALIZATION_CURRENCIES', 'Currencies');
 define('BOX_LOCALIZATION_LANGUAGES', 'Languages');
 define('BOX_LOCALIZATION_ORDERS_STATUS', 'Orders Status');
 
-// gift vouchers box text in includes/boxes/gv_admin.php
+// gift vouchers box text
 define('BOX_HEADING_GV_ADMIN', TEXT_GV_NAME . '/Coupons');
 define('BOX_GV_ADMIN_QUEUE',  TEXT_GV_NAMES . ' Queue');
 define('BOX_GV_ADMIN_MAIL', 'Mail ' . TEXT_GV_NAME);
 define('BOX_GV_ADMIN_SENT', TEXT_GV_NAMES . ' sent');
 define('BOX_COUPON_ADMIN','Coupon Admin');
+define('BOX_COUPON_RESTRICT','Coupon Restrictions');
+
+// admin access box text
+define('BOX_HEADING_ADMIN_ACCESS', 'Admin Access Management');
+define('BOX_ADMIN_ACCESS_USERS',  'Admin Users');
+define('BOX_ADMIN_ACCESS_PROFILES', 'Admin Profiles');
+define('BOX_ADMIN_ACCESS_PAGE_REGISTRATION', 'Admin Page Registration');
+define('BOX_ADMIN_ACCESS_LOGS', 'Admin Activity Logs');
 
 define('IMAGE_RELEASE', 'Redeem ' . TEXT_GV_NAME);
 
@@ -214,7 +244,6 @@ define('JS_STATE_SELECT', '-- Select Above --');
 define('JS_ZONE', '* The \'State\' entry must be selected from the list for this country.');
 define('JS_COUNTRY', '* The \'Country\' value must be chosen.\n');
 define('JS_TELEPHONE', '* The \'Telephone Number\' entry must have at least ' . ENTRY_TELEPHONE_MIN_LENGTH . ' characters.\n');
-define('JS_PASSWORD', '* The \'Password\' and \'Confirmation\' entries must match and have at least ' . ENTRY_PASSWORD_MIN_LENGTH . ' characters.\n');
 
 define('JS_ORDER_DOES_NOT_EXIST', 'Order Number %s does not exist!');
 
@@ -260,6 +289,11 @@ define('ENTRY_NEWSLETTER_YES', 'Subscribed');
 define('ENTRY_NEWSLETTER_NO', 'Unsubscribed');
 define('ENTRY_NEWSLETTER_ERROR', '');
 
+define('ERROR_PASSWORDS_NOT_MATCHING', 'Password and confirmation must match');
+define('ENTRY_PASSWORD_CHANGE_ERROR', '<strong>Sorry, your new password was rejected.</strong><br />');
+define('ERROR_PASSWORD_RULES', 'Passwords must contain both letters and numbers, must be at least %s characters long, and must not be the same as the last 4 passwords used. Passwords expire every 90 days.');
+define('ERROR_TOKEN_EXPIRED_PLEASE_RESUBMIT', 'ERROR: Sorry, there was an error processing your data. Please re-submit the information again.');
+
 // images
 //define('IMAGE_ANI_SEND_EMAIL', 'Sending E-Mail');
 define('IMAGE_BACK', 'Back');
@@ -272,6 +306,7 @@ define('IMAGE_DETAILS', 'Details');
 define('IMAGE_DELETE', 'Delete');
 define('IMAGE_EDIT', 'Edit');
 define('IMAGE_EMAIL', 'Email');
+define('IMAGE_GO', 'Go');
 define('IMAGE_FILE_MANAGER', 'File Manager');
 define('IMAGE_ICON_STATUS_GREEN', 'Active');
 define('IMAGE_ICON_STATUS_GREEN_LIGHT', 'Set Active');
@@ -304,6 +339,7 @@ define('IMAGE_OPTION_VALUES', 'Option Values Manager');
 define('IMAGE_ORDERS', 'Orders');
 define('IMAGE_ORDERS_INVOICE', 'Invoice');
 define('IMAGE_ORDERS_PACKINGSLIP', 'Packing Slip');
+define('IMAGE_PERMISSIONS', 'Edit Permissions');
 define('IMAGE_PREVIEW', 'Preview');
 define('IMAGE_RESTORE', 'Restore');
 define('IMAGE_RESET', 'Reset');
@@ -312,6 +348,7 @@ define('IMAGE_SEARCH', 'Search');
 define('IMAGE_SELECT', 'Select');
 define('IMAGE_SEND', 'Send');
 define('IMAGE_SEND_EMAIL', 'Send Email');
+define('IMAGE_SUBMIT', 'Submit');
 define('IMAGE_UNLOCK', 'Unlock');
 define('IMAGE_UPDATE', 'Update');
 define('IMAGE_UPDATE_CURRENCIES', 'Update Exchange Rate');
@@ -345,6 +382,7 @@ define('ICON_FILE_DOWNLOAD', 'Download');
 define('ICON_FOLDER', 'Folder');
 //define('ICON_LOCKED', 'Locked');
 define('ICON_MOVE', 'Move');
+define('ICON_PERMISSIONS', 'Permissions');
 define('ICON_PREVIOUS_LEVEL', 'Previous Level');
 define('ICON_PREVIEW', 'Preview');
 define('ICON_RESET', 'Reset');
@@ -410,10 +448,11 @@ define('WARNING_DATABASE_VERSION_OUT_OF_DATE','Your database appears to need pat
 define('WARN_DATABASE_VERSION_PROBLEM','true'); //set to false to turn off warnings about database version mismatches
 define('WARNING_ADMIN_DOWN_FOR_MAINTENANCE', '<strong>WARNING:</strong> Site is currently set to Down for Maintenance ...<br />NOTE: You cannot test most Payment and Shipping Modules in Maintenance mode');
 define('WARNING_BACKUP_CFG_FILES_TO_DELETE', 'WARNING: These files should be deleted to prevent security vulnerability: ');
-define('WARNING_INSTALL_DIRECTORY_EXISTS', 'Warning: Installation directory exists at: ' . DIR_FS_CATALOG . 'zc_install. Please remove this directory for security reasons.');
+define('WARNING_INSTALL_DIRECTORY_EXISTS', 'SECURITY WARNING: Installation directory exists at: ' . DIR_FS_CATALOG . 'zc_install. Please remove this directory for security reasons.');
 define('WARNING_CONFIG_FILE_WRITEABLE', 'Warning: Your configuration file: %sincludes/configure.php. This is a potential security risk - please set the right user permissions on this file (read-only, CHMOD 644 or 444 are typical).  <a href="http://tutorials.zen-cart.com/index.php?article=90" target="_blank">See this FAQ</a>');
 define('WARNING_COULD_NOT_LOCATE_LANG_FILE', 'WARNING: Could not locate language file: ');
 define('ERROR_MODULE_REMOVAL_PROHIBITED', 'ERROR: Module removal prohibited: ');
+define('WARNING_REVIEW_ROGUE_ACTIVITY', 'ALERT: Please review for possible XSS activity:');
 
 define('_JANUARY', 'January');
 define('_FEBRUARY', 'February');
@@ -472,8 +511,6 @@ define('NOT_INSTALLED_TEXT','Not Installed');
   define('IMAGE_GIFT_QUEUE', TEXT_GV_NAME . ' Queue');
   define('IMAGE_ORDER','Order');
 
-  define('BOX_TOOLS_EMAIL_WELCOME','Email Welcome');
-
   define('IMAGE_DISPLAY','Display');
   define('IMAGE_UPDATE_SORT','Update Sort Order');
   define('IMAGE_EDIT_PRODUCT','Edit Product');
@@ -519,7 +556,7 @@ define('NOT_INSTALLED_TEXT','Not Installed');
   define('TEXT_VERSION_CHECK_NEW_PATCH','New PATCH Available: v');
   define('TEXT_VERSION_CHECK_PATCH','patch');
   define('TEXT_VERSION_CHECK_DOWNLOAD','Download Here');
-  define('TEXT_VERSION_CHECK_CURRENT','Your version of Zen Cart&trade; appears to be current.');
+  define('TEXT_VERSION_CHECK_CURRENT','Your version of Zen Cart&reg; appears to be current.');
 
 // downloads manager
 define('TEXT_DISPLAY_NUMBER_OF_PRODUCTS_DOWNLOADS_MANAGER', 'Displaying <b>%d</b> to <b>%d</b> (of <b>%d</b> downloads)');
@@ -663,13 +700,24 @@ define('ENTRY_NOTHING_TO_SEND','You haven\'t entered any content for your messag
   define('TEXT_FREE_SHIPPING_EDIT','Warning: Yes makes the product - Free Shipping, Shipping Address Required<br />Free Shipping Module is required when all products in the order are Always Free Shipping Products');
 
 // admin activity log warnings
-  define('WARNING_ADMIN_ACTIVITY_LOG_DATE', 'WARNING: The Admin Activity Log table has records over 2 months old and should be cleaned ... ');
-  define('WARNING_ADMIN_ACTIVITY_LOG_RECORDS', 'WARNING: The Admin Activity Log table has over 50,000 records and should be cleaned ... ');
-  define('RESET_ADMIN_ACTIVITY_LOG', 'Go to Store Manager to Reset the Admin Activity Log');
+  define('WARNING_ADMIN_ACTIVITY_LOG_DATE', 'WARNING: The Admin Activity Log table has records over 2 months old and should be archived to conserve space ... ');
+  define('WARNING_ADMIN_ACTIVITY_LOG_RECORDS', 'WARNING: The Admin Activity Log table has over 50,000 records and should be archived to conserve space ... ');
+  define('RESET_ADMIN_ACTIVITY_LOG', 'You can view and archive Admin Activity details via the Admin Access Management menu, if you have appropriate permissions.');
 
   define('CATEGORY_HAS_SUBCATEGORIES', 'NOTE: Category has SubCategories<br />Products cannot be added');
 
   define('WARNING_WELCOME_DISCOUNT_COUPON_EXPIRES_IN', 'WARNING! Welcome Email Discount Coupon expires in %s days');
+
+define('WARNING_ADMIN_FOLDERNAME_VULNERABLE', 'CAUTION: <a href="http://tutorials.zen-cart.com/index.php?article=33" target="_blank">Your /admin/ foldername should be renamed to something less common</a>, to prevent unauthorized access.');
+define('WARNING_EMAIL_SYSTEM_DISABLED', 'WARNING: The email subsystem is turned off. No emails will be sent until it is re-enabled in Admin->Configuration->Email Options.');
+define('TEXT_CURRENT_VER_IS', 'You are presently using: ');
+define('ERROR_NO_DATA_TO_SAVE', 'ERROR: The data you submitted was found to be empty. YOUR CHANGES HAVE *NOT* BEEN SAVED. You may have a problem with your browser or your internet connection.');
+define('TEXT_HIDDEN', 'Hidden');
+define('TEXT_VISIBLE', 'Visible');
+define('TEXT_HIDE', 'Hide');
+define('TEXT_EMAIL', 'Email');
+define('TEXT_NOEMAIL', 'No Email');
+
 
 ///////////////////////////////////////////////////////////
 // include additional files:

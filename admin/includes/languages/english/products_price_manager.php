@@ -1,24 +1,10 @@
 <?php
-//
-// +----------------------------------------------------------------------+
-// |zen-cart Open Source E-commerce                                       |
-// +----------------------------------------------------------------------+
-// | Copyright (c) 2003 The zen-cart developers                           |
-// |                                                                      |
-// | http://www.zen-cart.com/index.php                                    |
-// |                                                                      |
-// | Portions Copyright (c) 2003 osCommerce                               |
-// +----------------------------------------------------------------------+
-// | This source file is subject to version 2.0 of the GPL license,       |
-// | that is bundled with this package in the file LICENSE, and is        |
-// | available through the world-wide-web at the following url:           |
-// | http://www.zen-cart.com/license/2_0.txt.                             |
-// | If you did not receive a copy of the zen-cart license and are unable |
-// | to obtain it through the world-wide-web, please send a note to       |
-// | license@zen-cart.com so we can mail you a copy immediately.          |
-// +----------------------------------------------------------------------+
-//  $Id: products_price_manager.php 543 2004-11-13 19:19:29Z wilt $
-//
+/**
+ * @package admin
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
+ * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
+ * @version $Id: products_price_manager.php 18695 2011-05-04 05:24:19Z drbyte $
+ */
 
 define('HEADING_TITLE', 'Products Price Manager');
 define('HEADING_TITLE_PRODUCT_SELECT','Please select a Category with Products to display the Pricing Information of ...');
@@ -66,6 +52,7 @@ define('TEXT_FEATURED_PRODUCTS_STATUS', 'Featured Status:');
 define('TEXT_FEATURED_PRODUCT_AVAILABLE', 'Active');
 define('TEXT_FEATURED_PRODUCT_NOT_AVAILABLE', 'Inactive');
 define('TEXT_FEATURED_DISABLED', '<strong>NOTE: Featured Product Info is currently disabled, expired or not yet active</strong>');
+define('TEXT_FEATURED_CONFIRM_DELETE', 'Please confirm that you want to delete the Featured status associated with this product');
 
 define('TEXT_SPECIALS_PRODUCT', 'Product:');
 define('TEXT_SPECIALS_SPECIAL_PRICE', 'Special Price:');
@@ -78,6 +65,7 @@ define('TEXT_SPECIALS_PRODUCT_AVAILABLE', 'Active');
 define('TEXT_SPECIALS_PRODUCT_NOT_AVAILABLE', 'Inactive');
 define('TEXT_SPECIALS_NO_GIFTS','No Specials on GV');
 define('TEXT_SPECIAL_DISABLED', '<strong>NOTE: Special Product Info is currently disabled, expired or not yet active</strong>');
+define('TEXT_SPECIALS_CONFIRM_DELETE', 'Please confirm that you want to delete the Special associated with this product');
 
 define('TEXT_INFO_DATE_ADDED', 'Date Added:');
 define('TEXT_INFO_LAST_MODIFIED', 'Last Modified:');
@@ -143,4 +131,3 @@ define('PRODUCT_WARNING_UPDATE_CANCEL', 'Changes were Cancelled and not saved ..
 define('TEXT_INFO_EDIT_CAUTION', '<strong>Click to begin Editing ...</strong>');
 define('TEXT_INFO_PREVIEW_ONLY', 'Preview Only ... Current Price Status ... Preview Only');
 define('TEXT_INFO_UPDATE_REMINDER', '<strong>Edit Product Information then Update to save</strong>');
-?>

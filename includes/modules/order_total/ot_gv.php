@@ -3,10 +3,10 @@
  * ot_gv order-total module
  *
  * @package orderTotal
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: ot_gv.php 15800 2010-04-03 15:43:16Z drbyte $
+ * @version $Id: ot_gv.php 19103 2011-07-13 18:10:46Z wilt $
  */
 /**
  * Enter description here...
@@ -222,7 +222,7 @@ class ot_gv {
     if ($_POST['gv_redeem_code']) {
       // check for validity
       $_POST['gv_redeem_code'] = preg_replace('/[^0-9a-zA-Z]/', '', $_POST['gv_redeem_code']);
-      $gv_result = $db->Execute("select coupon_id, coupon_type, coupon_amount from " . TABLE_COUPONS . " where coupon_code = '" . zen_db_prepare_input($_POST['gv_redeem_code']) . "'");
+      $gv_result = $db->Execute("select coupon_id, coupon_type, coupon_amount from " . TABLE_COUPONS . " where coupon_code = '" . zen_db_prepare_input($_POST['gv_redeem_code']) . "' and coupon_type = 'G'");
       if ($gv_result->RecordCount() > 0) {
         $redeem_query = $db->Execute("select * from " . TABLE_COUPON_REDEEM_TRACK . " where coupon_id = '" . (int)$gv_result->fields['coupon_id'] . "'");
         // if already redeemed, throw error
@@ -262,6 +262,7 @@ class ot_gv {
         }
         //          zen_redirect(zen_href_link(FILENAME_CHECKOUT_PAYMENT, 'error_message=' . urlencode(ERROR_REDEEMED_AMOUNT. $currencies->format($gv_amount)), 'SSL'));
         $messageStack->add_session('redemptions',ERROR_REDEEMED_AMOUNT. $currencies->format($gv_amount), 'success' );
+        zen_redirect(zen_href_link(FILENAME_CHECKOUT_PAYMENT, '', 'SSL',true, false));
       }
     }
     if ($_POST['submit_redeem_x'] && $gv_result->fields['coupon_type'] == 'G') zen_redirect(zen_href_link(FILENAME_CHECKOUT_PAYMENT, 'error_message=' . urlencode(ERROR_NO_REDEEM_CODE), 'SSL'));

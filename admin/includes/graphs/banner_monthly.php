@@ -1,10 +1,10 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2008 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: banner_monthly.php 8744 2008-06-28 02:20:51Z drbyte $
+ * @version $Id: banner_monthly.php 18695 2011-05-04 05:24:19Z drbyte $
  */
 if (!defined('IS_ADMIN_FLAG')) {
   die('Illegal Access');
@@ -12,14 +12,14 @@ if (!defined('IS_ADMIN_FLAG')) {
 
   include(DIR_WS_CLASSES . 'phplot.php');
 
-  $year = (($_GET['year']) ? $_GET['year'] : date('Y'));
+  $year = (($_GET['year']) ? zen_db_input($_GET['year']) : date('Y'));
 
   $stats = array();
   for ($i=1; $i<13; $i++) {
     $stats[] = array(strftime('%b', mktime(0,0,0,$i)), '0', '0');
   }
 
-  $banner_stats = $db->Execute("select month(banners_history_date) as banner_month, sum(banners_shown) as value, sum(banners_clicked) as dvalue from " . TABLE_BANNERS_HISTORY . " where banners_id = '" . $banner_id . "' and year(banners_history_date) = '" . $year . "' group by banner_month");
+  $banner_stats = $db->Execute("select month(banners_history_date) as banner_month, sum(banners_shown) as value, sum(banners_clicked) as dvalue from " . TABLE_BANNERS_HISTORY . " where banners_id = '" . (int)$banner_id . "' and year(banners_history_date) = '" . $year . "' group by banner_month");
   while (!$banner_stats->EOF) {
     $stats[($banner_stats->fields['banner_month']-1)] = array(strftime('%b', mktime(0,0,0,$banner_stats->fields['banner_month'])), (($banner_stats->fields['value']) ? $banner_stats->fields['value'] : '0'), (($banner_stats->fields['dvalue']) ? $banner_stats->fields['dvalue'] : '0'));
     $banner_stats->MoveNext();
@@ -49,4 +49,3 @@ if (!defined('IS_ADMIN_FLAG')) {
   $graph->DrawGraph();
 
   $graph->PrintImage();
-?>

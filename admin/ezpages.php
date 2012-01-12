@@ -1,19 +1,19 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: ezpages.php 17417 2010-08-30 18:25:01Z drbyte $
+ * @version $Id: ezpages.php 19330 2011-08-07 06:32:56Z drbyte $
  */
 
 // Sets the status of a page
   function zen_set_ezpage_status($pages_id, $status, $status_field) {
   global $db;
     if ($status == '1') {
-      return $db->Execute("update " . TABLE_EZPAGES . " set " . $status_field . " = '0'  where pages_id = '" . $pages_id . "'");
+      return $db->Execute("update " . TABLE_EZPAGES . " set " . zen_db_input($status_field) . " = '0'  where pages_id = '" . (int)$pages_id . "'");
     } elseif ($status == '0') {
-      return $db->Execute("update " . TABLE_EZPAGES . " set " . $status_field . " = '1'  where pages_id = '" . $pages_id . "'");
+      return $db->Execute("update " . TABLE_EZPAGES . " set " . zen_db_input($status_field) . " = '1'  where pages_id = '" . (int)$pages_id . "'");
     } else {
       return -1;
     }
@@ -171,7 +171,7 @@
         }
         break;
       case 'deleteconfirm':
-        $pages_id = zen_db_prepare_input($_GET['ezID']);
+        $pages_id = zen_db_prepare_input($_POST['ezID']);
         $db->Execute("delete from " . TABLE_EZPAGES . " where pages_id = '" . (int)$pages_id . "'");
         $messageStack->add(SUCCESS_PAGE_REMOVED, 'success');
         zen_redirect(zen_href_link(FILENAME_EZPAGES_ADMIN, 'page=' . $_GET['page']));
@@ -277,7 +277,7 @@
 
       $ezID = zen_db_prepare_input($_GET['ezID']);
 
-      $page_query = "select * from " . TABLE_EZPAGES . " where pages_id = '" . $_GET['ezID'] . "'";
+      $page_query = "select * from " . TABLE_EZPAGES . " where pages_id = '" . (int)$_GET['ezID'] . "'";
       $page = $db->Execute($page_query);
       $ezInfo->objectInfo($page->fields);
     } elseif (zen_not_null($_POST)) {
@@ -341,7 +341,7 @@
         <td><table border="0" cellspacing="0" cellpadding="2">
           <tr>
             <td class="main"><?php echo TEXT_PAGES_TITLE; ?></td>
-            <td class="main"><?php echo zen_draw_input_field('pages_title', htmlspecialchars($ezInfo->pages_title), zen_set_field_length(TABLE_EZPAGES, 'pages_title'), true); ?></td>
+            <td class="main"><?php echo zen_draw_input_field('pages_title', htmlspecialchars($ezInfo->pages_title, ENT_COMPAT, CHARSET, TRUE), zen_set_field_length(TABLE_EZPAGES, 'pages_title'), true); ?></td>
           </tr>
           <tr>
             <td colspan="2"><?php echo zen_draw_separator('pixel_trans.gif', '1', '10'); ?></td>
@@ -428,18 +428,7 @@
           </tr>
           <tr>
             <td valign="top" class="main"><?php echo TEXT_PAGES_HTML_TEXT; ?></td>
-            <td class="main">
-				<?php if ($_SESSION['html_editor_preference_status']=="FCKEDITOR") {
-                $oFCKeditor = new FCKeditor('pages_html_text') ;
-                $oFCKeditor->Value = $ezInfo->pages_html_text;
-                $oFCKeditor->Width  = '80%' ;
-                $oFCKeditor->Height = '500' ;
-//                $oFCKeditor->Create() ;
-                $output = $oFCKeditor->CreateHtml() ; echo $output;
-					} else { // using HTMLAREA or just raw "source"
-					echo zen_draw_textarea_field('pages_html_text', 'soft', '100%', '40', htmlspecialchars($ezInfo->pages_html_text));
-					} ?>
-            </td>
+            <td class="main"><?php echo zen_draw_textarea_field('pages_html_text', 'soft', '100%', '40', htmlspecialchars($ezInfo->pages_html_text, ENT_COMPAT, CHARSET, TRUE));?></td>
           </tr>
 
           <tr>
@@ -609,7 +598,7 @@ while (!$pages->EOF) {
     case 'delete':
       $heading[] = array('text' => '<b>' . $ezInfo->pages_title . '</b>');
 
-      $contents = array('form' => zen_draw_form('pages', FILENAME_EZPAGES_ADMIN, 'page=' . $_GET['page'] . '&ezID=' . $ezInfo->pages_id . '&action=deleteconfirm'));
+      $contents = array('form' => zen_draw_form('pages', FILENAME_EZPAGES_ADMIN, 'page=' . $_GET['page'] . '&action=deleteconfirm') . zen_draw_hidden_field('ezID', $ezInfo->pages_id));
       $contents[] = array('text' => TEXT_INFO_DELETE_INTRO);
       $contents[] = array('text' => '<br /><b>' . $ezInfo->pages_title . '</b>');
 

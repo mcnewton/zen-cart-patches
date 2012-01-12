@@ -4,10 +4,10 @@
  * Lookup Functions for various Zen Cart activities such as countries, prices, products, product types, etc
  *
  * @package functions
- * @copyright Copyright 2003-2009 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: functions_lookups.php 14141 2009-08-10 19:34:47Z wilt $
+ * @version $Id: functions_lookups.php 19352 2011-08-19 16:13:43Z ajeh $
  */
 
 
@@ -447,7 +447,7 @@
     if (preg_match('/^txt_/', $option)) {
       $check_attributes = $db->Execute("select attributes_display_only, attributes_required from " . TABLE_PRODUCTS_ATTRIBUTES . " where products_id='" . (int)$product_id . "' and options_id='" . (int)preg_replace('/txt_/', '', $option) . "' and options_values_id='0'");
 // text cannot be blank
-      if ($check_attributes->fields['attributes_required'] == '1' and empty($value)) {
+      if ($check_attributes->fields['attributes_required'] == '1' && (empty($value) && !is_numeric($value))) {
         $check_valid = false;
       }
     }
@@ -814,25 +814,18 @@
  */
   function zen_get_index_filters_directory($check_file, $dir_only = 'false') {
     global $template_dir;
-
     $zv_filename = $check_file;
     if (!strstr($zv_filename, '.php')) $zv_filename .= '.php';
-
-    if (file_exists(DIR_WS_INCLUDES . 'index_filters/' . $template_dir . '/' . $zv_filename)) {
-      $template_dir_select = $template_dir . '/';
-    } else {
-      $template_dir_select = '';
+    $checkArray = array();
+    $checkArray[] = DIR_WS_INCLUDES . 'index_filters/' . $template_dir . '/' . $zv_filename;
+    $checkArray[] = DIR_WS_INCLUDES . 'index_filters/' . $zv_filename;
+    $checkArray[] = DIR_WS_INCLUDES . 'index_filters/' . $template_dir . '/' . 'default_filter.php';
+    foreach($checkArray as $key => $val) {
+      if (file_exists($val)) {
+        return ($dir_only == 'true') ? $val = substr($val, 0, strpos($val, '/')) : $val;
+      }
     }
-
-    if (!file_exists(DIR_WS_INCLUDES . 'index_filters/' . $template_dir_select . '/' . $zv_filename)) {
-      $zv_filename = 'default';
-    }
-
-    if ($dir_only == 'true') {
-      return 'index_filters/' . $template_dir_select;
-    } else {
-      return 'index_filters/' . $template_dir_select . $zv_filename;
-    }
+    return DIR_WS_INCLUDES . 'index_filters/' . 'default_filter.php';
   }
 
 ////

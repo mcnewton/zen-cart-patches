@@ -1,10 +1,10 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2007 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: order.php 5784 2007-02-14 04:00:58Z ajeh $
+ * @version $Id: order.php 18695 2011-05-04 05:24:19Z drbyte $
  */
 
   class order {
@@ -39,7 +39,7 @@
                              where orders_id = '" . (int)$order_id . "'");
 
 
-      $totals = $db->Execute("select title, text, class
+      $totals = $db->Execute("select title, text, class, value
                               from " . TABLE_ORDERS_TOTAL . "
                               where orders_id = '" . (int)$order_id . "'
                               order by sort_order");
@@ -48,12 +48,13 @@
         if ($totals->fields['class'] == 'ot_coupon') {
           $coupon_link_query = "SELECT coupon_id
                   from " . TABLE_COUPONS . "
-                  where coupon_code ='" . $order->fields['coupon_code'] . "'";
+                  where coupon_code ='" . zen_db_input($order->fields['coupon_code']) . "'";
           $coupon_link = $db->Execute($coupon_link_query);
           $zc_coupon_link = '<a href="javascript:couponpopupWindow(\'' . zen_catalog_href_link(FILENAME_POPUP_COUPON_HELP, 'cID=' . $coupon_link->fields['coupon_id']) . '\')">';
         }
         $this->totals[] = array('title' => ($totals->fields['class'] == 'ot_coupon' ? $zc_coupon_link . $totals->fields['title'] . '</a>' : $totals->fields['title']),
                                 'text' => $totals->fields['text'],
+                                'value' => $totals->fields['value'],
                                 'class' => $totals->fields['class']);
         $totals->MoveNext();
       }
@@ -176,4 +177,3 @@
       }
     }
   }
-?>

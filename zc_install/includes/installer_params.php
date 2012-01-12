@@ -2,9 +2,9 @@
 /**
  * @package Installer
  * @access private
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: installer_params.php 16886 2010-07-09 16:26:42Z drbyte $
+ * @version $Id: installer_params.php 18819 2011-05-31 20:25:53Z drbyte $
  */
 
 /**
@@ -19,8 +19,8 @@
   define('STRICT_ERROR_REPORTING', FALSE);
 
 
-  // optionally set this to 'utf8':
-  define('DB_CHARSET', 'latin1');
+  // optionally set this to 'latin1':
+  define('DB_CHARSET', 'utf8');
 
   // optionally uncomment the following line if choosing 'utf8' or 'latin1' above are causing problems:
   // define('IGNORE_DB_CHARSET', TRUE);

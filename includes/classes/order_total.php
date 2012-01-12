@@ -3,10 +3,10 @@
  * File contains the order-totals-processing class ("order-total")
  *
  * @package classes
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: order_total.php 16811 2010-06-30 19:18:43Z drbyte $
+ * @version $Id: order_total.php 19103 2011-07-13 18:10:46Z wilt $
  */
 /**
  * order-total class
@@ -179,7 +179,7 @@ class order_total extends base {
       while (list(, $value) = each($this->modules)) {
         $class = substr($value, 0, strrpos($value, '.'));
         if ( $GLOBALS[$class]->credit_class ) {
-          $order_total = $GLOBALS[$class]->get_order_total();
+          $order_total = $GLOBALS[$class]->get_order_total(isset($_SESSION['cc_id']) ? $_SESSION['cc_id'] : '');
           if (is_array($order_total)) $order_total = $order_total['total'];
           $deduction = $GLOBALS[$class]->pre_confirmation_check($order_total);
           $total_deductions = $total_deductions + $deduction;

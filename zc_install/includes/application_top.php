@@ -2,10 +2,10 @@
 /**
  * @package Installer
  * @access private
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: application_top.php 17117 2010-07-31 18:19:41Z drbyte $
+ * @version $Id: application_top.php 19969 2011-11-08 17:03:26Z drbyte $
  */
 /**
  * ensure odd settings are disabled and set required defaults
@@ -14,6 +14,14 @@
 //@ini_set("session.use_trans_sid","0");
 
 @ini_set("arg_separator.output","&");
+
+// Check PHP version
+if (version_compare(PHP_VERSION, '5.2.14', '<'))
+{
+  require('includes/templates/template_default/templates/tpl_php_version_problem.php');
+  die('');
+}
+
 
 /**
  * Set the local configuration parameters - mainly for developers
@@ -31,7 +39,7 @@ include('includes/installer_params.php');
 /**
  * set the level of error reporting
  */
-error_reporting(version_compare(PHP_VERSION, 5.3, '>=') ? E_ALL & ~E_DEPRECATED & ~E_NOTICE : version_compare(PHP_VERSION, 6.0, '>=') ? E_ALL & ~E_DEPRECATED & ~E_NOTICE & ~E_STRICT : E_ALL & ~E_NOTICE);
+error_reporting(version_compare(PHP_VERSION, 5.3, '>=') ? E_ALL & ~E_DEPRECATED & ~E_NOTICE : version_compare(PHP_VERSION, 5.4, '>=') ? E_ALL & ~E_DEPRECATED & ~E_NOTICE & ~E_STRICT : E_ALL & ~E_NOTICE);
 $debug_logfile_path = DEBUG_LOG_FOLDER . '/zcInstallDEBUG-' . time() . '-' . mt_rand(1000,999999) . '.log';
 @ini_set('log_errors', 1);
 @ini_set('log_errors_max_len', 0);
@@ -42,8 +50,7 @@ if (defined('STRICT_ERROR_REPORTING') && STRICT_ERROR_REPORTING == true) {
   @ini_set('display_errors', 0);
 }
 /**
- * @todo php5.3 and PHP6
- * Timezone detection
+ * Timezone problem detection
  */
 if (PHP_VERSION >= '5.3' && ini_get('date.timezone') == '')
 {
@@ -57,14 +64,15 @@ if (PHP_VERSION >= '5.3' && ini_get('date.timezone') == '')
 /*
  * check settings for, and then turn off magic-quotes support, for both runtime and sybase, as both will cause problems if enabled
  */
-$php_magic_quotes_runtime = (@get_magic_quotes_runtime() > 0) ? 'ON' : 'OFF';
-if (version_compare(PHP_VERSION, 5.3, '<') && function_exists('set_magic_quotes_runtime')) set_magic_quotes_runtime(0);
-$val = @ini_get('magic_quotes_sybase');
-if (is_string($val) && strtolower($val) == 'on') $val = 1;
-$php_magic_quotes_sybase = ((int)$val > 0) ? 'ON' :'OFF';
-if ((int)$val != 0) @ini_set('magic_quotes_sybase', 0);
-unset($val);
-
+if (version_compare(PHP_VERSION, 5.4, '<')) {
+  $php_magic_quotes_runtime = (@get_magic_quotes_runtime() > 0) ? 'ON' : 'OFF';
+  if (version_compare(PHP_VERSION, 5.3, '<') && function_exists('set_magic_quotes_runtime')) set_magic_quotes_runtime(0);
+  $val = @ini_get('magic_quotes_sybase');
+  if (is_string($val) && strtolower($val) == 'on') $val = 1;
+  $php_magic_quotes_sybase = ((int)$val > 0) ? 'ON' :'OFF';
+  if ((int)$val != 0) @ini_set('magic_quotes_sybase', 0);
+  unset($val);
+}
 /**
  * boolean used to see if we are in the admin script, obviously set to false here.
  */
@@ -86,9 +94,6 @@ $request_type = ((isset($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) == '
 /**
  * require the session handling functions
  */
-//define('STORE_SESSIONS', (!is_writable(SESSION_WRITE_DIRECTORY) ? 'db' : 'file');
-//define('TABLE_SESSIONS', 'sessions');
-//define('STORE_SESSIONS', 'db');
 if (!defined('STORE_SESSIONS')) define('STORE_SESSIONS', 'file');
 require('includes/functions/sessions.php');
 /**
@@ -140,7 +145,7 @@ if (isset($_GET['main_page']) && !in_array($_GET['main_page'], array('', 'index'
 /*
  * language determination
  */
-$language = (isset($_GET['language']) && $_GET['language'] != '') ? $_GET['language'] : $zc_install->getConfigKey('language');
+$language = (isset($_GET['language']) && $_GET['language'] != '') ? preg_replace('/[^a-zA-Z_]/', '', $_GET['language']) : $zc_install->getConfigKey('language');
 if ($language == '') $language = 'english';
 if (!file_exists('includes/languages/' . $language . '.php')) {
   $zc_install->throwException('Specified language file not found. Defaulting to english. (' . 'includes/languages/' . $language . '.php)');

@@ -7,15 +7,19 @@
  * @copyright Copyright 2003-2010 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: database_tables.php 15508 2010-02-18 05:24:31Z drbyte $
+ * @version $Id: database_tables.php 16976 2010-07-24 23:33:45Z kuroi $
  * @private
  */
 
 if (!defined('DB_PREFIX')) define('DB_PREFIX', '');
 define('TABLE_ADDRESS_BOOK', DB_PREFIX . 'address_book');
+define('TABLE_ADDRESS_FORMAT', DB_PREFIX . 'address_format');
 define('TABLE_ADMIN', DB_PREFIX . 'admin');
 define('TABLE_ADMIN_ACTIVITY_LOG', DB_PREFIX . 'admin_activity_log');
-define('TABLE_ADDRESS_FORMAT', DB_PREFIX . 'address_format');
+define('TABLE_ADMIN_MENUS', DB_PREFIX . 'admin_menus');
+define('TABLE_ADMIN_PAGES', DB_PREFIX . 'admin_pages');
+define('TABLE_ADMIN_PAGES_TO_PROFILES', DB_PREFIX . 'admin_pages_to_profiles');
+define('TABLE_ADMIN_PROFILES', DB_PREFIX . 'admin_profiles');
 define('TABLE_AUTHORIZENET', DB_PREFIX . 'authorizenet');
 define('TABLE_BANNERS', DB_PREFIX . 'banners');
 define('TABLE_BANNERS_HISTORY', DB_PREFIX . 'banners_history');

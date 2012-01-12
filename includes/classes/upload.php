@@ -3,10 +3,10 @@
  * upload Class.
  *
  * @package classes
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: upload.php 15838 2010-04-06 17:21:09Z ajeh $
+ * @version $Id: upload.php 18697 2011-05-04 14:35:20Z wilt $
  */
 if (!defined('IS_ADMIN_FLAG')) {
   die('Illegal Access');
@@ -101,16 +101,13 @@ class upload extends base {
         }
         return false;
       }
-
-      if (sizeof($this->extensions) > 0) {
-        if (!in_array(strtolower(substr($file['name'], strrpos($file['name'], '.')+1)), $this->extensions)) {
+      if (substr($file['name'], -9) == '.htaccess' || (sizeof($this->extensions) > 0 && !in_array(strtolower(substr($file['name'], strrpos($file['name'], '.')+1)), $this->extensions))) {
           if ($this->message_location == 'direct') {
             $messageStack->add_session('header', ERROR_FILETYPE_NOT_ALLOWED . ' ' . UPLOAD_FILENAME_EXTENSIONS, 'error');
           } else {
             $messageStack->add_session('upload', ERROR_FILETYPE_NOT_ALLOWED . ' - ' . UPLOAD_FILENAME_EXTENSIONS, 'error');
           }
           return false;
-        }
       }
 
       $this->set_file($file);

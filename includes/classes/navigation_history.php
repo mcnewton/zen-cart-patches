@@ -3,10 +3,10 @@
  * Navigation_history Class.
  *
  * @package classes
- * @copyright Copyright 2003-2006 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: navigation_history.php 4383 2006-09-04 00:42:07Z drbyte $
+ * @version $Id: navigation_history.php 19328 2011-08-06 22:53:47Z drbyte $
  */
 if (!defined('IS_ADMIN_FLAG')) {
   die('Illegal Access');
@@ -57,13 +57,16 @@ class navigationHistory extends base {
               $old_cPath = explode('_', $this->path[$i]['get']['cPath']);
               $new_cPath = explode('_', $cPath);
 
+              $exit_loop = false;
               for ($j=0, $n2=sizeof($old_cPath); $j<$n2; $j++) {
                 if ($old_cPath[$j] != $new_cPath[$j]) {
                   array_splice($this->path, ($i));
                   $set = 'true';
-                  break 2;
+                  $exit_loop = true;
+                  break;
                 }
               }
+              if ($exit_loop == true) break;
             }
           }
         } else {
@@ -164,4 +167,3 @@ class navigationHistory extends base {
     }
   }
 }
-?>

@@ -3,10 +3,10 @@
  * Checkout Shipping Page
  *
  * @package page
- * @copyright Copyright 2003-2009 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: header_php.php 18007 2010-10-21 06:41:51Z drbyte $
+ * @version $Id: header_php.php 18697 2011-05-04 14:35:20Z wilt $
  */
 // This should be first line of the script:
   $zco_notifier->notify('NOTIFY_HEADER_START_CHECKOUT_SHIPPING');
@@ -183,6 +183,20 @@ if (isset($_SESSION['cart']->cartID)) {
 
 // get all available shipping quotes
   $quotes = $shipping_modules->quote();
+
+  // check that the currently selected shipping method is still valid (in case a zone restriction has disabled it, etc)
+  if (isset($_SESSION['shipping']) && $_SESSION['shipping'] != FALSE && $_SESSION['shipping'] != '') {
+    $checklist = array();
+    foreach ($quotes as $key=>$val) {
+      foreach($val['methods'] as $key2=>$method) {
+        $checklist[] = $val['id'] . '_' . $method['id'];
+      }
+    }
+    $checkval = (is_array($_SESSION['shipping']) ? $_SESSION['shipping']['id'] : $_SESSION['shipping']);
+    if (!in_array($checkval, $checklist)) {
+      $messageStack->add('checkout_shipping', ERROR_PLEASE_RESELECT_SHIPPING_METHOD, 'error');
+    }
+  }
 
 // if no shipping method has been selected, automatically select the cheapest method.
 // if the modules status was changed when none were available, to save on implementing

@@ -3,10 +3,10 @@
  * Login Page
  *
  * @package page
- * @copyright Copyright 2003-2007 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: header_php.php 6783 2007-08-23 21:16:16Z wilt $
+ * @version $Id: header_php.php 18695 2011-05-04 05:24:19Z drbyte $
  */
 
 // This should be first line of the script:
@@ -38,11 +38,6 @@ if (isset($_GET['action']) && ($_GET['action'] == 'process')) {
   }
   }
   */
-
-  if ((!isset($_SESSION['securityToken']) || !isset($_POST['securityToken'])) || ($_SESSION['securityToken'] !== $_POST['securityToken'])) {
-    $error = true;
-    $messageStack->add('login', ERROR_SECURITY_ERROR);
-  } else {
 
     // Check if email exists
     $check_customer_query = "SELECT customers_id, customers_firstname, customers_lastname, customers_password,
@@ -138,7 +133,6 @@ if (isset($_GET['action']) && ($_GET['action'] == 'process')) {
         }
       }
     }
-  }
 }
 if ($error == true) {
   $zco_notifier->notify('NOTIFY_LOGIN_FAILURE');
@@ -147,11 +141,10 @@ if ($error == true) {
 $breadcrumb->add(NAVBAR_TITLE);
 
 // Check for PayPal express checkout button suitability:
-$paypalec_enabled = (defined('MODULE_PAYMENT_PAYPALWPP_STATUS') && MODULE_PAYMENT_PAYPALWPP_STATUS == 'True');
+$paypalec_enabled = (defined('MODULE_PAYMENT_PAYPALWPP_STATUS') && MODULE_PAYMENT_PAYPALWPP_STATUS == 'True' && defined('MODULE_PAYMENT_PAYPALWPP_ECS_BUTTON') && MODULE_PAYMENT_PAYPALWPP_ECS_BUTTON == 'On');
 // Check for express checkout button suitability:
 $ec_button_enabled = ($paypalec_enabled && ($_SESSION['cart']->count_contents() > 0 && $_SESSION['cart']->total > 0));
 
 
 // This should be last line of the script:
 $zco_notifier->notify('NOTIFY_HEADER_END_LOGIN');
-?>

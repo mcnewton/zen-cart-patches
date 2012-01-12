@@ -1,10 +1,10 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2009 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: developers_tool_kit.php 14139 2009-08-10 13:46:02Z wilt $
+ * @version $Id: developers_tool_kit.php 18698 2011-05-04 14:50:06Z wilt $
  */
   define('HEADING_TITLE', 'Developers Tool Kit');
   define('TABLE_CONFIGURATION_TABLE', 'Lookup CONSTANT Definitions');
@@ -76,6 +76,7 @@
   define('TEXT_ALL_FILES_LOOKUP_PHPCSS', '.php and .css');
   define('TEXT_ALL_FILES_LOOKUP_CSS', '.css only');
   define('TEXT_ALL_FILES_LOOKUP_HTMLTXT', '.html and .txt');
+  define('TEXT_ALL_FILES_LOOKUP_JS', '.js only');
 
   define('TEXT_CASE_SENSITIVE', 'Case Sensitive?');
 

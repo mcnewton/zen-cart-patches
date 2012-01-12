@@ -3,10 +3,10 @@
  * checkout_payment header_php.php
  *
  * @package page
- * @copyright Copyright 2003-2007 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: header_php.php 16397 2010-05-26 11:21:22Z drbyte $
+ * @version $Id: header_php.php 19098 2011-07-13 15:19:52Z wilt $
  */
 
 // This should be first line of the script:
@@ -111,7 +111,6 @@ require(DIR_WS_MODULES . zen_get_module_directory('require_languages.php'));
 if (isset($_GET['payment_error']) && is_object(${$_GET['payment_error']}) && ($error = ${$_GET['payment_error']}->get_error())) {
   $messageStack->add('checkout_payment', $error['error'], 'error');
 }
-
 $breadcrumb->add(NAVBAR_TITLE_1, zen_href_link(FILENAME_CHECKOUT_SHIPPING, '', 'SSL'));
 $breadcrumb->add(NAVBAR_TITLE_2);
 

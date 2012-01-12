@@ -6,15 +6,16 @@
  * Displays the allowed payment modules, for selection by customer.
  *
  * @package templateSystem
- * @copyright Copyright 2003-2006 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: tpl_checkout_payment_default.php 5414 2006-12-27 07:51:03Z drbyte $
+ * @version $Id: tpl_checkout_payment_default.php 19358 2011-08-24 17:36:50Z drbyte $
  */
 ?>
 <?php echo $payment_modules->javascript_validation(); ?>
 <div class="centerColumn" id="checkoutPayment">
 <?php echo zen_draw_form('checkout_payment', zen_href_link(FILENAME_CHECKOUT_CONFIRMATION, '', 'SSL'), 'post', ($flagOnSubmit ? 'onsubmit="return check_form();"' : '')); ?>
+<?php echo zen_draw_hidden_field('action', 'submit'); ?>
 
 <h1 id="checkoutPaymentHeading"><?php echo HEADING_TITLE; ?></h1>
 
@@ -52,7 +53,7 @@
 <?php // ** BEGIN PAYPAL EXPRESS CHECKOUT **
       }
       // ** END PAYPAL EXPRESS CHECKOUT ** ?>
-      
+
 <fieldset id="checkoutOrderTotals">
 <legend id="checkoutPaymentHeadingTotal"><?php echo TEXT_YOUR_TOTAL; ?></legend>
 <?php
@@ -141,9 +142,9 @@
 <?php   } ?>
 <?php
     } else {
-    	
+
 ?>
-<?php echo zen_draw_hidden_field('payment', $selection[$i]['id']); ?>
+<?php echo zen_draw_hidden_field('payment', $selection[$i]['id'], 'id="pmt-'.$selection[$i]['id'].'"'); ?>
 <?php
     }
 ?>

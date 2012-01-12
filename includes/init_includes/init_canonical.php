@@ -3,10 +3,10 @@
  * canonical link handling
  *
  * @package initSystem
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: init_canonical.php 17600 2010-09-22 00:45:20Z drbyte $
+ * @version $Id: init_canonical.php 18697 2011-05-04 14:35:20Z wilt $
  */
 if (!defined('IS_ADMIN_FLAG')) {
   die('Illegal Access');

@@ -2,10 +2,10 @@
 /**
  * @package Installer
  * @access private
- * @copyright Copyright 2003-2007 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: database_setup_default.php 7412 2007-11-11 05:47:50Z drbyte $
+ * @version $Id: database_setup_default.php 18830 2011-05-31 23:11:45Z drbyte $
  */
 
   if ($zc_install->error) include(DIR_WS_INSTALL_TEMPLATE . 'templates/display_errors.php');
@@ -14,12 +14,13 @@
     <fieldset>
     <legend><?php echo DATABASE_INFORMATION; ?></legend>
       <div class="section">
-      <select id="db_type" name="db_type" tabindex="1">
-        <option value="mysql"<?php echo setSelected('mysql', $_POST['db_type']); ?>>MySQL</option>
-<!--      <option value="postgres"<?php echo setSelected('postgres', $_POST['db_type']); ?>>PostgreSQL</option> -->
+      <input type="hidden" id="db_type" name="db_type" value="mysql" />
+      <select id="db_coll" name="db_coll" tabindex="1">
+        <option value="latin1"<?php echo setSelected('latin1', $_POST['db_coll']); ?>>Latin1</option>
+        <option value="utf8"<?php echo setSelected('utf8', $_POST['db_coll']); ?>>UTF-8 (default)</option>
       </select>
-        <label for="db_type"><?php echo DATABASE_TYPE; ?></label>
-      <p><?php echo DATABASE_TYPE_INSTRUCTION . '<a href="javascript:popupWindow(\'popup_help_screen.php?error_code=14\')"> ' . TEXT_HELP_LINK . '</a>'; ?></p>
+        <label for="db_type"><?php echo DATABASE_CHARSET; ?></label>
+      <p><?php echo DATABASE_CHARSET_INSTRUCTION . '<a href="javascript:popupWindow(\'popup_help_screen.php?error_code=14\')"> ' . TEXT_HELP_LINK . '</a>'; ?></p>
     </div>
     <div class="section">
       <input type="text" id="db_host" name="db_host" tabindex="2" value="<?php echo DATABASE_HOST_VALUE; ?>" size="18" />
@@ -55,30 +56,6 @@
       <input type="hidden" id="db_prefix" name="db_prefix" value="<?php echo DATABASE_NAME_PREFIX; ?>" />
 <?php } ?>
 
-
-<!--
-    <div class="section">
-      <div class="input">
-        <input type="radio" name="db_conn" id="db_conn_yes" tabindex="80" value="true" <?php echo DB_CONN_TRUE; ?>/>
-        <label for="db_conn_yes"><?php echo YES; ?></label>
-        <input type="radio" name="db_conn" id="db_conn_no" tabindex="80" value="false" <?php echo DB_CONN_FALSE; ?>/>
-        <label for="db_conn_no"><?php echo NO; ?></label>
-      </div>
-      <span class="label"><?php echo DATABASE_CONNECTION; ?></span>
-      <p><?php echo DATABASE_CONNECTION_INSTRUCTION. '<a href="javascript:popupWindow(\'popup_help_screen.php?error_code=21\')"> ' . TEXT_HELP_LINK . '</a>'; ?></p>
-    </div>
--->
-
-    <div class="section">
-      <div class="input">
-        <input type="radio" name="db_sess" id="db_sess_yes" tabindex="12" value="true" <?php echo DB_SESS_TRUE; ?>/>
-        <label for="db_sess_yes"><?php echo YES; ?></label>
-        <input type="radio" name="db_sess" id="db_sess_no" tabindex="12" value="false" <?php echo DB_SESS_FALSE; ?>/>
-        <label for="db_sess_no"><?php echo NO; ?></label>
-      </div>
-      <span class="label"><?php echo DATABASE_SESSION; ?></span>
-      <p><?php echo DATABASE_SESSION_INSTRUCTION. '<a href="javascript:popupWindow(\'popup_help_screen.php?error_code=22\')"> ' . TEXT_HELP_LINK . '</a>'; ?></p>
-    </div>
       <div class="section">
       <select id="cache_type" name="cache_type" tabindex="13">
         <option value="none"<?php echo setSelected('none', $_POST['cache_type']); ?>>None</option>
@@ -100,7 +77,7 @@
 <?php if (isset($_GET['configfile'])) echo '<input type="hidden" id="configfile" name="configfile" value="'.$_GET['configfile'].'" />'; ?>
 <?php if (isset($_GET['nogrants'])) echo '<input type="hidden" id="nogrants" name="nogrants" value="'.$_GET['nogrants'].'" />'; ?>
     <input type="submit" name="submit" class="button" tabindex="20" value="<?php echo SAVE_DATABASE_SETTINGS; ?>" />
-<?php if ($write_config_files_only) { ?>
+<?php if (FALSE && $write_config_files_only) { ?>
     <input type="submit" name="submit" class="button" tabindex="21" value="<?php echo ONLY_UPDATE_CONFIG_FILES; ?>" />
 <?php } ?>
 

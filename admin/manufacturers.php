@@ -1,10 +1,10 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2008 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: manufacturers.php 10991 2008-11-15 05:32:16Z drbyte $
+ * @version $Id: manufacturers.php 19330 2011-08-07 06:32:56Z drbyte $
  */
 
   require('includes/application_top.php');
@@ -38,7 +38,7 @@
 
       if ($_POST['manufacturers_image_manual'] != '') {
         // add image manually
-        $manufacturers_image_name = $_POST['img_dir'] . $_POST['manufacturers_image_manual'];
+        $manufacturers_image_name = zen_db_input($_POST['img_dir'] . $_POST['manufacturers_image_manual']);
         $db->Execute("update " . TABLE_MANUFACTURERS . "
                       set manufacturers_image = '" .  $manufacturers_image_name . "'
                       where manufacturers_id = '" . (int)$manufacturers_id . "'");
@@ -49,7 +49,7 @@
           // remove image from database if none
           if ($manufacturers_image->filename != 'none') {
             $db->Execute("update " . TABLE_MANUFACTURERS . "
-                          set manufacturers_image = '" .  $_POST['img_dir'] . $manufacturers_image->filename . "'
+                          set manufacturers_image = '" .  zen_db_input($_POST['img_dir'] . $manufacturers_image->filename) . "'
                           where manufacturers_id = '" . (int)$manufacturers_id . "'");
           } else {
             $db->Execute("update " . TABLE_MANUFACTURERS . "
@@ -87,7 +87,7 @@
           $messageStack->add_session(ERROR_ADMIN_DEMO, 'caution');
           zen_redirect(zen_href_link(FILENAME_MANUFACTURERS, 'page=' . $_GET['page']));
         }
-        $manufacturers_id = zen_db_prepare_input($_GET['mID']);
+        $manufacturers_id = zen_db_prepare_input($_POST['mID']);
 
         if (isset($_POST['delete_image']) && ($_POST['delete_image'] == 'on')) {
           $manufacturer = $db->Execute("select manufacturers_image
@@ -175,6 +175,25 @@
               </tr>
 <?php
   $manufacturers_query_raw = "select manufacturers_id, manufacturers_name, manufacturers_image, date_added, last_modified from " . TABLE_MANUFACTURERS . " order by manufacturers_name";
+
+// reset page when page is unknown
+if (($_GET['page'] == '' or $_GET['page'] == '1') and $_GET['mID'] != '') {
+  $check_page = $db->Execute($manufacturers_query_raw);
+  $check_count=1;
+  if ($check_page->RecordCount() > MAX_DISPLAY_SEARCH_RESULTS) {
+    while (!$check_page->EOF) {
+      if ($check_page->fields['manufacturers_id'] == $_GET['mID']) {
+        break;
+      }
+      $check_count++;
+      $check_page->MoveNext();
+    }
+    $_GET['page'] = round((($check_count/MAX_DISPLAY_SEARCH_RESULTS)+(fmod_round($check_count,MAX_DISPLAY_SEARCH_RESULTS) !=0 ? .5 : 0)),0);
+  } else {
+    $_GET['page'] = 1;
+  }
+}
+
   $manufacturers_split = new splitPageResults($_GET['page'], MAX_DISPLAY_SEARCH_RESULTS, $manufacturers_query_raw, $manufacturers_query_numrows);
   $manufacturers = $db->Execute($manufacturers_query_raw);
   while (!$manufacturers->EOF) {
@@ -263,7 +282,7 @@
 
       $contents = array('form' => zen_draw_form('manufacturers', FILENAME_MANUFACTURERS, 'page=' . $_GET['page'] . '&mID=' . $mInfo->manufacturers_id . '&action=save', 'post', 'enctype="multipart/form-data"'));
       $contents[] = array('text' => TEXT_EDIT_INTRO);
-      $contents[] = array('text' => '<br />' . TEXT_MANUFACTURERS_NAME . '<br>' . zen_draw_input_field('manufacturers_name', $mInfo->manufacturers_name, zen_set_field_length(TABLE_MANUFACTURERS, 'manufacturers_name')));
+      $contents[] = array('text' => '<br />' . TEXT_MANUFACTURERS_NAME . '<br>' . zen_draw_input_field('manufacturers_name', htmlspecialchars($mInfo->manufacturers_name, ENT_COMPAT, CHARSET, TRUE), zen_set_field_length(TABLE_MANUFACTURERS, 'manufacturers_name')));
       $contents[] = array('text' => '<br />' . TEXT_MANUFACTURERS_IMAGE . '<br>' . zen_draw_file_field('manufacturers_image') . '<br />' . $mInfo->manufacturers_image);
       $dir = @dir(DIR_FS_CATALOG_IMAGES);
       $dir_info[] = array('id' => '', 'text' => "Main Directory");
@@ -293,7 +312,7 @@
     case 'delete':
       $heading[] = array('text' => '<b>' . TEXT_HEADING_DELETE_MANUFACTURER . '</b>');
 
-      $contents = array('form' => zen_draw_form('manufacturers', FILENAME_MANUFACTURERS, 'page=' . $_GET['page'] . '&mID=' . $mInfo->manufacturers_id . '&action=deleteconfirm'));
+      $contents = array('form' => zen_draw_form('manufacturers', FILENAME_MANUFACTURERS, 'page=' . $_GET['page'] . '&action=deleteconfirm') . zen_draw_hidden_field('mID', $mInfo->manufacturers_id));
       $contents[] = array('text' => TEXT_DELETE_INTRO);
       $contents[] = array('text' => '<br><b>' . $mInfo->manufacturers_name . '</b>');
       $contents[] = array('text' => '<br>' . zen_draw_checkbox_field('delete_image', '', true) . ' ' . TEXT_DELETE_IMAGE);

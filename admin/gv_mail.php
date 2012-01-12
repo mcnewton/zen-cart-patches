@@ -1,10 +1,10 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: gv_mail.php 15976 2010-04-17 01:48:44Z drbyte $
+ * @version $Id: gv_mail.php 19970 2011-11-08 17:38:46Z ajeh $
  */
 
   require('includes/application_top.php');
@@ -67,15 +67,15 @@
       $html_msg['GV_REDEEM'] = TEXT_TO_REDEEM . TEXT_WHICH_IS . ' <strong>' . $id1 . '</strong> ' . TEXT_IN_CASE;
 
       if (SEARCH_ENGINE_FRIENDLY_URLS == 'true') {
-        $message .= HTTP_SERVER  . DIR_WS_CATALOG . 'index.php/gv_redeem/gv_no/'.$id1 . "\n\n";
-        $html_msg['GV_CODE_URL'] = '<a href="'.HTTP_SERVER  . DIR_WS_CATALOG . 'index.php/gv_redeem/gv_no/'.$id1.'">' .TEXT_CLICK_TO_REDEEM . '</a>'. "&nbsp;";
+        $message .= HTTP_CATALOG_SERVER  . DIR_WS_CATALOG . 'index.php/gv_redeem/gv_no/'.$id1 . "\n\n";
+        $html_msg['GV_CODE_URL'] = '<a href="' . HTTP_CATALOG_SERVER  . DIR_WS_CATALOG . 'index.php/gv_redeem/gv_no/'.$id1.'">' .TEXT_CLICK_TO_REDEEM . '</a>'. "&nbsp;";
       } else {
-        $message .= HTTP_SERVER  . DIR_WS_CATALOG . 'index.php?main_page=gv_redeem&gv_no='.$id1 . "\n\n";
-        $html_msg['GV_CODE_URL'] =  '<a href="'. HTTP_SERVER  . DIR_WS_CATALOG . 'index.php?main_page=gv_redeem&gv_no='.$id1 .'">' .TEXT_CLICK_TO_REDEEM . '</a>' . "&nbsp;";
+        $message .= HTTP_CATALOG_SERVER  . DIR_WS_CATALOG . 'index.php?main_page=gv_redeem&gv_no='.$id1 . "\n\n";
+        $html_msg['GV_CODE_URL'] =  '<a href="'. HTTP_CATALOG_SERVER  . DIR_WS_CATALOG . 'index.php?main_page=gv_redeem&gv_no='.$id1 .'">' .TEXT_CLICK_TO_REDEEM . '</a>' . "&nbsp;";
       }
 
-      $message .= TEXT_OR_VISIT . HTTP_SERVER  . DIR_WS_CATALOG . TEXT_ENTER_CODE . "\n\n";
-      $html_msg['GV_CODE_URL'] .= TEXT_OR_VISIT .  '<a href="'.HTTP_SERVER  . DIR_WS_CATALOG.'">' . STORE_NAME . '</a>' . TEXT_ENTER_CODE;
+      $message .= TEXT_OR_VISIT . HTTP_CATALOG_SERVER  . DIR_WS_CATALOG . TEXT_ENTER_CODE . "\n\n";
+      $html_msg['GV_CODE_URL'] .= TEXT_OR_VISIT .  '<a href="' . HTTP_CATALOG_SERVER . DIR_WS_CATALOG.'">' . STORE_NAME . '</a>' . TEXT_ENTER_CODE;
       $html_msg['EMAIL_FIRST_NAME'] = $mail->fields['customers_firstname'];
       $html_msg['EMAIL_LAST_NAME']  = $mail->fields['customers_lastname'];
 
@@ -84,8 +84,8 @@
 
       zen_mail($mail->fields['customers_firstname'] . ' ' . $mail->fields['customers_lastname'], $mail->fields['customers_email_address'], $subject , $message, $from, $from, $html_msg, 'gv_mail');
       $recip_count++;
-      if (SEND_EXTRA_DISCOUNT_COUPON_ADMIN_EMAILS_TO_STATUS== '1' and SEND_EXTRA_DISCOUNT_COUPON_ADMIN_EMAILS_TO != '') {
-        zen_mail('', SEND_EXTRA_DISCOUNT_COUPON_ADMIN_EMAILS_TO, SEND_EXTRA_DISCOUNT_COUPON_ADMIN_EMAILS_TO_SUBJECT . ' ' . $subject, $message, $from, $from, $html_msg, 'gv_mail_extra');
+      if (SEND_EXTRA_GV_ADMIN_EMAILS_TO_STATUS== '1' and SEND_EXTRA_GV_ADMIN_EMAILS_TO != '') {
+        zen_mail('', SEND_EXTRA_GV_ADMIN_EMAILS_TO, SEND_EXTRA_GV_ADMIN_EMAILS_TO_SUBJECT . ' ' . $subject, $message, $from, $from, $html_msg, 'gv_mail_extra');
       }
 
       // Now create the coupon main and email entry
@@ -104,14 +104,14 @@
       $html_msg['GV_REDEEM'] = TEXT_TO_REDEEM . TEXT_WHICH_IS . ' <strong>' . $id1 . '</strong> ' . TEXT_IN_CASE . "\n\n";
 
       if (SEARCH_ENGINE_FRIENDLY_URLS == 'true') {
-        $message .= HTTP_SERVER  . DIR_WS_CATALOG . 'index.php/gv_redeem/gv_no/'.$id1 . "\n\n";
-        $html_msg['GV_CODE_URL']  = '<a href="'.HTTP_SERVER  . DIR_WS_CATALOG . 'index.php/gv_redeem/gv_no/'.$id1.'">' .TEXT_CLICK_TO_REDEEM . '</a>'. "&nbsp;";
+        $message .= HTTP_CATALOG_SERVER  . DIR_WS_CATALOG . 'index.php/gv_redeem/gv_no/'.$id1 . "\n\n";
+        $html_msg['GV_CODE_URL']  = '<a href="' . HTTP_CATALOG_SERVER . DIR_WS_CATALOG . 'index.php/gv_redeem/gv_no/'.$id1.'">' .TEXT_CLICK_TO_REDEEM . '</a>'. "&nbsp;";
       } else {
-        $message .= HTTP_SERVER  . DIR_WS_CATALOG . 'index.php?main_page=gv_redeem&gv_no='.$id1 . "\n\n";
-        $html_msg['GV_CODE_URL']  =  '<a href="'. HTTP_SERVER  . DIR_WS_CATALOG . 'index.php?main_page=gv_redeem&gv_no='.$id1 .'">' .TEXT_CLICK_TO_REDEEM . '</a>' . "&nbsp;";
+        $message .= HTTP_CATALOG_SERVER  . DIR_WS_CATALOG . 'index.php?main_page=gv_redeem&gv_no='.$id1 . "\n\n";
+        $html_msg['GV_CODE_URL']  =  '<a href="'. HTTP_CATALOG_SERVER  . DIR_WS_CATALOG . 'index.php?main_page=gv_redeem&gv_no='.$id1 .'">' .TEXT_CLICK_TO_REDEEM . '</a>' . "&nbsp;";
       }
-      $message .= TEXT_OR_VISIT . HTTP_SERVER  . DIR_WS_CATALOG  . TEXT_ENTER_CODE . "\n\n";
-      $html_msg['GV_CODE_URL']  .= TEXT_OR_VISIT .  '<a href="'.HTTP_SERVER  . DIR_WS_CATALOG.'">' . STORE_NAME . '</a>' . TEXT_ENTER_CODE;
+      $message .= TEXT_OR_VISIT . HTTP_CATALOG_SERVER  . DIR_WS_CATALOG  . TEXT_ENTER_CODE . "\n\n";
+      $html_msg['GV_CODE_URL']  .= TEXT_OR_VISIT .  '<a href="'.HTTP_CATALOG_SERVER  . DIR_WS_CATALOG.'">' . STORE_NAME . '</a>' . TEXT_ENTER_CODE;
 
       $html_msg['EMAIL_MESSAGE_HTML'] = zen_db_prepare_input($_POST['message_html']);
       $html_msg['EMAIL_FIRST_NAME'] = ''; // unknown, since only an email address was supplied
@@ -123,8 +123,8 @@
       //Send the emails
       zen_mail('Friend', $_POST['email_to'], $subject , $message, $from, $from, $html_msg, 'gv_mail');
       $recip_count++;
-      if (SEND_EXTRA_DISCOUNT_COUPON_ADMIN_EMAILS_TO_STATUS== '1' and SEND_EXTRA_DISCOUNT_COUPON_ADMIN_EMAILS_TO != '') {
-        zen_mail('', SEND_EXTRA_DISCOUNT_COUPON_ADMIN_EMAILS_TO, SEND_EXTRA_DISCOUNT_COUPON_ADMIN_EMAILS_TO_SUBJECT . ' ' . $subject, $message, $from, $from, $html_msg, 'gv_mail_extra');
+      if (SEND_EXTRA_GV_ADMIN_EMAILS_TO_STATUS== '1' and SEND_EXTRA_GV_ADMIN_EMAILS_TO != '') {
+        zen_mail('', SEND_EXTRA_GV_ADMIN_EMAILS_TO, SEND_EXTRA_GV_ADMIN_EMAILS_TO_SUBJECT . ' ' . $subject, $message, $from, $from, $html_msg, 'gv_mail_extra');
       }
 
       // Now create the coupon main entry
@@ -376,7 +376,7 @@ function check_form(form_name) {
               </tr>
              <tr>
                 <td class="main"><?php echo TEXT_FROM; ?></td>
-                <td><?php echo zen_draw_input_field('from', EMAIL_FROM, 'size="50"'); ?></td>
+                <td><?php echo zen_draw_input_field('from', htmlspecialchars(EMAIL_FROM, ENT_COMPAT, CHARSET, TRUE), 'size="50"'); ?></td>
               </tr>
               <tr>
                 <td colspan="2"><?php echo zen_draw_separator('pixel_trans.gif', '1', '10'); ?></td>
@@ -395,26 +395,15 @@ function check_form(form_name) {
               <tr>
                 <td colspan="2"><?php echo zen_draw_separator('pixel_trans.gif', '1', '10'); ?></td>
               </tr>
+<?php if (EMAIL_USE_HTML == 'true') {?>
               <tr>
                 <td valign="top" class="main"><?php echo TEXT_RICH_TEXT_MESSAGE; ?></td>
-                <td>
-<?php if (EMAIL_USE_HTML == 'true') {?>
-                <?php if ($_SESSION['html_editor_preference_status']=="FCKEDITOR") {
-                    $oFCKeditor = new FCKeditor('message_html') ;
-                    $oFCKeditor->Value = ($_POST['message_html']=='') ? TEXT_GV_ANNOUNCE : stripslashes($_POST['message_html']) ;
-                    $oFCKeditor->Width  = '97%' ;
-                    $oFCKeditor->Height = '250' ;
-//                    $oFCKeditor->Create() ;
-                    $output = $oFCKeditor->CreateHtml() ; echo $output;
-                  } else { // using HTMLAREA or just raw "source"
-                  echo zen_draw_textarea_field('message_html', 'soft', '100%', '20', ($_POST['message_html']=='') ? TEXT_GV_ANNOUNCE : stripslashes($_POST['message_html']), 'id="message_html" class="editorHook"');
-                  }
-} ?>
-        </td>
-        </tr>
+                <td><?php echo zen_draw_textarea_field('message_html', 'soft', '100%', '20', htmlspecialchars(($_POST['message_html']=='') ? TEXT_GV_ANNOUNCE : stripslashes($_POST['message_html']), ENT_COMPAT, CHARSET, TRUE), 'id="message_html" class="editorHook"'); ?></td>
+              </tr>
+<?php } ?>
               <tr>
                 <td valign="top" class="main"><?php echo TEXT_MESSAGE; ?></td>
-                <td><?php echo zen_draw_textarea_field('message', 'soft', '60', '15', ($_POST['message']=='') ? strip_tags(TEXT_GV_ANNOUNCE) : stripslashes($_POST['message'])); ?></td>
+                <td><?php echo zen_draw_textarea_field('message', 'soft', '60', '15', htmlspecialchars(($_POST['message']=='') ? strip_tags(TEXT_GV_ANNOUNCE) : stripslashes($_POST['message']), ENT_COMPAT, CHARSET, TRUE)); ?></td>
               </tr>
               <tr>
                 <td colspan="2"><?php echo zen_draw_separator('pixel_trans.gif', '1', '10'); ?></td>

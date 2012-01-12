@@ -6,14 +6,15 @@
  * They can send up to the amount of GV accumlated in their account by way of purchased GV's or GV's sent to them.
  *
  * @package page
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: header_php.php 15880 2010-04-11 16:24:30Z wilt $
+ * @version $Id: header_php.php 18695 2011-05-04 05:24:19Z drbyte $
  */
 
 // This should be first line of the script:
 $zco_notifier->notify('NOTIFY_HEADER_START_GV_SEND');
+if (isset($_POST['message'])) $_POST['message'] = zen_output_string_protected($_POST['message']);
 
 require_once('includes/classes/http_client.php');
 
@@ -211,4 +212,3 @@ $gv_amount = (float)$gv_amount;
 
 // This should be last line of the script:
 $zco_notifier->notify('NOTIFY_HEADER_END_GV_SEND');
-?>

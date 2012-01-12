@@ -1,16 +1,17 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2007 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: split_page_results.php 17066 2010-07-29 19:18:14Z wilt $
+ * @version $Id: split_page_results.php 18926 2011-06-13 04:44:17Z drbyte $
  */
 
   class splitPageResults {
     function splitPageResults(&$current_page_number, $max_rows_per_page, &$sql_query, &$query_num_rows) {
       global $db;
 
+      if ($max_rows_per_page == 0) $max_rows_per_page = 20;
       $sql_query = preg_replace("/\n\r|\r\n|\n|\r/", " ", $sql_query);
 
       if (empty($current_page_number)) $current_page_number = 1;
@@ -39,6 +40,8 @@
 
       $query_num_rows = $reviews_count->fields['total'];
 
+      if ($max_rows_per_page == '') $max_rows_per_page = $query_num_rows;
+      if ($query_num_rows == 0) $max_rows_per_page = 1;
       $num_pages = ceil($query_num_rows / $max_rows_per_page);
       if ($current_page_number > $num_pages) {
         $current_page_number = $num_pages;
@@ -55,8 +58,11 @@
       global $PHP_SELF;
       $current_page_number = (int)$current_page_number;
       if ( zen_not_null($parameters) && (substr($parameters, -1) != '&') ) $parameters .= '&';
+      if ($max_rows_per_page == 0) $max_rows_per_page = 20;
+      if ($query_numrows == 0) return '';
 
 // calculate number of pages needing links
+      if ($max_rows_per_page == '' || $max_rows_per_page == 0) $max_rows_per_page = $query_numrows;
       $num_pages = ceil($query_numrows / $max_rows_per_page);
 
       $pages_array = array();
@@ -102,6 +108,8 @@
 
     function display_count($query_numrows, $max_rows_per_page, $current_page_number, $text_output) {
       $current_page_number = (int)$current_page_number;
+      if ($max_rows_per_page == 0) $max_rows_per_page = 20;
+      if ($max_rows_per_page == '') $max_rows_per_page = $query_numrows;
       $to_num = ($max_rows_per_page * $current_page_number);
       if ($to_num > $query_numrows) $to_num = $query_numrows;
       $from_num = ($max_rows_per_page * ($current_page_number - 1));
@@ -114,4 +122,3 @@
       return sprintf($text_output, $from_num, $to_num, $query_numrows);
     }
   }
-?>

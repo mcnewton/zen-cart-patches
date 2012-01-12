@@ -3,10 +3,10 @@
  * dist-configure.php
  *
  * @package Configuration Settings
- * @copyright Copyright 2003-2007 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: dist-configure.php 6329 2007-05-16 15:36:56Z drbyte $
+ * @version $Id: dist-configure.php 18698 2011-05-04 14:50:06Z wilt $
  * @private
  */
 // Define the webserver and path parameters
@@ -34,8 +34,6 @@ define('DIR_WS_LANGUAGES', DIR_WS_INCLUDES . 'languages/');
 define('DIR_WS_DOWNLOAD_PUBLIC', DIR_WS_CATALOG . 'pub/');
 define('DIR_WS_TEMPLATES', DIR_WS_INCLUDES . 'templates/');
 
-define('DIR_WS_PHPBB', '/phpBB2/');
-
 // * DIR_FS_* = Filesystem directories (local/physical)
 //the following path is a COMPLETE path to your Zen Cart files. eg: /var/www/vhost/accountname/public_html/store/
 define('DIR_FS_CATALOG', '/');
@@ -50,12 +48,9 @@ define('DIR_FS_EMAIL_TEMPLATES', DIR_FS_CATALOG . 'email/');
 define('DB_TYPE', 'mysql');
 define('DB_PREFIX', ''); // prefix for database table names -- preferred to be left empty
 define('DB_SERVER', 'localhost');
-define('DB_SERVER_USERNAME', 'root');
+define('DB_SERVER_USERNAME', '');
 define('DB_SERVER_PASSWORD', '');
 define('DB_DATABASE', '');
-define('USE_PCONNECT', 'false');
-define('STORE_SESSIONS', 'db'); 
-// use 'db' for best support, or '' for file-based storage
 
 // The next 2 "defines" are for SQL cache support.
 // For SQL_CACHE_METHOD, you can select from:  none, database, or file
@@ -65,4 +60,3 @@ define('STORE_SESSIONS', 'db');
 define('SQL_CACHE_METHOD', 'none');
 define('DIR_FS_SQL_CACHE', '/enter/your/path/to/public_html_or_htdocs/and/zencart/here/zen/cache');
 
-?>

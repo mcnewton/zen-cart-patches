@@ -5,10 +5,10 @@
  * Template used to collect/display details of sending a GV to a friend from own GV balance. <br />
  *
  * @package templateSystem
- * @copyright Copyright 2003-2007 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: tpl_gv_send_default.php 5924 2007-02-28 08:25:15Z drbyte $
+ * @version $Id: tpl_gv_send_default.php 18695 2011-05-04 05:24:19Z drbyte $
  */
 ?>
 <div class="centerColumn" id="gvSendDefault">
@@ -44,8 +44,7 @@
 
 <h1 id="gvSendDefaultHeadingConfirm"><?php echo HEADING_TITLE_CONFIRM_SEND; ?></h1>
 
-<form action="<?php echo zen_href_link(FILENAME_GV_SEND, 'action=process', 'SSL', false); ?>" method="post">
-
+<?php echo zen_draw_form('gv_send_process', zen_href_link(FILENAME_GV_SEND, 'action=process', 'SSL', false)); ?>
 <div id="gvSendDefaultMainMessage" class="content"><?php echo sprintf(MAIN_MESSAGE, $currencies->format($_POST['amount'], false), $_POST['to_name'], $_POST['email']); ?></div>
 
 <div id="gvSendDefaultMessageSecondary" class="content"><?php echo sprintf(SECONDARY_MESSAGE, $_POST['to_name'], $currencies->format($_POST['amount'], false), $send_name); ?></div>
@@ -80,7 +79,7 @@
 <br class="clearBoth" />
 <?php if ($messageStack->size('gv_send') > 0) echo $messageStack->output('gv_send'); ?>
 
-<form action="<?php echo zen_href_link(FILENAME_GV_SEND, 'action=send', 'SSL', false); ?>" method="post">
+<?php echo zen_draw_form('gv_send_send', zen_href_link(FILENAME_GV_SEND, 'action=send', 'SSL', false)); ?>
 
 <fieldset>
 <legend><?php echo HEADING_TITLE; ?></legend>

@@ -1,11 +1,12 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2009 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: tax_rates.php 14541 2009-10-08 18:37:47Z drbyte $
+ * @version $Id: tax_rates.php 19330 2011-08-07 06:32:56Z drbyte $
  */
+
   require('includes/application_top.php');
 
   $action = (isset($_GET['action']) ? $_GET['action'] : '');
@@ -58,7 +59,7 @@
           $messageStack->add_session(ERROR_ADMIN_DEMO, 'caution');
           zen_redirect(zen_href_link(FILENAME_TAX_RATES, 'page=' . $_GET['page']));
         }
-        $tax_rates_id = zen_db_prepare_input($_GET['tID']);
+        $tax_rates_id = zen_db_prepare_input($_POST['tID']);
 
         $db->Execute("delete from " . TABLE_TAX_RATES . "
                       where tax_rates_id = '" . (int)$tax_rates_id . "'");
@@ -190,14 +191,14 @@
       $contents[] = array('text' => '<br>' . TEXT_INFO_CLASS_TITLE . '<br>' . zen_tax_classes_pull_down('name="tax_class_id" style="font-size:10px"', $trInfo->tax_class_id));
       $contents[] = array('text' => '<br>' . TEXT_INFO_ZONE_NAME . '<br>' . zen_geo_zones_pull_down('name="tax_zone_id" style="font-size:10px"', $trInfo->geo_zone_id));
       $contents[] = array('text' => '<br>' . TEXT_INFO_TAX_RATE . '<br>' . zen_draw_input_field('tax_rate', $trInfo->tax_rate));
-      $contents[] = array('text' => '<br>' . TEXT_INFO_RATE_DESCRIPTION . '<br>' . zen_draw_input_field('tax_description', $trInfo->tax_description));
+      $contents[] = array('text' => '<br>' . TEXT_INFO_RATE_DESCRIPTION . '<br>' . zen_draw_input_field('tax_description', htmlspecialchars($trInfo->tax_description, ENT_COMPAT, CHARSET, TRUE)));
       $contents[] = array('text' => '<br>' . TEXT_INFO_TAX_RATE_PRIORITY . '<br>' . zen_draw_input_field('tax_priority', $trInfo->tax_priority));
       $contents[] = array('align' => 'center', 'text' => '<br>' . zen_image_submit('button_update.gif', IMAGE_UPDATE) . '&nbsp;<a href="' . zen_href_link(FILENAME_TAX_RATES, 'page=' . $_GET['page'] . '&tID=' . $trInfo->tax_rates_id) . '">' . zen_image_button('button_cancel.gif', IMAGE_CANCEL) . '</a>');
       break;
     case 'delete':
       $heading[] = array('text' => '<b>' . TEXT_INFO_HEADING_DELETE_TAX_RATE . '</b>');
 
-      $contents = array('form' => zen_draw_form('rates', FILENAME_TAX_RATES, 'page=' . $_GET['page'] . '&tID=' . $trInfo->tax_rates_id  . '&action=deleteconfirm'));
+      $contents = array('form' => zen_draw_form('rates', FILENAME_TAX_RATES, 'page=' . $_GET['page'] . '&action=deleteconfirm') . zen_draw_hidden_field('tID', $trInfo->tax_rates_id));
       $contents[] = array('text' => TEXT_INFO_DELETE_INTRO);
       $contents[] = array('text' => '<br><b>' . $trInfo->tax_class_title . ' ' . $trInfo->tax_rate . '%</b>');
       $contents[] = array('align' => 'center', 'text' => '<br>' . zen_image_submit('button_delete.gif', IMAGE_DELETE) . '&nbsp;<a href="' . zen_href_link(FILENAME_TAX_RATES, 'page=' . $_GET['page'] . '&tID=' . $trInfo->tax_rates_id) . '">' . zen_image_button('button_cancel.gif', IMAGE_CANCEL) . '</a>');

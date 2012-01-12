@@ -3,10 +3,10 @@
  * authorize.net AIM payment method class
  *
  * @package paymentMethod
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: authorizenet_aim.php 18013 2010-10-22 03:38:29Z drbyte $
+ * @version $Id: authorizenet_aim.php 19180 2011-07-21 15:33:19Z drbyte $
  */
 /**
  * Authorize.net Payment Module (AIM version)
@@ -113,6 +113,9 @@ class authorizenet_aim extends base {
    */
   function update_status() {
     global $order, $db;
+    // if store is not running in SSL, cannot offer credit card module, for PCI reasons
+    if (!defined('ENABLE_SSL') || ENABLE_SSL != 'true') $this->enabled = FALSE;
+    // check other reasons for the module to be deactivated:
     if ( ($this->enabled == true) && ((int)MODULE_PAYMENT_AUTHORIZENET_AIM_ZONE > 0) ) {
       $check_flag = false;
       $check = $db->Execute("select zone_id from " . TABLE_ZONES_TO_GEO_ZONES . " where geo_zone_id = '" . MODULE_PAYMENT_AUTHORIZENET_AIM_ZONE . "' and zone_country_id = '" . $order->billing['country']['id'] . "' order by zone_id");
@@ -194,7 +197,7 @@ class authorizenet_aim extends base {
                                                'tag' => $this->code.'-cc-expires-month')));
     if (MODULE_PAYMENT_AUTHORIZENET_AIM_USE_CVV == 'True') {
       $selection['fields'][] = array('title' => MODULE_PAYMENT_AUTHORIZENET_AIM_TEXT_CVV,
-                                   'field' => zen_draw_input_field('authorizenet_aim_cc_cvv', '', 'size="4", maxlength="4"' . ' id="'.$this->code.'-cc-cvv"' . $onFocus . ' autocomplete="off"') . ' ' . '<a href="javascript:popupWindow(\'' . zen_href_link(FILENAME_POPUP_CVV_HELP) . '\')">' . MODULE_PAYMENT_AUTHORIZENET_AIM_TEXT_POPUP_CVV_LINK . '</a>',
+                                   'field' => zen_draw_input_field('authorizenet_aim_cc_cvv', '', 'size="4" maxlength="4"' . ' id="'.$this->code.'-cc-cvv"' . $onFocus . ' autocomplete="off"') . ' ' . '<a href="javascript:popupWindow(\'' . zen_href_link(FILENAME_POPUP_CVV_HELP) . '\')">' . MODULE_PAYMENT_AUTHORIZENET_AIM_TEXT_POPUP_CVV_LINK . '</a>',
                                    'tag' => $this->code.'-cc-cvv');
     }
     return $selection;
@@ -280,7 +283,7 @@ class authorizenet_aim extends base {
     $order->info['cc_owner']   = $_POST['cc_owner'];
     $order->info['cc_number']  = str_pad(substr($_POST['cc_number'], -4), strlen($_POST['cc_number']), "X", STR_PAD_LEFT);
     $order->info['cc_expires'] = '';  // $_POST['cc_expires'];
-    $order->info['cc_cvv']     = '***'; //$_POST['cc_cvv'];
+    $order->info['cc_cvv']     = '***';
     $sessID = zen_session_id();
 
     // DATA PREPARATION SECTION
@@ -357,6 +360,13 @@ class authorizenet_aim extends base {
                          'Date' => $order_time,
                          'IP' => zen_get_ip_address(),
                          'Session' => $sessID );
+    // force conversion to USD
+    if ($order->info['currency'] != 'USD') {
+      global $currencies;
+      $submit_data['x_amount'] = number_format($order->info['total'] * $currencies->get_value('USD'), 2);
+      $submit_data['x_currency_code'] = 'USD';
+      unset($submit_data['x_tax'], $submit_data['x_freight']);
+    }
 
     unset($response);
     $response = $this->_sendRequest($submit_data);
@@ -608,9 +618,8 @@ class authorizenet_aim extends base {
     global $db;
     if ($order_time == '') $order_time = date("F j, Y, g:i a");
     // convert output to 1-based array for easier understanding:
-    $resp_output = array_reverse($response);
-    $resp_output[] = 'Response from gateway' . (isset($response['ErrorDetails']) ? ': ' . $response['ErrorDetails'] : '');
-    $resp_output = array_reverse($resp_output);
+    $resp_output = $response;
+    array_unshift($resp_output, 'Response from gateway' . (isset($response['ErrorDetails']) ? ': ' . $response['ErrorDetails'] : ''));
 
     // DEBUG LOGGING
       $errorMessage = date('M-d-Y h:i:s') .
@@ -620,8 +629,7 @@ class authorizenet_aim extends base {
                       'Sending to Authorizenet: ' . print_r($this->reportable_submit_data, true) . "\n\n" .
                       'Results Received back from Authorizenet: ' . print_r($resp_output, true) . "\n\n" .
                       'CURL communication info: ' . print_r($this->commInfo, true) . "\n";
-      if (CURL_PROXY_REQUIRED == 'True')
-        $errorMessage .= 'Using CURL Proxy: [' . CURL_PROXY_SERVER_DETAILS . ']  with Proxy Tunnel: ' .($this->proxy_tunnel_flag ? 'On' : 'Off') . "\n";
+      if (CURL_PROXY_REQUIRED == 'True') $errorMessage .= 'Using CURL Proxy: [' . CURL_PROXY_SERVER_DETAILS . ']  with Proxy Tunnel: ' .($this->proxy_tunnel_flag ? 'On' : 'Off') . "\n";
       $errorMessage .= "\nRAW data received: \n" . $this->authorize . "\n\n";
 
       if (strstr(MODULE_PAYMENT_AUTHORIZENET_AIM_DEBUGGING, 'Log') || strstr(MODULE_PAYMENT_AUTHORIZENET_AIM_DEBUGGING, 'All') || (defined('AUTHORIZENET_DEVELOPER_MODE') && in_array(AUTHORIZENET_DEVELOPER_MODE, array('on', 'certify')))) {
@@ -640,7 +648,7 @@ class authorizenet_aim extends base {
     // Insert the send and receive response data into the database.
     // This can be used for testing or for implementation in other applications
     // This can be turned on and off if the Admin Section
-    if (MODULE_PAYMENT_AUTHORIZENET_AIM_STORE_DATA == 'True') {
+    if (MODULE_PAYMENT_AUTHORIZENET_AIM_STORE_DATA == 'True'){
       $db_response_text = $response[3] . ($this->commError !='' ? ' - Comm results: ' . $this->commErrNo . ' ' . $this->commError : '');
       $db_response_text .= ($response[0] == 2 && $response[2] == 4) ? ' NOTICE: Card should be picked up - possibly stolen ' : '';
       $db_response_text .= ($response[0] == 3 && $response[2] == 11) ? ' DUPLICATE TRANSACTION ATTEMPT ' : '';

@@ -2,10 +2,10 @@
  * @package admin
  * @ignore
  * @access private
- * @copyright Copyright 2003-2006 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: stylesheet.css 5454 2006-12-29 20:10:17Z drbyte $
+ * @version $Id: stylesheet.css 19301 2011-07-28 21:50:05Z kuroi $
  */
 @import url("menu.css");/* including stylesheet for dhtml menu */
 @import url("index.css");/* including stylesheet for index.php */
@@ -361,4 +361,24 @@ color:#ff6600;
 }
 .clearBoth {
 	clear:both;
+}
+#loginExpiryPolicy {
+	margin-top: 2em;
+}
+.hiddenField {
+	display: none;
+}
+#alt_nav {
+	padding:20px;
+	font-size:110%;
+	line-height:1.8em;
+}
+#alt_nav h2 {
+	font-size:90%
+}
+#alt_nav p {
+	max-width:600px;
+}
+#alt_nav a {
+	white-space: nowrap;
 }

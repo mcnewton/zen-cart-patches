@@ -1,10 +1,10 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: update_product.php 15636 2010-03-07 07:00:40Z drbyte $
+ * @version $Id: update_product.php 18695 2011-05-04 05:24:19Z drbyte $
  */
   if (!defined('IS_ADMIN_FLAG')) {
     die('Illegal Access');
@@ -87,10 +87,10 @@
       $tmp_value = zen_db_prepare_input($_POST['music_genre_id']);
       $music_genre_id = (!zen_not_null($tmp_value) || $tmp_value=='' || $tmp_value == 0) ? 0 : $tmp_value;
 
-      $sql_data_array = array('products_id' => $products_id,
-                              'artists_id' => $artists_id,
-                              'record_company_id' => $record_company_id,
-                              'music_genre_id' => $music_genre_id );
+      $sql_data_array = array('products_id' => (int)$products_id,
+                              'artists_id' => (int)$artists_id,
+                              'record_company_id' => (int)$record_company_id,
+                              'music_genre_id' => (int)$music_genre_id );
 
       zen_db_perform(TABLE_PRODUCT_MUSIC_EXTRA, $sql_data_array);
 
@@ -117,9 +117,9 @@
       $tmp_value = zen_db_prepare_input($_POST['music_genre_id']);
       $music_genre_id = (!zen_not_null($tmp_value) || $tmp_value=='' || $tmp_value == 0) ? 0 : $tmp_value;
 
-      $sql_data_array = array('artists_id' => $artists_id,
-                              'record_company_id' => $record_company_id,
-                              'music_genre_id' => $music_genre_id );
+      $sql_data_array = array('artists_id' => (int)$artists_id,
+                              'record_company_id' => (int)$record_company_id,
+                              'music_genre_id' => (int)$music_genre_id );
 
       zen_db_perform(TABLE_PRODUCT_MUSIC_EXTRA, $sql_data_array, 'update', "products_id = '" . (int)$products_id . "'");
 
@@ -136,8 +136,8 @@
                               'products_url' => zen_db_prepare_input($_POST['products_url'][$language_id]));
 
       if ($action == 'insert_product') {
-        $insert_sql_data = array('products_id' => $products_id,
-                                 'language_id' => $language_id);
+        $insert_sql_data = array('products_id' => (int)$products_id,
+                                 'language_id' => (int)$language_id);
 
         $sql_data_array = array_merge($sql_data_array, $insert_sql_data);
 
@@ -158,8 +158,8 @@
 
       if ($action == 'insert_product_meta_tags') {
 
-        $insert_sql_data = array('products_id' => $products_id,
-                                 'language_id' => $language_id);
+        $insert_sql_data = array('products_id' => (int)$products_id,
+                                 'language_id' => (int)$language_id);
 
         $sql_data_array = array_merge($sql_data_array, $insert_sql_data);
 

@@ -1,10 +1,10 @@
 <?php
 /**
  * @package languageDefines
- * @copyright Copyright 2003-2006 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: checkout_shipping.php 4042 2006-07-30 23:05:39Z drbyte $
+ * @version $Id: checkout_shipping.php 18697 2011-05-04 14:35:20Z wilt $
  */
 
 define('NAVBAR_TITLE_1', 'Checkout');
@@ -29,6 +29,7 @@ define('TITLE_CONTINUE_CHECKOUT_PROCEDURE', 'Continue to Step 2');
 define('TEXT_CONTINUE_CHECKOUT_PROCEDURE', '- choose your payment method.');
 
 // when free shipping for orders over $XX.00 is active
-  define('FREE_SHIPPING_TITLE', 'Free Shipping');
-  define('FREE_SHIPPING_DESCRIPTION', 'Free shipping for orders over %s');
-?>
+define('FREE_SHIPPING_TITLE', 'Free Shipping');
+define('FREE_SHIPPING_DESCRIPTION', 'Free shipping for orders over %s');
+
+define('ERROR_PLEASE_RESELECT_SHIPPING_METHOD', 'Your available shipping options have changed. Please re-select your desired shipping method.');

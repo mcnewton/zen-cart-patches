@@ -3,10 +3,10 @@
  * header code, mainly concerned with adding to messagestack when certain warnings are applicable
  *
  * @package templateStructure
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: init_header.php 15921 2010-04-12 22:08:10Z drbyte $
+ * @version $Id: init_header.php 18697 2011-05-04 14:35:20Z wilt $
  */
 if (!defined('IS_ADMIN_FLAG')) {
   die('Illegal Access');
@@ -22,10 +22,6 @@ define('WARN_INSTALL_EXISTENCE', 'true');
  * should a message be displayed if  config directory is writeable
  */
 define('WARN_CONFIG_WRITEABLE', 'true');
-/**
- * should a message be displayed if session directory not writeable
- */
-define('WARN_SESSION_DIRECTORY_NOT_WRITEABLE', 'true');
 /**
  * should a message be displayed if sql cache directory not writeable
  */
@@ -55,17 +51,6 @@ if (WARN_CONFIG_WRITEABLE == 'true') {
   $check_path = realpath(dirname(basename($PHP_SELF)) . '/includes/configure.php');
   if (file_exists($check_path) && is__writeable($check_path)) {
     $messageStack->add('header', sprintf(WARNING_CONFIG_FILE_WRITEABLE, ($check_path == '' ? '..../includes/configure.php' : $check_path)), 'warning');
-  }
-}
-
-// check if the session folder is writeable
-if (WARN_SESSION_DIRECTORY_NOT_WRITEABLE == 'true') {
-  if (STORE_SESSIONS == '') {
-    if (!is_dir(zen_session_save_path())) {
-      $messageStack->add('header', WARNING_SESSION_DIRECTORY_NON_EXISTENT, 'warning');
-    } elseif (!is_writeable(zen_session_save_path())) {
-      $messageStack->add('header', WARNING_SESSION_DIRECTORY_NOT_WRITEABLE, 'warning');
-    }
   }
 }
 

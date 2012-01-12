@@ -3,10 +3,10 @@
  * ot_group_pricing order-total module
  *
  * @package orderTotal
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: ot_group_pricing.php 17155 2010-08-05 13:33:01Z wilt $
+ * @version $Id: ot_group_pricing.php 18695 2011-05-04 05:24:19Z drbyte $
  */
 
 class ot_group_pricing {
@@ -39,7 +39,6 @@ class ot_group_pricing {
           $tax += $od_amount['tax_groups'][$key];
         }
       }
-      if ($od_amount['type'] == 'S') $order->info['shipping_cost'] = 0;
       $order->info['total'] = $order->info['total'] - $od_amount['total'];
       if (DISPLAY_PRICE_WITH_TAX == 'true') {
         $od_amount['total'] += $tax;

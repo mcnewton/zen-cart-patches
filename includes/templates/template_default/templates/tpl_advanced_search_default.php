@@ -6,15 +6,15 @@
  * Displays options fields upon which a product search will be run
  *
  * @package templateSystem
- * @copyright Copyright 2003-2009 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: tpl_advanced_search_default.php 14545 2009-10-09 15:04:33Z ajeh $
+ * @version $Id: tpl_advanced_search_default.php 18695 2011-05-04 05:24:19Z drbyte $
  */
 ?>
 <div class="centerColumn" id="advSearchDefault">
 
-<?php echo zen_draw_form('advanced_search', zen_href_link(FILENAME_ADVANCED_SEARCH_RESULT, '', 'NONSSL', false), 'get', 'onsubmit="return check_form(this);"') . zen_hide_session_id(); ?>
+<?php echo zen_draw_form('advanced_search', zen_href_link(FILENAME_ADVANCED_SEARCH_RESULT, '', $request_type, false), 'get', 'onsubmit="return check_form(this);"') . zen_hide_session_id(); ?>
 <?php echo zen_draw_hidden_field('main_page', FILENAME_ADVANCED_SEARCH_RESULT); ?>
 
 <h1 id="advSearchDefaultHeading"><?php echo HEADING_TITLE_1; ?></h1>

@@ -1,10 +1,10 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2008 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: banner_daily.php 8744 2008-06-28 02:20:51Z drbyte $
+ * @version $Id: banner_daily.php 18695 2011-05-04 05:24:19Z drbyte $
  */
 if (!defined('IS_ADMIN_FLAG')) {
   die('Illegal Access');
@@ -12,8 +12,8 @@ if (!defined('IS_ADMIN_FLAG')) {
 
   include(DIR_WS_CLASSES . 'phplot.php');
 
-  $year = (($_GET['year']) ? $_GET['year'] : date('Y'));
-  $month = (($_GET['month']) ? $_GET['month'] : date('n'));
+  $year = (($_GET['year']) ? zen_db_input($_GET['year']) : date('Y'));
+  $month = (($_GET['month']) ? zen_db_input($_GET['month']) : date('n'));
 
   $days = (date('t', mktime(0,0,0,$month))+1);
   $stats = array();
@@ -21,7 +21,7 @@ if (!defined('IS_ADMIN_FLAG')) {
     $stats[] = array($i, '0', '0');
   }
 
-  $banner_stats = $db->Execute("select dayofmonth(banners_history_date) as banner_day, banners_shown as value, banners_clicked as dvalue from " . TABLE_BANNERS_HISTORY . " where banners_id = '" . $banner_id . "' and month(banners_history_date) = '" . $month . "' and year(banners_history_date) = '" . $year . "'");
+  $banner_stats = $db->Execute("select dayofmonth(banners_history_date) as banner_day, banners_shown as value, banners_clicked as dvalue from " . TABLE_BANNERS_HISTORY . " where banners_id = '" . (int)$banner_id . "' and month(banners_history_date) = '" . $month . "' and year(banners_history_date) = '" . $year . "'");
   while (!$banner_stats->EOF) {
     $stats[($banner_stats->fields['banner_day']-1)] = array($banner_stats->fields['banner_day'], (($banner_stats->fields['value']) ? $banner_stats->fields['value'] : '0'), (($banner_stats->fields['dvalue']) ? $banner_stats->fields['dvalue'] : '0'));
     $banner_stats->MoveNext();
@@ -51,4 +51,3 @@ if (!defined('IS_ADMIN_FLAG')) {
   $graph->DrawGraph();
 
   $graph->PrintImage();
-?>

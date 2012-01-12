@@ -1,10 +1,10 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2009 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: languages.php 14139 2009-08-10 13:46:02Z wilt $
+ * @version $Id: languages.php 19330 2011-08-07 06:32:56Z drbyte $
  */
 
   require('includes/application_top.php');
@@ -240,7 +240,7 @@
           $messageStack->add_session(ERROR_ADMIN_DEMO, 'caution');
           zen_redirect(zen_href_link(FILENAME_LANGUAGES, 'page=' . $_GET['page']));
         }
-        $lID = zen_db_prepare_input($_GET['lID']);
+        $lID = zen_db_prepare_input($_POST['lID']);
         $lng = $db->Execute("select languages_id
                              from " . TABLE_LANGUAGES . "
                              where code = '" . DEFAULT_LANGUAGE . "'");
@@ -263,7 +263,7 @@
 
         // if we just deleted our currently-selected language, need to switch to default lang:
         $lng = $db->Execute("select languages_id from " . TABLE_LANGUAGES . " where code = '" . DEFAULT_LANGUAGE . "'");
-        if ((int)$_SESSION['languages_id'] == (int)$_GET['lID'])  $_SESSION['languages_id'] = $lng->fields['languages_id'];
+        if ((int)$_SESSION['languages_id'] == (int)$_POST['lID'])  $_SESSION['languages_id'] = $lng->fields['languages_id'];
 
         zen_redirect(zen_href_link(FILENAME_LANGUAGES, 'page=' . $_GET['page']));
         break;
@@ -392,7 +392,7 @@
       $heading[] = array('text' => '<b>' . TEXT_INFO_HEADING_EDIT_LANGUAGE . '</b>');
       $contents = array('form' => zen_draw_form('languages', FILENAME_LANGUAGES, 'page=' . $_GET['page'] . '&lID=' . $lInfo->languages_id . '&action=save'));
       $contents[] = array('text' => TEXT_INFO_EDIT_INTRO);
-      $contents[] = array('text' => '<br>' . TEXT_INFO_LANGUAGE_NAME . '<br>' . zen_draw_input_field('name', $lInfo->name));
+      $contents[] = array('text' => '<br>' . TEXT_INFO_LANGUAGE_NAME . '<br>' . zen_draw_input_field('name', htmlspecialchars($lInfo->name, ENT_COMPAT, CHARSET, TRUE)));
       $contents[] = array('text' => '<br>' . TEXT_INFO_LANGUAGE_CODE . '<br>' . zen_draw_input_field('code', $lInfo->code, 'maxlength="2" size="4"'));
       $contents[] = array('text' => '<br>' . TEXT_INFO_LANGUAGE_IMAGE . '<br>' . zen_draw_input_field('image', $lInfo->image));
       $contents[] = array('text' => '<br>' . TEXT_INFO_LANGUAGE_DIRECTORY . '<br>' . zen_draw_input_field('directory', $lInfo->directory));
@@ -402,7 +402,7 @@
       break;
     case 'delete':
       $heading[] = array('text' => '<b>' . TEXT_INFO_HEADING_DELETE_LANGUAGE . '</b>');
-      $contents = array('form'=>zen_draw_form('delete', FILENAME_LANGUAGES, 'page=' . $_GET['page'] . '&lID=' . $lInfo->languages_id . '&action=deleteconfirm', 'post'));
+      $contents = array('form'=>zen_draw_form('delete', FILENAME_LANGUAGES, 'page=' . $_GET['page'] . '&action=deleteconfirm') . zen_draw_hidden_field('lID', $lInfo->languages_id));
       $contents[] = array('text' => TEXT_INFO_DELETE_INTRO);
       $contents[] = array('text' => '<br><b>' . $lInfo->name . '</b>');
       $contents[] = array('text'=> (($remove_language) ? zen_image_submit('button_delete.gif', IMAGE_DELETE) : '') . ' <a href="' . zen_href_link(FILENAME_LANGUAGES, 'page=' . $_GET['page'] . '&lID=' . $_GET['lID']) . '">' . zen_image_button('button_cancel.gif', IMAGE_CANCEL) . '</a>', 'align'=>'center');

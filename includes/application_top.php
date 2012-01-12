@@ -7,10 +7,10 @@
  * see {@link  http://www.zen-cart.com/wiki/index.php/Developers_API_Tutorials#InitSystem wikitutorials} for more details.
  *
  * @package initSystem
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: application_top.php 15766 2010-03-31 20:17:56Z drbyte $
+ * @version $Id: application_top.php 19731 2011-10-09 17:20:30Z wilt $
  */
 /**
  * inoculate against hack attempts which waste CPU cycles
@@ -78,13 +78,10 @@ define('DEBUG_AUTOLOAD', false);
  *
  * Note STRICT_ERROR_REPORTING should never be set to true on a production site. <br />
  * It is mainly there to show php warnings during testing/bug fixing phases.<br />
- * note for strict error reporting we also turn on show_errors as this may be disabled<br />
- * in php.ini. Otherwise we respect the php.ini setting
- *
  */
 if (defined('STRICT_ERROR_REPORTING') && STRICT_ERROR_REPORTING == true) {
   @ini_set('display_errors', TRUE);
-  error_reporting(version_compare(PHP_VERSION, 5.3, '>=') ? E_ALL & ~E_DEPRECATED & ~E_NOTICE : version_compare(PHP_VERSION, 6.0, '>=') ? E_ALL & ~E_DEPRECATED & ~E_NOTICE & ~E_STRICT : E_ALL & ~E_NOTICE);
+  error_reporting(version_compare(PHP_VERSION, 5.3, '>=') ? E_ALL & ~E_DEPRECATED & ~E_NOTICE : version_compare(PHP_VERSION, 5.4, '>=') ? E_ALL & ~E_DEPRECATED & ~E_NOTICE & ~E_STRICT : E_ALL & ~E_NOTICE);
 } else {
   error_reporting(0);
 }
@@ -92,7 +89,7 @@ if (defined('STRICT_ERROR_REPORTING') && STRICT_ERROR_REPORTING == true) {
  * turn off magic-quotes support, for both runtime and sybase, as both will cause problems if enabled
  */
 if (version_compare(PHP_VERSION, 5.3, '<') && function_exists('set_magic_quotes_runtime')) set_magic_quotes_runtime(0);
-if (@ini_get('magic_quotes_sybase') != 0) @ini_set('magic_quotes_sybase', 0);
+if (version_compare(PHP_VERSION, 5.4, '<') && @ini_get('magic_quotes_sybase') != 0) @ini_set('magic_quotes_sybase', 0);
 /**
  * check for and include load application parameters
  */
@@ -131,7 +128,7 @@ if ($za_dir = @dir(DIR_WS_INCLUDES . 'extra_configures')) {
 }
 $autoLoadConfig = array();
 if (isset($loaderPrefix)) {
- $loaderPrefix = preg_replace('/[a-z_]^/', '', $loaderPrefix);
+ $loaderPrefix = preg_replace('/[^a-z_]/', '', $loaderPrefix);
 } else {
   $loaderPrefix = 'config';
 }

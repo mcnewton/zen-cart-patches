@@ -1,10 +1,10 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: products_price_manager.php 17534 2010-09-08 19:50:34Z wilt $
+ * @version $Id: products_price_manager.php 19294 2011-07-28 18:15:46Z drbyte $
  */
 
   require('includes/application_top.php');
@@ -19,14 +19,14 @@
   require(DIR_WS_CLASSES . 'currencies.php');
   $currencies = new currencies();
 
-  $products_filter = (isset($_GET['products_filter']) ? $_GET['products_filter'] : $products_filter);
+  $products_filter = (isset($_GET['products_filter']) ? (int)$_GET['products_filter'] : (int)$products_filter);
 
   $action = (isset($_GET['action']) ? $_GET['action'] : '');
 
-  $current_category_id = (isset($_GET['current_category_id']) ? $_GET['current_category_id'] : $current_category_id);
+  $current_category_id = (isset($_GET['current_category_id']) ? (int)$_GET['current_category_id'] : (int)$current_category_id);
 
   if ($action == 'new_cat') {
-    $current_category_id = (isset($_GET['current_category_id']) ? $_GET['current_category_id'] : $current_category_id);
+    $current_category_id = (isset($_GET['current_category_id']) ? (int)$_GET['current_category_id'] : $current_category_id);
     $sql = "SELECT ptc.*
             FROM " . TABLE_PRODUCTS_TO_CATEGORIES . " ptc
             LEFT JOIN " . TABLE_PRODUCTS_DESCRIPTION . " pd
@@ -87,19 +87,26 @@
 
   require(DIR_WS_MODULES . FILENAME_PREV_NEXT);
 
-  if ($action == 'delete_special') {
-    $delete_special = $db->Execute("delete from " . TABLE_SPECIALS . " where products_id='" . $products_filter . "'");
+  if ($action == 'delete_special_confirm')
+  {
+    if (isset($_POST['product_id']))
+    {
+      $delete_special = $db->Execute("delete from " . TABLE_SPECIALS . " where products_id='" . (int)$_POST['product_id'] . "'");
 
-    // reset products_price_sorter for searches etc.
-    zen_update_products_price_sorter($products_filter);
+      // reset products_price_sorter for searches etc.
+      zen_update_products_price_sorter($products_filter);
 
-    zen_redirect(zen_href_link(FILENAME_PRODUCTS_PRICE_MANAGER, 'products_filter=' . $products_filter . '&current_category_id=' . $current_category_id));
+      zen_redirect(zen_href_link(FILENAME_PRODUCTS_PRICE_MANAGER, 'products_filter=' . $products_filter . '&current_category_id=' . $current_category_id));
+    }
   }
 
-  if ($action == 'delete_featured') {
-    $delete_featured = $db->Execute("delete from " . TABLE_FEATURED . " where products_id='" . $products_filter . "'");
+  if ($action == 'delete_featured_confirm') {
+    if (isset($_POST['product_id']))
+    {
+      $delete_featured = $db->Execute("delete from " . TABLE_FEATURED . " where products_id='" . (int)$_POST['product_id'] . "'");
 
-    zen_redirect(zen_href_link(FILENAME_PRODUCTS_PRICE_MANAGER, 'products_filter=' . $products_filter . '&current_category_id=' . $current_category_id));
+      zen_redirect(zen_href_link(FILENAME_PRODUCTS_PRICE_MANAGER, 'products_filter=' . $products_filter . '&current_category_id=' . $current_category_id));
+    }
   }
 
   if ($action == 'add_discount_qty_id') {
@@ -125,7 +132,7 @@
           $master_categories_id = $_POST['master_categories_id'];
         }
 
-        $products_date_available = ((zen_db_prepare_input($_POST['product_start']) == '') ? 'null' : "'".zen_date_raw($_POST['product_start'])."'");
+        $products_date_available = ((zen_db_prepare_input($_POST['product_start']) == '') ? '0001-01-01' : zen_date_raw($_POST['product_start']));
 
         $specials_date_available = ((zen_db_prepare_input($_POST['special_start']) == '') ? '0001-01-01' : zen_date_raw($_POST['special_start']));
         $specials_expires_date = ((zen_db_prepare_input($_POST['special_end']) == '') ? '0001-01-01' : zen_date_raw($_POST['special_end']));
@@ -136,26 +143,44 @@
     $tmp_value = zen_db_prepare_input($_POST['products_price_sorter']);
     $products_price_sorter = (!zen_not_null($tmp_value) || $tmp_value=='' || $tmp_value == 0) ? 0 : $tmp_value;
 
-
-        $db->Execute("update " . TABLE_PRODUCTS . " set
-            products_price='" . zen_db_prepare_input($_POST['products_price']) . "',
-            products_tax_class_id='" . zen_db_prepare_input($_POST['products_tax_class_id']) . "',
-            products_date_available=" . $products_date_available . ",
+        $sql = "update " . TABLE_PRODUCTS . " set
+            products_price=:price:,
+            products_tax_class_id=:taxClass:,
+            products_date_available=:dateAvailable:,
             products_last_modified=now(),
-            products_status='" . zen_db_prepare_input($_POST['products_status']) . "',
-            products_quantity_order_min='" . zen_db_prepare_input($_POST['products_quantity_order_min']) . "',
-            products_quantity_order_units='" . zen_db_prepare_input($_POST['products_quantity_order_units']) . "',
-            products_quantity_order_max='" . zen_db_prepare_input($_POST['products_quantity_order_max']) . "',
-            product_is_free='" . zen_db_prepare_input($_POST['product_is_free']) . "',
-            product_is_call='" . zen_db_prepare_input($_POST['product_is_call']) . "',
-            products_quantity_mixed='" . zen_db_prepare_input($_POST['products_quantity_mixed']) . "',
-            products_priced_by_attribute='" . zen_db_prepare_input($_POST['products_priced_by_attribute']) . "',
-            products_discount_type='" . (int)zen_db_prepare_input($_POST['products_discount_type']) . "',
-            products_discount_type_from='" . (int)zen_db_prepare_input($_POST['products_discount_type_from']) . "',
-            products_price_sorter='" . $products_price_sorter . "',
-            master_categories_id='" . zen_db_prepare_input($master_categories_id) . "',
-            products_mixed_discount_quantity='" . (int)zen_db_prepare_input($_POST['products_mixed_discount_quantity']) . "'
-            where products_id='" . $products_filter . "'");
+            products_status=:status:,
+            products_quantity_order_min=:orderMin:,
+            products_quantity_order_units=:orderUnits:,
+            products_quantity_order_max=:orderMax:,
+            product_is_free=:isFree:,
+            product_is_call=:isCall:,
+            products_quantity_mixed=:qtyMixed:,
+            products_priced_by_attribute=:pricedByAttr:,
+            products_discount_type=:discType:,
+            products_discount_type_from=:discTypeFrom:,
+            products_price_sorter=:discPriceSorter:,
+            master_categories_id=:masterCatId:,
+            products_mixed_discount_quantity=:discQty:
+            where products_id='" . $products_filter . "'";
+
+        $sql = $db->bindVars($sql, ':price:', $_POST['products_price'], 'string');
+        $sql = $db->bindVars($sql, ':taxClass:', $_POST['products_tax_class_id'], 'integer');
+        $sql = $db->bindVars($sql, ':dateAvailable:', $products_date_available, 'string');
+        $sql = $db->bindVars($sql, ':status:', $_POST['products_status'], 'integer');
+        $sql = $db->bindVars($sql, ':orderMin:', $_POST['products_quantity_order_min'], 'string');
+        $sql = $db->bindVars($sql, ':orderUnits:', $_POST['products_quantity_order_units'], 'string');
+        $sql = $db->bindVars($sql, ':orderMax:', $_POST['products_quantity_order_max'], 'string');
+        $sql = $db->bindVars($sql, ':isFree:', $_POST['product_is_free'], 'integer');
+        $sql = $db->bindVars($sql, ':isCall:', $_POST['product_is_call'], 'integer');
+        $sql = $db->bindVars($sql, ':qtyMixed:', $_POST['products_quantity_mixed'], 'integer');
+        $sql = $db->bindVars($sql, ':pricedByAttr:', $_POST['products_priced_by_attribute'], 'integer');
+        $sql = $db->bindVars($sql, ':discType:', $_POST['products_discount_type'], 'integer');
+        $sql = $db->bindVars($sql, ':discTypeFrom:', $_POST['products_discount_type_from'], 'integer');
+        $sql = $db->bindVars($sql, ':discPriceSorter:', $products_price_sorter, 'string');
+        $sql = $db->bindVars($sql, ':masterCatId:', $master_categories_id, 'integer');
+        $sql = $db->bindVars($sql, ':discQty:', $_POST['products_mixed_discount_quantity'], 'integer');
+
+        $db->Execute($sql);
 
         if ($_POST['specials_id'] != '') {
 
@@ -197,7 +222,7 @@
             $new_id++;
             $db->Execute("insert into " . TABLE_PRODUCTS_DISCOUNT_QUANTITY . "
                           (discount_id, products_id, discount_qty, discount_price)
-                          values ('" . $new_id . "', '" . $products_filter . "', '" . $_POST['discount_qty'][$i] . "', '" . $_POST['discount_price'][$i] . "')");
+                          values ('" . $new_id . "', '" . $products_filter . "', '" . zen_db_input($_POST['discount_qty'][$i]) . "', '" . zen_db_input($_POST['discount_price'][$i]) . "')");
             $discount_cnt++;
           } else {
             loop;
@@ -219,20 +244,7 @@
 
         zen_redirect(zen_href_link(FILENAME_PRODUCTS_PRICE_MANAGER, 'products_filter=' . $_GET['products_filter'] . '&current_category_id=' . $_POST['current_category_id']));
         break;
-      case 'deleteconfirm':
-        // demo active test
-        if (zen_admin_demo()) {
-          $_GET['action']= '';
-          $messageStack->add_session(ERROR_ADMIN_DEMO, 'caution');
-          zen_redirect(zen_href_link(FILENAME_PRODUCTS_PRICE_MANAGER, 'page=' . $_GET['page']));
-        }
-        $featured_id = zen_db_prepare_input($_GET['fID']);
 
-        $db->Execute("delete from " . TABLE_FEATURED . "
-                      where featured_id = '" . (int)$featured_id . "'");
-
-        zen_redirect(zen_href_link(FILENAME_PRODUCTS_PRICE_MANAGER, 'page=' . $_GET['page']));
-        break;
       case 'edit':
       // set edit message
       $messageStack->add_session(PRODUCT_WARNING_UPDATE, 'caution');
@@ -415,7 +427,7 @@ if ($products_filter == '') {
                                from " . TABLE_PRODUCTS . " p, " .
                                         TABLE_FEATURED . " f
                                where p.products_id = f.products_id
-                               and f.products_id = '" . $_GET['products_filter'] . "'");
+                               and f.products_id = '" . (int)$_GET['products_filter'] . "'");
 
 
       if ($product->RecordCount() > 0) {
@@ -428,7 +440,7 @@ if ($products_filter == '') {
                                from " . TABLE_PRODUCTS . " p, " .
                                         TABLE_SPECIALS . " s
                                where p.products_id = s.products_id
-                               and s.products_id = '" . $_GET['products_filter'] . "'");
+                               and s.products_id = '" . (int)$_GET['products_filter'] . "'");
 
       if ($product->RecordCount() > 0) {
         $sInfo = new objectInfo($product->fields);
@@ -445,7 +457,7 @@ if ($products_filter == '') {
                                       p.master_categories_id, p.products_mixed_discount_quantity
                                from " . TABLE_PRODUCTS . " p, " .
                                         TABLE_PRODUCTS_DESCRIPTION . " pd
-                               where p.products_id = '" . $_GET['products_filter'] . "'
+                               where p.products_id = '" . (int)$_GET['products_filter'] . "'
                                and p.products_id = pd.products_id
                                and pd.language_id = '" . (int)$_SESSION['languages_id'] . "'");
 
@@ -571,6 +583,43 @@ var SpecialEndDate = new ctlSpiffyCalendarBox("SpecialEndDate", "new_prices", "s
       <tr>
         <td><?php echo zen_draw_separator('pixel_black.gif', '100%', '2'); ?></td>
       </tr>
+      <?php if ($action == 'delete_special') { ?>
+      <tr>
+        <td>
+          <table border="0" cellspacing="2" cellpadding="2">
+            <tr class="pageHeading">
+              <td class="alert" align="center" colspan="2"><?php echo TEXT_SPECIALS_CONFIRM_DELETE; ?></td>
+            </tr>
+            <tr>
+              <td class="main" align="left">
+              <?php echo zen_draw_form('delete_special', FILENAME_PRODUCTS_PRICE_MANAGER, 'action=delete_special_confirm&products_filter=' . $_GET['products_filter'] . '&current_category_id=' . $_GET['current_category_id']); ?>
+              <input type="hidden" name="product_id" value="<?php echo $_GET['products_filter']; ?>" />
+              <?php echo zen_image_submit('button_delete.gif', IMAGE_REMOVE_SPECIAL); ?>&nbsp;&nbsp;<a href="<?php echo zen_href_link(FILENAME_PRODUCTS_PRICE_MANAGER, 'products_filter=' . $_GET['products_filter'] . '&current_category_id=' . $_GET['current_category_id']); ?>"><?php echo zen_image_button('button_cancel.gif', IMAGE_CANCEL); ?></a>
+              </td>
+            </tr>
+          </table>
+      </td>
+      </tr>
+      <?php } ?>
+      <?php if ($action == 'delete_featured') { ?>
+      <tr>
+        <td>
+          <table border="0" cellspacing="2" cellpadding="2">
+            <tr class="pageHeading">
+              <td class="alert" align="center" colspan="2"><?php echo TEXT_FEATURED_CONFIRM_DELETE; ?></td>
+            </tr>
+            <tr>
+              <td class="main" align="left">
+              <?php echo zen_draw_form('delete_special', FILENAME_PRODUCTS_PRICE_MANAGER, 'action=delete_featured_confirm&products_filter=' . $_GET['products_filter'] . '&current_category_id=' . $_GET['current_category_id']); ?>
+              <input type="hidden" name="product_id" value="<?php echo $_GET['products_filter']; ?>" />
+              <?php echo zen_image_submit('button_delete.gif', IMAGE_REMOVE_FEATURED); ?>&nbsp;&nbsp;<a href="<?php echo zen_href_link(FILENAME_PRODUCTS_PRICE_MANAGER, 'products_filter=' . $_GET['products_filter'] . '&current_category_id=' . $_GET['current_category_id']); ?>"><?php echo zen_image_button('button_cancel.gif', IMAGE_CANCEL); ?></a>
+              </td>
+            </tr>
+          </table>
+      </td>
+      </tr>
+      <?php } ?>
+
       <?php echo zen_draw_form('new_prices', FILENAME_PRODUCTS_PRICE_MANAGER, zen_get_all_get_params(array('action', 'info', $_GET['products_filter'])) . 'action=' . 'update', 'post'); ?>
       <?php echo zen_draw_hidden_field('products_id', $_GET['products_filter']); echo zen_draw_hidden_field('specials_id', $sInfo->specials_id); echo zen_draw_hidden_field('featured_id', $fInfo->featured_id); echo zen_draw_hidden_field('discounts_list', $discounts_qty); ?>
       <tr>
@@ -583,7 +632,7 @@ var SpecialEndDate = new ctlSpiffyCalendarBox("SpecialEndDate", "new_prices", "s
           <tr>
             <td class="main" align="center" valign="middle">
             <?php
-            if ($action == '') {
+            if ($action == '' || $action == 'delete_special' || $action == 'delete_featured') {
               echo '<a href="' . zen_href_link(FILENAME_PRODUCTS_PRICE_MANAGER, 'action=edit' . '&products_filter=' . $products_filter . '&current_category_id=' . $current_category_id) . '">' . zen_image_button('button_edit.gif', IMAGE_EDIT_PRODUCT) . '</a>' . '<br />' . TEXT_INFO_EDIT_CAUTION;
             } else {
               echo zen_image_submit('button_update.gif', IMAGE_UPDATE_PRICE_CHANGES) . '&nbsp;&nbsp;' . '<a href="' . zen_href_link(FILENAME_PRODUCTS_PRICE_MANAGER, 'action=cancel' . '&products_filter=' . $products_filter . '&current_category_id=' . $current_category_id) . '">' . zen_image_button('button_cancel.gif', IMAGE_CANCEL) . '</a>' . '<br />' . TEXT_UPDATE_COMMIT;
@@ -946,7 +995,7 @@ echo zen_draw_hidden_field('master_categories_id', $pInfo->master_categories_id)
           <tr>
             <td class="main" align="center" valign="middle" width="100%">
             <?php
-            if ($action == '') {
+            if ($action == '' || $action == 'delete_special' || $action == 'delete_featured') {
               echo '<a href="' . zen_href_link(FILENAME_PRODUCTS_PRICE_MANAGER, 'action=edit' . '&products_filter=' . $products_filter . '&current_category_id=' . $current_category_id) . '">' . zen_image_button('button_edit.gif', IMAGE_EDIT_PRODUCT) . '</a>' . '<br />' . TEXT_INFO_EDIT_CAUTION;
             } else {
               echo zen_image_submit('button_update.gif', IMAGE_UPDATE_PRICE_CHANGES) . '&nbsp;&nbsp;' . '<a href="' . zen_href_link(FILENAME_PRODUCTS_PRICE_MANAGER, 'action=cancel' . '&products_filter=' . $products_filter . '&current_category_id=' . $current_category_id) . '">' . zen_image_button('button_cancel.gif', IMAGE_CANCEL) . '</a>' . '<br />' . TEXT_UPDATE_COMMIT;

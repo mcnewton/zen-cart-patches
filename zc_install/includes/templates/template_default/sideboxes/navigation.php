@@ -5,7 +5,7 @@
  * @copyright Copyright 2003-2010 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: navigation.php 16937 2010-07-20 17:21:37Z drbyte $
+ * @version $Id: navigation.php 17018 2010-07-27 07:25:41Z drbyte $
  */
 
 ?>

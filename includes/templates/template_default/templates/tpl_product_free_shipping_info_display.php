@@ -6,10 +6,10 @@
  * Displays details of a "free-shipping" product (provided it is assigned to the product-free-shipping product type)
  *
  * @package templateSystem
- * @copyright Copyright 2003-2006 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: tpl_product_free_shipping_info_display.php 16242 2010-05-08 16:05:40Z ajeh $
+ * @version $Id: tpl_product_free_shipping_info_display.php 19690 2011-10-04 16:41:45Z drbyte $
  */
 ?>
 <div class="centerColumn" id="productFreeShipdisplay">
@@ -170,15 +170,6 @@ if (CUSTOMERS_APPROVAL == 3 and TEXT_LOGIN_FOR_PRICE_BUTTON_REPLACE_SHOWROOM == 
  require($template->get_template_dir('/tpl_products_next_previous.php',DIR_WS_TEMPLATE, $current_page_base,'templates'). '/tpl_products_next_previous.php'); ?>
 <?php } ?>
 <!--eof Prev/Next bottom position -->
-
-<!--bof Tell a Friend button -->
-<?php
-  if ($flag_show_product_info_tell_a_friend == 1) { ?>
-<div id="productTellFriendLink" class="buttonRow forward"><?php echo ($flag_show_product_info_tell_a_friend == 1 ? '<a href="' . zen_href_link(FILENAME_TELL_A_FRIEND, 'products_id=' . $_GET['products_id']) . '">' . zen_image_button(BUTTON_IMAGE_TELLAFRIEND, BUTTON_TELLAFRIEND_ALT) . '</a>' : ''); ?></div>
-<?php
-  }
-?>
-<!--eof Tell a Friend button -->
 
 <!--bof Reviews button and count-->
 <?php

@@ -4,10 +4,10 @@
  * Class used for database abstraction to MySQL
  *
  * @package classes
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: query_factory.php 17549 2010-09-12 17:35:32Z drbyte $
+ * @version $Id: query_factory.php 18994 2011-06-30 20:04:18Z wilt $
  */
 if (!defined('IS_ADMIN_FLAG')) {
   die('Illegal Access');
@@ -49,6 +49,7 @@ class queryFactory extends base {
           }
         }
         $this->db_connected = true;
+        if (getenv('TZ') && !defined('DISABLE_MYSQL_TZ_SET')) @mysql_query("SET time_zone = '" . substr_replace(date("O"),":",-2,0) . "'", $this->link);
         return true;
       } else {
         $this->set_error(mysql_errno(),mysql_error(), $zp_real);
@@ -90,8 +91,14 @@ class queryFactory extends base {
   function show_error() {
     if ($this->error_number == 0 && $this->error_text == DB_ERROR_NOT_CONNECTED && !headers_sent() && file_exists('nddbc.html') ) include('nddbc.html');
     echo '<div class="systemError">';
-    echo $this->error_number . ' ' . $this->error_text;
-    echo '<br />in:<br />[' . (strstr($this->zf_sql, 'db_cache') ? 'db_cache table' : $this->zf_sql) . ']<br />';
+    if (defined('STRICT_ERROR_REPORTING') && STRICT_ERROR_REPORTING == true) 
+    {
+      echo $this->error_number . ' ' . $this->error_text;
+      echo '<br />in:<br />[' . (strstr($this->zf_sql, 'db_cache') ? 'db_cache table' : $this->zf_sql) . ']<br />';
+    } else {
+      echo 'WARNING: An Error occurred, please refresh the page and try again.';	
+    }
+    trigger_error($this->error_number . ':' . $this->error_text . ' :: ' . $this->zf_sql, E_USER_ERROR);
     if (defined('IS_ADMIN_FLAG') && IS_ADMIN_FLAG==true) echo 'If you were entering information, press the BACK button in your browser and re-check the information you had entered to be sure you left no blank fields.<br />';
     echo '</div>';
   }
@@ -115,7 +122,7 @@ class queryFactory extends base {
       $zf_sql = $zf_sql . ' LIMIT ' . $zf_limit;
     }
     $this->zf_sql = $zf_sql;
-    if ( $zf_cache AND $zc_cache->sql_cache_exists($zf_sql) AND !$zc_cache->sql_cache_is_expired($zf_sql, $zf_cachetime) ) {
+    if ( $zf_cache AND $zc_cache->sql_cache_exists($zf_sql, $zf_cachetime) ) {
       $obj = new queryFactoryResult;
       $obj->cursor = 0;
       $obj->is_cached = true;
@@ -302,11 +309,14 @@ class queryFactory extends base {
   }
 
   function metaColumns($zp_table) {
-    $res = @mysql_query("select * from " . $zp_table . " limit 1", $this->link);
-    $num_fields = @mysql_num_fields($res);
-    for ($i = 0; $i < $num_fields; $i++) {
-     $obj[strtoupper(@mysql_field_name($res, $i))] = new queryFactoryMeta($i, $res);
-    }
+    $sql = "SHOW COLUMNS from :tableName:";
+    $sql = $this->bindVars($sql, ':tableName:', $zp_table, 'noquotestring');
+    $res = $this->execute($sql);    
+    while (!$res->EOF) 
+    {
+      $obj [strtoupper($res->fields['Field'])] = new queryFactoryMeta($res->fields); 
+      $res->MoveNext();
+    }    
     return $obj;
   }
 
@@ -500,8 +510,10 @@ class queryFactoryResult {
 
 class queryFactoryMeta {
 
-  function queryFactoryMeta($zp_field, $zp_res) {
-    $this->type = @mysql_field_type($zp_res, $zp_field);
-    $this->max_length = @mysql_field_len($zp_res, $zp_field);
+  function queryFactoryMeta($zp_field) {
+    $type = $zp_field['Type'];
+    $rgx = preg_match('/^[a-z]*/', $type, $matches);
+    $this->type = $matches[0];
+    $this->max_length = preg_replace('/[a-z\(\)]/', '', $type);
   }
 }

@@ -1,10 +1,10 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: application_top.php 15766 2010-03-31 20:17:56Z drbyte $
+ * @version $Id: application_top.php 19731 2011-10-09 17:20:30Z wilt $
  */
 /**
  * File contains just application_top code
@@ -13,8 +13,6 @@
  * the elements to be initialised and the order in which that happens.
  *
  * @package admin
- * @copyright Copyright 2003-2010 Zen Cart Development Team
- * @copyright Portions Copyright 2003 osCommerce
  */
 /**
  * boolean if true the autoloader scripts will be parsed and their output shown. For debugging purposes only.
@@ -41,15 +39,15 @@ define('PAGE_PARSE_START_TIME', microtime());
  */
 if (defined('STRICT_ERROR_REPORTING') && STRICT_ERROR_REPORTING == true) {
   @ini_set('display_errors', TRUE);
-  error_reporting(version_compare(PHP_VERSION, 5.3, '>=') ? E_ALL & ~E_DEPRECATED & ~E_NOTICE : version_compare(PHP_VERSION, 6.0, '>=') ? E_ALL & ~E_DEPRECATED & ~E_NOTICE & ~E_STRICT : E_ALL & ~E_NOTICE);
+  error_reporting(version_compare(PHP_VERSION, 5.3, '>=') ? E_ALL & ~E_DEPRECATED & ~E_NOTICE : version_compare(PHP_VERSION, 5.4, '>=') ? E_ALL & ~E_DEPRECATED & ~E_NOTICE & ~E_STRICT : E_ALL & ~E_NOTICE);
 } else {
   error_reporting(0);
 }
 /*
  * turn off magic-quotes support, for both runtime and sybase, as both will cause problems if enabled
  */
-if (function_exists('set_magic_quotes_runtime') && version_compare(PHP_VERSION, 5.3, '<')) set_magic_quotes_runtime(0);
-if (@ini_get('magic_quotes_sybase') != 0) @ini_set('magic_quotes_sybase', 0);
+if (version_compare(PHP_VERSION, 5.3, '<') && function_exists('set_magic_quotes_runtime')) set_magic_quotes_runtime(0);
+if (version_compare(PHP_VERSION, 5.4, '<') && @ini_get('magic_quotes_sybase') != 0) @ini_set('magic_quotes_sybase', 0);
 // set php_self in the local scope
 if (!isset($PHP_SELF)) $PHP_SELF = $_SERVER['PHP_SELF'];
 
@@ -137,7 +135,7 @@ define('DIR_WS_TEMPLATES', DIR_WS_INCLUDES . 'templates/');
 unset($loaderPrefix); // admin doesn't need this override
 $autoLoadConfig = array();
 if (isset($loaderPrefix)) {
- $loaderPrefix = preg_replace('/[a-z_]^/', '', $loaderPrefix);
+ $loaderPrefix = preg_replace('/[^a-z_]/', '', $loaderPrefix);
 } else {
   $loaderPrefix = 'config';
 }

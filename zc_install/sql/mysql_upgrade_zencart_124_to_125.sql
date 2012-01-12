@@ -1,6 +1,6 @@
 # This SQL script upgrades the core Zen Cart database structure from v1.2.4 to v1.2.5
 #
-# $Id: mysql_upgrade_zencart_124_to_125.sql 4243 2006-08-24 10:55:28Z drbyte $
+# $Id: mysql_upgrade_zencart_124_to_125.sql 18695 2011-05-04 05:24:19Z drbyte $
 #
 
 ## CONFIGURATION TABLE
@@ -61,7 +61,7 @@ CREATE TABLE meta_tags_products_description (
   metatags_keywords TEXT,
   metatags_description TEXT,
   PRIMARY KEY  (products_id,language_id)
-) TYPE=MyISAM;
+);
 
 
 #insert product type layout settings
@@ -131,7 +131,7 @@ CREATE TABLE admin_activity_log (
   KEY page_accessed (page_accessed),
   KEY access_date (access_date),
   KEY idx_ip_zen (ip_address)
-) TYPE=MyISAM;
+);
 
 
 ### ADD INDEXES:

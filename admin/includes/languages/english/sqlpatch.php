@@ -1,27 +1,15 @@
 <?php
-//
-// +----------------------------------------------------------------------+
-// |zen-cart Open Source E-commerce                                       |
-// +----------------------------------------------------------------------+
-// | Copyright (c) 2006 The zen-cart developers                           |
-// |                                                                      |
-// | http://www.zen-cart.com/index.php                                    |
-// |                                                                      |
-// | Portions Copyright (c) 2003 osCommerce                               |
-// +----------------------------------------------------------------------+
-// | This source file is subject to version 2.0 of the GPL license,       |
-// | that is bundled with this package in the file LICENSE, and is        |
-// | available through the world-wide-web at the following url:           |
-// | http://www.zen-cart.com/license/2_0.txt.                             |
-// | If you did not receive a copy of the zen-cart license and are unable |
-// | to obtain it through the world-wide-web, please send a note to       |
-// | license@zen-cart.com so we can mail you a copy immediately.          |
-// +----------------------------------------------------------------------+
-//  $Id: sqlpatch.php 4138 2006-08-14 05:56:44Z drbyte $
-//
+/**
+ * @package admin
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
+ * @copyright Portions Copyright 2003 osCommerce
+ * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
+ * @version $Id: sqlpatch.php 19537 2011-09-20 17:14:44Z drbyte $
+ */
+
   define('HEADING_TITLE','SQL Query Executor');
   define('HEADING_WARNING','BE SURE TO DO A FULL DATABASE BACKUP BEFORE RUNNING SCRIPTS HERE');
-  define('HEADING_WARNING2','If you are installing 3rd-party contributions, note that you do so at your own risk.<br />Zen Cart&trade; makes no warranty as to the safety of scripts supplied by 3rd-party contributors. Test before using on your live database!');
+  define('HEADING_WARNING2','If you are installing 3rd-party contributions, note that you do so at your own risk.<br />Zen Cart&reg; makes no warranty as to the safety of scripts supplied by 3rd-party contributors. Test before using on your live database!');
   define('HEADING_WARNING_INSTALLSCRIPTS', 'NOTE: Zen Cart database-upgrade scripts should NOT be run from this page.<br />Please upload the new <strong>zc_install</strong> folder and run the upgrade from there instead for better reliability.');
   define('TEXT_QUERY_RESULTS','Query Results:');
   define('TEXT_ENTER_QUERY_STRING','Enter the query <br />to be executed:&nbsp;&nbsp;<br /><br />Be sure to<br />end with ;');
@@ -36,7 +24,7 @@
                               'The commands entered or uploaded may only begin with the following statements, and MUST be in UPPERCASE:'.
                               '<br /><ul><li>DROP TABLE IF EXISTS</li><li>CREATE TABLE</li><li>INSERT INTO</li><li>INSERT IGNORE INTO</li><li>ALTER TABLE</li>' .
                               '<li>UPDATE (just a single table)</li><li>UPDATE IGNORE (just a single table)</li><li>DELETE FROM</li><li>DROP INDEX</li><li>CREATE INDEX</li>' .
-                              '<br /><li>SELECT </li></ul>' . 
+                              '<br /><li>SELECT </li></ul>' .
 '<h2>Advanced Methods</h2>The following methods can be used to issue more complex statements as necessary:<br />
 To run some blocks of code together so that they are treated as one command by MySQL, you need the "<code>#NEXT_X_ROWS_AS_ONE_COMMAND:xxx</code>" value set.  The parser will then treat X number of commands as one.<br />
 If you are running this file thru phpMyAdmin or equivalent, the "#NEXT..." comment is ignored, and the script will process fine.<br />
@@ -79,4 +67,3 @@ WHERE p.othercol_f = pm.othercol_f;</li>
   define('REASON_PRIMARY_KEY_ALREADY_EXISTS','Cannot add primary key to table %s because a primary key already exists.');
   define('REASON_NO_PRIVILEGES','User '.DB_SERVER_USERNAME.'@'.DB_SERVER.' does not have %s privileges to database '.DB_DATABASE.'.');
 
-?>

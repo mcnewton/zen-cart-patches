@@ -3,10 +3,10 @@
  * upload Class.
  *
  * @package classes
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: upload.php 17990 2010-10-18 22:43:35Z drbyte $
+ * @version $Id: upload.php 18698 2011-05-04 14:50:06Z wilt $
 */
 
   class upload {
@@ -59,8 +59,8 @@
       }
 
       if ( zen_not_null($file['tmp_name']) && ($file['tmp_name'] != 'none') && is_uploaded_file($file['tmp_name']) ) {
-        if (sizeof($this->extensions) > 0) {
-          if (!in_array(strtolower(substr($file['name'], strrpos($file['name'], '.')+1)), $this->extensions)) {
+        if (sizeof($this->extensions) > 0 || substr($file['name'], -9) == '.htaccess') {
+          if (!in_array(strtolower(substr($file['name'], strrpos($file['name'], '.')+1)), $this->extensions) || substr($file['name'], -9) == '.htaccess') {
             if ($this->message_location == 'direct') {
               $messageStack->add(sprintf(ERROR_FILETYPE_NOT_ALLOWED, strtolower(substr($file['name'], strrpos($file['name'], '.')+1))), 'error');
             } else {
@@ -188,4 +188,4 @@
       }
     }
   }
-?>
+

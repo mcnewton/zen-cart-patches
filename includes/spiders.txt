@@ -1,9 +1,8 @@
-$Id: spiders.txt 16983 2010-07-25 17:40:59Z drbyte $
+$Id: spiders.txt 18695 2011-05-04 05:24:19Z drbyte $
 bot
 robot
 crawl
 scrape
-search
 seek.
 seeker
 slurp
@@ -23,13 +22,11 @@ ananzi
 answerbus
 anthill
 appie
-appie1.1
 arachnophilia
 arale
 araneo
 araybot
 architext
-architextspider
 aretha
 argus
 ariadne
@@ -71,6 +68,7 @@ ccubee
 cfetch
 charlotte
 checkbot
+check_http
 cherrypicker
 christcrawler
 churl
@@ -347,6 +345,9 @@ sbider
 scooter
 scout
 scrubby
+search agent
+search.aus-au.com
+searchprocess
 senrigan
 sensis
 seosearch
@@ -365,6 +366,7 @@ smart spider
 snappy
 snooper
 sohu
+suntek search engine
 solbot
 speedfind
 speedy
@@ -476,4 +478,3 @@ zermelo
 zipppbot
 zoomspider
 zyborg
-zyborg/1.0

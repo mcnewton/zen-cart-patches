@@ -1,29 +1,19 @@
 <?php
-//
-// +----------------------------------------------------------------------+
-// |zen-cart Open Source E-commerce                                       |
-// +----------------------------------------------------------------------+
-// | Copyright (c) 2003 The zen-cart developers                           |
-// |                                                                      |
-// | http://www.zen-cart.com/index.php                                    |
-// |                                                                      |
-// | Portions Copyright (c) 2003 osCommerce                               |
-// +----------------------------------------------------------------------+
-// | This source file is subject to version 2.0 of the GPL license,       |
-// | that is bundled with this package in the file LICENSE, and is        |
-// | available through the world-wide-web at the following url:           |
-// | http://www.zen-cart.com/license/2_0.txt.                             |
-// | If you did not receive a copy of the zen-cart license and are unable |
-// | to obtain it through the world-wide-web, please send a note to       |
-// | license@zen-cart.com so we can mail you a copy immediately.          |
-// +----------------------------------------------------------------------+
-//  $Id: gv_queue.php 1969 2005-09-13 06:57:21Z drbyte $
-//
+/**
+ * @package admin
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
+ * @copyright Portions Copyright 2003 osCommerce
+ * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
+ * @version $Id: gv_queue.php 18695 2011-05-04 05:24:19Z drbyte $
+ */
 
   require('includes/application_top.php');
 
   require(DIR_WS_CLASSES . 'currencies.php');
   $currencies = new currencies();
+
+  if (isset($_GET['order'])) $_GET['order'] = (int)$_GET['order'];
+  if (isset($_GET['gid'])) $_GET['gid'] = (int)$_GET['gid'];
 
 // bof: find gv for a particular order and set page
   if ($_GET['order'] != '') {
@@ -47,15 +37,15 @@
   }
 // eof: find gv for a particular order and set page
 
-  if ($_GET['action'] == 'confirmrelease' && isset($_GET['gid'])) {
+  if ($_GET['action'] == 'confirmrelease' && isset($_POST['gid'])) {
     $gv_result = $db->Execute("select release_flag
                                from " . TABLE_COUPON_GV_QUEUE . "
-                               where unique_id='" . $_GET['gid'] . "'");
+                               where unique_id='" . (int)$_POST['gid'] . "'");
 
     if ($gv_result->fields['release_flag'] == 'N') {
       $gv_resulta = $db->Execute("select customer_id, amount, order_id
                                   from " . TABLE_COUPON_GV_QUEUE . "
-                                  where unique_id='" . $_GET['gid'] . "'");
+                                  where unique_id='" . (int)$_POST['gid'] . "'");
 
       if ($gv_resulta->RecordCount() > 0) {
       $gv_amount = $gv_resulta->fields['amount'];
@@ -111,9 +101,11 @@
       }
         $db->Execute("update " . TABLE_COUPON_GV_QUEUE . "
                       set release_flag= 'Y'
-                      where unique_id='" . $_GET['gid'] . "'");
+                      where unique_id='" . (int)$_POST['gid'] . "'");
       }
     }
+    // return back to same page after release
+    zen_redirect(zen_href_link(FILENAME_GV_QUEUE, 'page=' . (int)$_GET['page']));
   }
 ?>
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN">
@@ -206,8 +198,8 @@
   switch ($_GET['action']) {
     case 'release':
       $heading[] = array('text' => '[' . $gInfo->unique_id . '] ' . zen_datetime_short($gInfo->date_created) . ' ' . $currencies->format($gInfo->amount));
-
-      $contents[] = array('align' => 'center', 'text' => '<a href="' . zen_href_link('gv_queue.php', 'action=confirmrelease&gid=' . $gInfo->unique_id,'NONSSL') . '">' . zen_image_button('button_confirm_red.gif', IMAGE_CONFIRM) . '</a> <a href="' . zen_href_link('gv_queue.php', 'action=cancel&gid=' . $gInfo->unique_id,'NONSSL') . '">' . zen_image_button('button_cancel.gif', IMAGE_CANCEL) . '</a>');
+      $contents[] = array('align' => 'center', 'text' => zen_draw_form('gv_release', FILENAME_GV_QUEUE, 'action=confirmrelease&page=' . $_GET['page']) . zen_image_submit('button_confirm_red.gif', IMAGE_CONFIRM) . '<input type="hidden" name="gid" value="' . $gInfo->unique_id . '" /></form>' . '<a href="' . zen_href_link('gv_queue.php', 'action=cancel&gid=' . $gInfo->unique_id . '&page=' . $_GET['page'],'NONSSL') . '">' . zen_image_button('button_cancel.gif', IMAGE_CANCEL) . '</a>');
+//      $contents[] = array('align' => 'center', 'text' => '<a href="' . zen_href_link('gv_queue.php', 'action=confirmrelease&gid=' . $gInfo->unique_id . '&page=' . $_GET['page'],'NONSSL') . '">' . zen_image_button('button_confirm_red.gif', IMAGE_CONFIRM) . '</a> <a href="' . zen_href_link('gv_queue.php', 'action=cancel&gid=' . $gInfo->unique_id . '&page=' . $_GET['page'],'NONSSL') . '">' . zen_image_button('button_cancel.gif', IMAGE_CANCEL) . '</a>');
       break;
     default:
       $heading[] = array('text' => '[' . $gInfo->unique_id . '] ' . zen_datetime_short($gInfo->date_created) . ' ' . $currencies->format($gInfo->amount));
@@ -215,7 +207,7 @@
       if ($gv_list->RecordCount() == 0) {
         $contents[] = array('align' => 'center','text' => TEXT_GV_NONE);
       } else {
-        $contents[] = array('align' => 'center','text' => '<a href="' . zen_href_link('gv_queue.php','action=release&gid=' . $gInfo->unique_id,'NONSSL'). '">' . zen_image_button('button_release_gift.gif', IMAGE_RELEASE) . '</a>');
+        $contents[] = array('align' => 'center','text' => '<a href="' . zen_href_link('gv_queue.php','action=release&gid=' . $gInfo->unique_id . '&page=' . $_GET['page'],'NONSSL'). '">' . zen_image_button('button_release_gift.gif', IMAGE_RELEASE) . '</a>');
 
 // quick link to order
         $contents[] = array('align' => 'center', 'text' => '<br />' . zen_image(DIR_WS_IMAGES . 'pixel_black.gif','','90%','3'));

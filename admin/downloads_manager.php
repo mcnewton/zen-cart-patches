@@ -1,10 +1,10 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: downloads_manager.php 17534 2010-09-08 19:50:34Z wilt $
+ * @version $Id: downloads_manager.php 19294 2011-07-28 18:15:46Z drbyte $
  */
 
   require('includes/application_top.php');
@@ -20,8 +20,12 @@
     switch ($action) {
       case 'insert':
       case 'save':
-        $db->Execute("update " . TABLE_PRODUCTS_ATTRIBUTES_DOWNLOAD . " set products_attributes_filename='" . zen_db_prepare_input($_POST['products_attributes_filename']) . "', products_attributes_maxdays='" . zen_db_prepare_input($_POST['products_attributes_maxdays']) . "', products_attributes_maxcount='" . zen_db_prepare_input($_POST['products_attributes_maxcount']) . "' where products_attributes_id='" . $_GET['padID'] . "'");
-        zen_redirect(zen_href_link(FILENAME_DOWNLOADS_MANAGER, 'padID=' . $_GET['padID'] . '&page=' . $_GET['page']));
+        $sql = "update " . TABLE_PRODUCTS_ATTRIBUTES_DOWNLOAD . " set products_attributes_filename=:filename:, products_attributes_maxdays=:maxdays:, products_attributes_maxcount=:maxcount: where products_attributes_id='" . (int)$_GET['padID'] . "'";
+        $sql = $db->bindVars($sql, ':filename:', $_POST['products_attributes_filename'], 'string');
+        $sql = $db->bindVars($sql, ':maxdays:', $_POST['products_attributes_maxdays'], 'string');
+        $sql = $db->bindVars($sql, ':maxcount:', $_POST['products_attributes_maxcount'], 'string');
+        $db->Execute($sql);
+        zen_redirect(zen_href_link(FILENAME_DOWNLOADS_MANAGER, 'padID=' . (int)$_GET['padID'] . '&page=' . (int)$_GET['page']));
         break;
     }
   }
@@ -39,7 +43,7 @@
 <script language="javascript"><!--
 function go_option() {
   if (document.option_order_by.selected.options[document.option_order_by.selected.selectedIndex].value != "none") {
-    location = "<?php echo zen_href_link(FILENAME_ATTRIBUTES_CONTROLLER, 'option_page=' . ($_GET['option_page'] ? $_GET['option_page'] : 1)); ?>&option_order_by="+document.option_order_by.selected.options[document.option_order_by.selected.selectedIndex].value;
+    location = "<?php echo zen_href_link(FILENAME_ATTRIBUTES_CONTROLLER, 'option_page=' . ($_GET['option_page'] ? (int)$_GET['option_page'] : 1)); ?>&option_order_by="+document.option_order_by.selected.options[document.option_order_by.selected.selectedIndex].value;
   }
 }
 //--></script>
@@ -210,15 +214,6 @@ function go_option() {
   $contents = array();
 
   switch ($action) {
-/*
-    case 'confirm':
-      $heading[] = array('text' => '<b>' . TEXT_INFO_HEADING_DELETE_PRODUCTS_DOWNLOAD . '</b>');
-
-      $contents = array('form' => zen_draw_form('products_downloads_delete', FILENAME_DOWNLOADS_MANAGER, zen_get_all_get_params(array('padID', 'action')) . 'padID=' . $padInfo->products_attributes_id . '&action=deleteconfirm' . '&page=' . $_GET['page']));
-      $contents[] = array('text' => TEXT_DELETE_INTRO . '<br /><br /><b>' . $padInfo->products_name . ' - ' . $padInfo->products_attributes_filename . '</b>');
-      $contents[] = array('align' => 'center', 'text' => '<br />' . zen_image_submit('button_delete.gif', IMAGE_DELETE) . ' <a href="' . zen_href_link(FILENAME_DOWNLOADS_MANAGER, zen_get_all_get_params(array('padID', 'action')) . 'padID=' . $padInfo->products_attributes_id) . '&page=' . $_GET['page'] . '">' . zen_image_button('button_cancel.gif', IMAGE_CANCEL) . '</a>');
-      break;
-*/
     case 'edit':
       $heading[] = array('text' => '<b>' . TEXT_INFO_HEADING_EDIT_PRODUCTS_DOWNLOAD . '</b>');
 

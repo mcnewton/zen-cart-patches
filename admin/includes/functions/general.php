@@ -1,10 +1,10 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: general.php 17717 2010-10-03 21:45:52Z drbyte $
+ * @version $Id: general.php 19330 2011-08-07 06:32:56Z drbyte $
  */
 
 ////
@@ -249,7 +249,7 @@
                                 TABLE_PRODUCTS_DESCRIPTION . " pd
                                 where p.products_id = pd.products_id
                                 and pd.language_id = '" . (int)$_SESSION['languages_id'] . "'
-                                and ptc.categories_id = '" . $current_category_id . "'
+                                and ptc.categories_id = '" . (int)$current_category_id . "'
                                 order by products_name");
     } else {
       $products = $db->Execute("select p.products_id, pd.products_name, p.products_price, p.products_model
@@ -871,7 +871,7 @@
   function zen_cfg_select_coupon_id($coupon_id, $key = '') {
     global $db;
     $name = (($key) ? 'configuration[' . $key . ']' : 'configuration_value');
-    $coupons = $db->execute("select cd.coupon_name, c.coupon_id from " . TABLE_COUPONS ." c, ". TABLE_COUPONS_DESCRIPTION . " cd where cd.coupon_id = c.coupon_id and cd.language_id = '" . $_SESSION['languages_id'] . "'");
+    $coupons = $db->execute("select cd.coupon_name, c.coupon_id from " . TABLE_COUPONS ." c, ". TABLE_COUPONS_DESCRIPTION . " cd where cd.coupon_id = c.coupon_id and cd.language_id = '" . (int)$_SESSION['languages_id'] . "'");
     $coupon_array[] = array('id' => '0',
                             'text' => 'None');
 
@@ -931,7 +931,7 @@
 // Function to read in text area in admin
  function zen_cfg_textarea($text, $key = '') {
     $name = (($key) ? 'configuration[' . $key . ']' : 'configuration_value');
-    return zen_draw_textarea_field($name, false, 60, 5, $text);
+    return zen_draw_textarea_field($name, false, 60, 5, htmlspecialchars($text, ENT_COMPAT, CHARSET, TRUE));
   }
 
 
@@ -939,7 +939,7 @@
 // Function to read in text area in admin
  function zen_cfg_textarea_small($text, $key = '') {
     $name = (($key) ? 'configuration[' . $key . ']' : 'configuration_value');
-    return zen_draw_textarea_field($name, false, 35, 1, $text);
+    return zen_draw_textarea_field($name, false, 35, 1, htmlspecialchars($text, ENT_COMPAT, CHARSET, TRUE));
   }
 
 
@@ -1000,7 +1000,7 @@
 // Sets timeout for the current script.
 // Cant be used in safe mode.
   function zen_set_time_limit($limit) {
-    if (!get_cfg_var('safe_mode')) {
+    if (version_compare(PHP_VERSION, 5.4, '>=') || !get_cfg_var('safe_mode')) {
       @set_time_limit($limit);
     }
   }
@@ -1109,7 +1109,7 @@
                  'db_version' => 'MySQL ' . (function_exists('mysql_get_server_info') ? mysql_get_server_info() : ''),
                  'db_date' => zen_datetime_short($db_query->fields['datetime']),
                  'php_memlimit' => @ini_get('memory_limit'),
-                 'php_safemode' => strtolower(@ini_get('safe_mode')),
+                 'php_safemode' => version_compare(PHP_VERSION, 5.4, '<') ? strtolower(@ini_get('safe_mode')) : '',
                  'php_file_uploads' => strtolower(@ini_get('file_uploads')),
                  'php_uploadmaxsize' => @ini_get('upload_max_filesize'),
                  'php_postmaxsize' => @ini_get('post_max_size'),
@@ -1366,13 +1366,13 @@ while (!$chk_sale_categories_all->EOF) {
                                      from " . TABLE_PRODUCTS . "
                                      where products_image = '" . zen_db_input($product_image->fields['products_image']) . "'");
 
-    if ($duplicate_image->fields['total'] < 2 and $product_image->fields['products_image'] != '') {
+    if ($duplicate_image->fields['total'] < 2 and $product_image->fields['products_image'] != '' && PRODUCTS_IMAGE_NO_IMAGE != substr($product_image->fields['products_image'], strrpos($product_image->fields['products_image'], '/')+1)) {
       $products_image = $product_image->fields['products_image'];
       $products_image_extension = substr($products_image, strrpos($products_image, '.'));
-			$products_image_base = preg_replace('/' . $products_image_extension . '/', '', $products_image);
+      $products_image_base = preg_replace('/' . $products_image_extension . '/', '', $products_image);
 
       $filename_medium = 'medium/' . $products_image_base . IMAGE_SUFFIX_MEDIUM . $products_image_extension;
-			$filename_large = 'large/' . $products_image_base . IMAGE_SUFFIX_LARGE . $products_image_extension;
+      $filename_large = 'large/' . $products_image_base . IMAGE_SUFFIX_LARGE . $products_image_extension;
 
       if (file_exists(DIR_FS_CATALOG_IMAGES . $product_image->fields['products_image'])) {
         @unlink(DIR_FS_CATALOG_IMAGES . $product_image->fields['products_image']);
@@ -1440,7 +1440,7 @@ while (!$chk_sale_categories_all->EOF) {
   function zen_products_attributes_download_delete($product_id) {
     global $db;
   // remove downloads if they exist
-    $remove_downloads= $db->Execute("select products_attributes_id from " . TABLE_PRODUCTS_ATTRIBUTES . " where products_id= '" . $product_id . "'");
+    $remove_downloads= $db->Execute("select products_attributes_id from " . TABLE_PRODUCTS_ATTRIBUTES . " where products_id= '" . (int)$product_id . "'");
     while (!$remove_downloads->EOF) {
       $db->Execute("delete from " . TABLE_PRODUCTS_ATTRIBUTES_DOWNLOAD . " where products_attributes_id= '" . $remove_downloads->fields['products_attributes_id'] . "'");
       $remove_downloads->MoveNext();
@@ -1477,6 +1477,8 @@ while (!$chk_sale_categories_all->EOF) {
     $db->Execute("delete from " . TABLE_ORDERS_TOTAL . "
                   where orders_id = '" . (int)$order_id . "'");
 
+    $db->Execute("delete from " . TABLE_COUPON_GV_QUEUE . "
+                  where order_id = '" . (int)$order_id . "' and release_flag = 'N'");
   }
 
   function zen_get_file_permissions($mode) {
@@ -1681,7 +1683,7 @@ while (!$chk_sale_categories_all->EOF) {
       $tax_multiplier = 0;
       while (!$tax->EOF) {
         $tax_multiplier += $tax->fields['tax_rate'];
-		$tax->MoveNext();
+    $tax->MoveNext();
       }
       return $tax_multiplier;
     } else {
@@ -1852,20 +1854,20 @@ while (!$chk_sale_categories_all->EOF) {
     global $db;
     $customer_gv = $db->Execute("select amount
                                  from " . TABLE_COUPON_GV_CUSTOMER . "
-                                 where customer_id = '" . $customer_id . "'");
+                                 where customer_id = '" . (int)$customer_id . "'");
 
     $coupon_gv = $db->Execute("select coupon_amount
                                from " . TABLE_COUPONS . "
-                               where coupon_id = '" . $gv_id . "'");
+                               where coupon_id = '" . (int)$gv_id . "'");
 
     if ($customer_gv->RecordCount() > 0) {
       $new_gv_amount = $customer_gv->fields['amount'] + $coupon_gv->fields['coupon_amount'];
       $gv_query = $db->Execute("update " . TABLE_COUPON_GV_CUSTOMER . "
                                 set amount = '" . $new_gv_amount . "'
-                                where customer_id = '" . $customer_id . "'");
+                                where customer_id = '" . (int)$customer_id . "'");
 
     } else {
-      $db->Execute("insert into " . TABLE_COUPON_GV_CUSTOMER . " (customer_id, amount) values ('" . $customer_id . "', '" . $coupon_gv->fields['coupon_amount'] . "')");
+      $db->Execute("insert into " . TABLE_COUPON_GV_CUSTOMER . " (customer_id, amount) values ('" . (int)$customer_id . "', '" . $coupon_gv->fields['coupon_amount'] . "')");
     }
   }
 ////
@@ -1918,8 +1920,8 @@ while (!$chk_sale_categories_all->EOF) {
     global $db;
     $check_options_to_values_query= $db->Execute("select products_options_id
                                                   from " . TABLE_PRODUCTS_OPTIONS_VALUES_TO_PRODUCTS_OPTIONS . "
-                                                  where products_options_id= '" . $products_options_id . "'
-                                                  and products_options_values_id='" . $products_options_values_id .
+                                                  where products_options_id= '" . (int)$products_options_id . "'
+                                                  and products_options_values_id='" . (int)$products_options_values_id .
                                                   "' limit 1");
 
     if ($check_options_to_values_query->RecordCount() != 1) {
@@ -1940,12 +1942,12 @@ while (!$chk_sale_categories_all->EOF) {
 
     $check_options_to_values = $db->Execute("select products_options_id
                     from " . TABLE_PRODUCTS_OPTIONS_VALUES_TO_PRODUCTS_OPTIONS . "
-                    where products_options_values_id='" . $lookup . "'");
+                    where products_options_values_id='" . (int)$lookup . "'");
 
     $check_options = $db->Execute("select products_options_name
                       from " . TABLE_PRODUCTS_OPTIONS . "
-                      where products_options_id='" . $check_options_to_values->fields['products_options_id']
-                      . "' and language_id='" . $_SESSION['languages_id'] . "'");
+                      where products_options_id='" . (int)$check_options_to_values->fields['products_options_id']
+                      . "' and language_id='" . (int)$_SESSION['languages_id'] . "'");
 
     return $check_options->fields['products_options_name'];
   }
@@ -1957,7 +1959,7 @@ while (!$chk_sale_categories_all->EOF) {
     global $db;
     $check = $db->Execute("select products_model
                     from " . TABLE_PRODUCTS . "
-                    where products_id='" . $products_id . "'");
+                    where products_id='" . (int)$products_id . "'");
 
     return $check->fields['products_model'];
   }
@@ -2050,18 +2052,18 @@ function zen_copy_products_attributes($products_id_from, $products_id_to) {
 // die('DELETE FIRST - Copying from ' . $products_id_from . ' to ' . $products_id_to . ' Do I delete first? ' . $copy_attributes_delete_first);
       // delete all attributes first from products_id_to
       zen_products_attributes_download_delete($products_id_to);
-      $db->Execute("delete from " . TABLE_PRODUCTS_ATTRIBUTES . " where products_id = '" . $products_id_to . "'");
+      $db->Execute("delete from " . TABLE_PRODUCTS_ATTRIBUTES . " where products_id = '" . (int)$products_id_to . "'");
     }
 
 // get attributes to copy from
-    $products_copy_from= $db->Execute("select * from " . TABLE_PRODUCTS_ATTRIBUTES . " where products_id='" . $products_id_from . "'" . " order by products_attributes_id");
+    $products_copy_from= $db->Execute("select * from " . TABLE_PRODUCTS_ATTRIBUTES . " where products_id='" . (int)$products_id_from . "'" . " order by products_attributes_id");
 
     while ( !$products_copy_from->EOF ) {
 // This must match the structure of your products_attributes table
 
       $update_attribute = false;
       $add_attribute = true;
-      $check_duplicate = $db->Execute("select * from " . TABLE_PRODUCTS_ATTRIBUTES . " where products_id='" . $products_id_to . "'" . " and options_id= '" . $products_copy_from->fields['options_id'] . "' and options_values_id='" . $products_copy_from->fields['options_values_id'] .  "'");
+      $check_duplicate = $db->Execute("select * from " . TABLE_PRODUCTS_ATTRIBUTES . " where products_id='" . (int)$products_id_to . "'" . " and options_id= '" . (int)$products_copy_from->fields['options_id'] . "' and options_values_id='" . (int)$products_copy_from->fields['options_values_id'] .  "'");
       if ($check_attributes == true) {
         if ($check_duplicate->RecordCount() == 0) {
           $update_attribute = false;
@@ -2088,7 +2090,7 @@ function zen_copy_products_attributes($products_id_from, $products_id_to) {
       } else {
         if ($add_attribute == true) {
           // New attribute - insert it
-          $db->Execute("insert into " . TABLE_PRODUCTS_ATTRIBUTES . " (products_attributes_id, products_id, options_id, options_values_id, options_values_price, price_prefix, products_options_sort_order, product_attribute_is_free, products_attributes_weight, products_attributes_weight_prefix, attributes_display_only, attributes_default, attributes_discounted, attributes_image, attributes_price_base_included, attributes_price_onetime, attributes_price_factor, attributes_price_factor_offset, attributes_price_factor_onetime, attributes_price_factor_onetime_offset, attributes_qty_prices, attributes_qty_prices_onetime, attributes_price_words, attributes_price_words_free, attributes_price_letters, attributes_price_letters_free, attributes_required) values (0, '" . $products_id_to . "',
+          $db->Execute("insert into " . TABLE_PRODUCTS_ATTRIBUTES . " (products_attributes_id, products_id, options_id, options_values_id, options_values_price, price_prefix, products_options_sort_order, product_attribute_is_free, products_attributes_weight, products_attributes_weight_prefix, attributes_display_only, attributes_default, attributes_discounted, attributes_image, attributes_price_base_included, attributes_price_onetime, attributes_price_factor, attributes_price_factor_offset, attributes_price_factor_onetime, attributes_price_factor_onetime_offset, attributes_qty_prices, attributes_qty_prices_onetime, attributes_price_words, attributes_price_words_free, attributes_price_letters, attributes_price_letters_free, attributes_required) values (0, '" . (int)$products_id_to . "',
           '" . $products_copy_from->fields['options_id'] . "',
           '" . $products_copy_from->fields['options_values_id'] . "',
           '" . $products_copy_from->fields['options_values_price'] . "',
@@ -2142,7 +2144,7 @@ function zen_copy_products_attributes($products_id_from, $products_id_to) {
           attributes_price_letters='" . $products_copy_from->fields['attributes_price_letters'] . "',
           attributes_price_letters_free='" . $products_copy_from->fields['attributes_price_letters_free'] . "',
           attributes_required='" . $products_copy_from->fields['attributes_required'] . "'"
-           . " where products_id='" . $products_id_to . "'" . " and options_id= '" . $products_copy_from->fields['options_id'] . "' and options_values_id='" . $products_copy_from->fields['options_values_id'] . "'");
+           . " where products_id='" . (int)$products_id_to . "'" . " and options_id= '" . $products_copy_from->fields['options_id'] . "' and options_values_id='" . $products_copy_from->fields['options_values_id'] . "'");
 //           . " where products_id='" . $products_id_to . "'" . " and options_id= '" . $products_copy_from->fields['options_id'] . "' and options_values_id='" . $products_copy_from->fields['options_values_id'] . "' and attributes_image='" . $products_copy_from->fields['attributes_image'] . "' and attributes_price_base_included='" . $products_copy_from->fields['attributes_price_base_included'] .  "'");
           $messageStack->add_session(TEXT_ATTRIBUTE_COPY_UPDATING . $products_copy_from->fields['products_attributes_id'] . ' for Products ID#' . $products_id_to, 'caution');
         }
@@ -2204,7 +2206,7 @@ function zen_copy_products_attributes($products_id_from, $products_id_to) {
 // Lookup Languages Icon
   function zen_get_language_icon($lookup) {
     global $db;
-    $languages_icon = $db->Execute("select directory, image from " . TABLE_LANGUAGES . " where languages_id = '" . $lookup . "'");
+    $languages_icon = $db->Execute("select directory, image from " . TABLE_LANGUAGES . " where languages_id = '" . zen_db_input($lookup) . "'");
     $icon= zen_image(DIR_WS_CATALOG_LANGUAGES . $languages_icon->fields['directory'] . '/images/' . $languages_icon->fields['image']);
     return $icon;
   }
@@ -2213,7 +2215,7 @@ function zen_copy_products_attributes($products_id_from, $products_id_to) {
 // Get the Option Name for a particular language
   function zen_get_option_name_language($option, $language) {
     global $db;
-    $lookup = $db->Execute("select products_options_id, products_options_name from " . TABLE_PRODUCTS_OPTIONS . " where products_options_id= '" . $option . "' and language_id = '" . $language . "'");
+    $lookup = $db->Execute("select products_options_id, products_options_name from " . TABLE_PRODUCTS_OPTIONS . " where products_options_id= '" . (int)$option . "' and language_id = '" . (int)$language . "'");
     return $lookup->fields['products_options_name'];
   }
 
@@ -2221,7 +2223,7 @@ function zen_copy_products_attributes($products_id_from, $products_id_to) {
 // Get the Option Name for a particular language
   function zen_get_option_name_language_sort_order($option, $language) {
     global $db;
-    $lookup = $db->Execute("select products_options_id, products_options_name, products_options_sort_order from " . TABLE_PRODUCTS_OPTIONS . " where products_options_id= '" . $option . "' and language_id = '" . $language . "'");
+    $lookup = $db->Execute("select products_options_id, products_options_name, products_options_sort_order from " . TABLE_PRODUCTS_OPTIONS . " where products_options_id= '" . (int)$option . "' and language_id = '" . (int)$language . "'");
     return $lookup->fields['products_options_sort_order'];
   }
 
@@ -2229,7 +2231,7 @@ function zen_copy_products_attributes($products_id_from, $products_id_to) {
 // lookup attributes model
   function zen_get_language_name($lookup) {
     global $db;
-    $check_language= $db->Execute("select directory from " . TABLE_LANGUAGES . " where languages_id = '" . $lookup . "'");
+    $check_language= $db->Execute("select directory from " . TABLE_LANGUAGES . " where languages_id = '" . (int)$lookup . "'");
     return $check_language->fields['directory'];
   }
 
@@ -2239,13 +2241,13 @@ function zen_copy_products_attributes($products_id_from, $products_id_to) {
   function zen_delete_products_attributes($delete_product_id) {
     global $db;
     // delete associated downloads
-    $products_delete_from = $db->Execute("select pa.products_id, pad.products_attributes_id from " . TABLE_PRODUCTS_ATTRIBUTES . " pa, " . TABLE_PRODUCTS_ATTRIBUTES_DOWNLOAD . " pad  where pa.products_id='" . $delete_product_id . "' and pad.products_attributes_id= pa.products_attributes_id");
+    $products_delete_from = $db->Execute("select pa.products_id, pad.products_attributes_id from " . TABLE_PRODUCTS_ATTRIBUTES . " pa, " . TABLE_PRODUCTS_ATTRIBUTES_DOWNLOAD . " pad  where pa.products_id='" . (int)$delete_product_id . "' and pad.products_attributes_id= pa.products_attributes_id");
     while (!$products_delete_from->EOF) {
       $db->Execute("delete from " . TABLE_PRODUCTS_ATTRIBUTES_DOWNLOAD . " where products_attributes_id = '" . $products_delete_from->fields['products_attributes_id'] . "'");
       $products_delete_from->MoveNext();
     }
 
-    $db->Execute("delete from " . TABLE_PRODUCTS_ATTRIBUTES . " where products_id = '" . $delete_product_id . "'");
+    $db->Execute("delete from " . TABLE_PRODUCTS_ATTRIBUTES . " where products_id = '" . (int)$delete_product_id . "'");
 }
 
 
@@ -2253,9 +2255,9 @@ function zen_copy_products_attributes($products_id_from, $products_id_to) {
 // Set Product Attributes Sort Order to Products Option Value Sort Order
   function zen_update_attributes_products_option_values_sort_order($products_id) {
     global $db;
-    $attributes_sort_order = $db->Execute("select distinct pa.products_attributes_id, pa.options_id, pa.options_values_id, pa.products_options_sort_order, pov.products_options_values_sort_order from " . TABLE_PRODUCTS_ATTRIBUTES . " pa, " . TABLE_PRODUCTS_OPTIONS_VALUES . " pov where pa.products_id = '" . $products_id . "' and pa.options_values_id = pov.products_options_values_id");
+    $attributes_sort_order = $db->Execute("select distinct pa.products_attributes_id, pa.options_id, pa.options_values_id, pa.products_options_sort_order, pov.products_options_values_sort_order from " . TABLE_PRODUCTS_ATTRIBUTES . " pa, " . TABLE_PRODUCTS_OPTIONS_VALUES . " pov where pa.products_id = '" . (int)$products_id . "' and pa.options_values_id = pov.products_options_values_id");
     while (!$attributes_sort_order->EOF) {
-      $db->Execute("update " . TABLE_PRODUCTS_ATTRIBUTES . " set products_options_sort_order = '" . $attributes_sort_order->fields['products_options_values_sort_order'] . "' where products_id = '" . $products_id . "' and products_attributes_id = '" . $attributes_sort_order->fields['products_attributes_id'] . "'");
+      $db->Execute("update " . TABLE_PRODUCTS_ATTRIBUTES . " set products_options_sort_order = '" . $attributes_sort_order->fields['products_options_values_sort_order'] . "' where products_id = '" . (int)$products_id . "' and products_attributes_id = '" . $attributes_sort_order->fields['products_attributes_id'] . "'");
       $attributes_sort_order->MoveNext();
     }
   }
@@ -2404,18 +2406,7 @@ function zen_copy_products_attributes($products_id_from, $products_id_to) {
 ////
 // Check if a demo is active
   function zen_admin_demo() {
-    global $db;
-    if (ADMIN_DEMO == '1') {
-      $admin_current = $db->Execute("select admin_level from " . TABLE_ADMIN . " where admin_id='" . $_SESSION['admin_id'] . "'");
-      if ($admin_current->fields['admin_level'] == '1') {
-        $demo_on = false;
-      } else {
-        $demo_on = true;
-      }
-    } else {
-      $demo_on = false;
-    }
-    return $demo_on;
+    return (ADMIN_DEMO == '1') ? TRUE : FALSE;
   }
 
 ////
@@ -2425,7 +2416,7 @@ function zen_copy_products_attributes($products_id_from, $products_id_to) {
     if (DOWNLOAD_ENABLED == 'true') {
       $download_display_query_raw ="select pa.products_attributes_id, pad.products_attributes_filename
                                     from " . TABLE_PRODUCTS_ATTRIBUTES . " pa, " . TABLE_PRODUCTS_ATTRIBUTES_DOWNLOAD . " pad
-                                    where pa.products_id='" . $products_id . "'
+                                    where pa.products_id='" . (int)$products_id . "'
                                       and pad.products_attributes_id= pa.products_attributes_id";
       $download_display = $db->Execute($download_display_query_raw);
       if ($check_valid == true) {
@@ -2460,7 +2451,7 @@ function zen_copy_products_attributes($products_id_from, $products_id_to) {
     if (DOWNLOAD_ENABLED == 'true') {
       $download_display_query_raw ="select pa.products_attributes_id, pad.products_attributes_filename
                                     from " . TABLE_PRODUCTS_ATTRIBUTES . " pa, " . TABLE_PRODUCTS_ATTRIBUTES_DOWNLOAD . " pad
-                                    where pa.products_id='" . $products_id . "'
+                                    where pa.products_id='" . (int)$products_id . "'
                                       and pad.products_attributes_id= pa.products_attributes_id";
 
       $download_display = $db->Execute($download_display_query_raw);
@@ -2568,7 +2559,7 @@ function zen_copy_products_attributes($products_id_from, $products_id_to) {
 // configuration key value lookup
   function zen_get_configuration_key_value($lookup) {
     global $db;
-    $configuration_query= $db->Execute("select configuration_value from " . TABLE_CONFIGURATION . " where configuration_key='" . $lookup . "'");
+    $configuration_query= $db->Execute("select configuration_value from " . TABLE_CONFIGURATION . " where configuration_key='" . zen_db_input($lookup) . "'");
     $lookup_value= $configuration_query->fields['configuration_value'];
     if ( $configuration_query->RecordCount() == 0 ) {
       $lookup_value='<span class="lookupAttention">' . $lookup . '</span>';
@@ -2625,9 +2616,9 @@ function zen_copy_products_attributes($products_id_from, $products_id_to) {
   function zen_get_handler_from_type($product_type) {
     global $db;
 
-    $sql = "select type_handler from " . TABLE_PRODUCT_TYPES . " where type_id = '" . $product_type . "'";
+    $sql = "select type_handler from " . TABLE_PRODUCT_TYPES . " where type_id = '" . (int)$product_type . "'";
     $handler = $db->Execute($sql);
-	return $handler->fields['type_handler'];
+  return $handler->fields['type_handler'];
   }
 
 /*
@@ -2684,7 +2675,7 @@ function zen_copy_products_attributes($products_id_from, $products_id_to) {
 
     $db->Execute("update " . TABLE_PRODUCTS . " set
          products_price_sorter='" . zen_db_prepare_input($products_price_sorter) . "'
-         where products_id='" . $product_id . "'");
+         where products_id='" . (int)$product_id . "'");
 
   }
 
@@ -2692,7 +2683,7 @@ function zen_copy_products_attributes($products_id_from, $products_id_to) {
 // configuration key value lookup in TABLE_PRODUCT_TYPE_LAYOUT
   function zen_get_configuration_key_value_layout($lookup, $type=1) {
     global $db;
-    $configuration_query= $db->Execute("select configuration_value from " . TABLE_PRODUCT_TYPE_LAYOUT . " where configuration_key='" . $lookup . "' and product_type_id='". $type . "'");
+    $configuration_query= $db->Execute("select configuration_value from " . TABLE_PRODUCT_TYPE_LAYOUT . " where configuration_key='" . zen_db_input($lookup) . "' and product_type_id='". (int)$type . "'");
     $lookup_value= $configuration_query->fields['configuration_value'];
     if ( !($lookup_value) ) {
       $lookup_value='<span class="lookupAttention">' . $lookup . '</span>';
@@ -2751,7 +2742,7 @@ function zen_copy_products_attributes($products_id_from, $products_id_to) {
 // Get the status of a category
   function zen_get_categories_status($categories_id) {
     global $db;
-    $sql = "select categories_status from " . TABLE_CATEGORIES . (zen_not_null($categories_id) ? " where categories_id=" . $categories_id : "");
+    $sql = "select categories_status from " . TABLE_CATEGORIES . (zen_not_null($categories_id) ? " where categories_id=" . (int)$categories_id : "");
     $check_status = $db->Execute($sql);
     return $check_status->fields['categories_status'];
   }
@@ -2760,7 +2751,7 @@ function zen_copy_products_attributes($products_id_from, $products_id_to) {
 // Get the status of a product
   function zen_get_products_status($product_id) {
     global $db;
-    $sql = "select products_status from " . TABLE_PRODUCTS . (zen_not_null($product_id) ? " where products_id=" . $product_id : "");
+    $sql = "select products_status from " . TABLE_PRODUCTS . (zen_not_null($product_id) ? " where products_id=" . (int)$product_id : "");
     $check_status = $db->Execute($sql);
     return $check_status->fields['products_status'];
   }
@@ -2770,7 +2761,7 @@ function zen_copy_products_attributes($products_id_from, $products_id_to) {
   function zen_get_product_is_linked($product_id, $show_count = 'false') {
     global $db;
 
-    $sql = "select * from " . TABLE_PRODUCTS_TO_CATEGORIES . (zen_not_null($product_id) ? " where products_id=" . $product_id : "");
+    $sql = "select * from " . TABLE_PRODUCTS_TO_CATEGORIES . (zen_not_null($product_id) ? " where products_id=" . (int)$product_id : "");
     $check_linked = $db->Execute($sql);
     if ($check_linked->RecordCount() > 1) {
       if ($show_count == 'true') {
@@ -2791,7 +2782,7 @@ function zen_copy_products_attributes($products_id_from, $products_id_to) {
 
 //    $check_products_category= $db->Execute("select products_id, categories_id from " . TABLE_PRODUCTS_TO_CATEGORIES . " where products_id='" . $product_id . "' limit 1");
     $check_products_category = $db->Execute("select products_id, master_categories_id from " . TABLE_PRODUCTS . " where products_id = '" . (int)$product_id . "'");
-    $the_categories_name= $db->Execute("select categories_name from " . TABLE_CATEGORIES_DESCRIPTION . " where categories_id= '" . $check_products_category->fields['master_categories_id'] . "' and language_id= '" . $_SESSION['languages_id'] . "'");
+    $the_categories_name= $db->Execute("select categories_name from " . TABLE_CATEGORIES_DESCRIPTION . " where categories_id= '" . $check_products_category->fields['master_categories_id'] . "' and language_id= '" . (int)$_SESSION['languages_id'] . "'");
 
     return $the_categories_name->fields['categories_name'];
   }
@@ -2930,7 +2921,7 @@ function zen_copy_products_attributes($products_id_from, $products_id_to) {
                                     from " . TABLE_PRODUCTS_TO_CATEGORIES . " ptc
                                     left join " . TABLE_CATEGORIES_DESCRIPTION . " cd
                                     on cd.categories_id = ptc.categories_id
-                                    where ptc.products_id='" . $product_id . "'
+                                    where ptc.products_id='" . (int)$product_id . "'
                                     and cd.language_id = '" . (int)$_SESSION['languages_id'] . "'
                                     ");
 
@@ -2948,28 +2939,9 @@ function zen_copy_products_attributes($products_id_from, $products_id_to) {
   function zen_get_products_type($product_id) {
     global $db;
 
-    $check_products_type = $db->Execute("select products_type from " . TABLE_PRODUCTS . " where products_id='" . $product_id . "'");
+    $check_products_type = $db->Execute("select products_type from " . TABLE_PRODUCTS . " where products_id='" . (int)$product_id . "'");
     return $check_products_type->fields['products_type'];
   }
-
-  function zen_draw_admin_box($zf_header, $zf_content) {
-    $zp_boxes = '<li class="submenu"><a target="_top" href="' . $zf_header['link'] . '">' . $zf_header['text'] . '</a>';
-    $zp_boxes .= '<UL>' . "\n";
-    for ($i=0; $i<sizeof($zf_content); $i++) {
-      $zp_boxes .= '<li>';
-      $zp_boxes .= '<a href="' . $zf_content[$i]['link'] . '">' . $zf_content[$i]['text'] . '</a>';
-      $zp_boxes .= '</li>' . "\n";
-    }
-    $zp_boxes .= '</UL>' . "\n";
-    $zp_boxes .= '</li>' . "\n";
-    return $zp_boxes;
-  }
-
-
-
-
-
-
 
 ////
 //  ++++ modified for UPS Choice 1.8 and USPS Methods 2.5 by Brad Waite and Fritz Clapp ++++
@@ -3050,18 +3022,18 @@ function zen_copy_products_attributes($products_id_from, $products_id_to) {
 // Recursive algorithim to restrict all sub_categories to a rpoduct type
   function zen_restrict_sub_categories($zf_cat_id, $zf_type) {
     global $db;
-    $zp_sql = "select categories_id from " . TABLE_CATEGORIES . " where parent_id = '" . $zf_cat_id . "'";
+    $zp_sql = "select categories_id from " . TABLE_CATEGORIES . " where parent_id = '" . (int)$zf_cat_id . "'";
     $zq_sub_cats = $db->Execute($zp_sql);
     while (!$zq_sub_cats->EOF) {
       $zp_sql = "select * from " . TABLE_PRODUCT_TYPES_TO_CATEGORY . "
-                         where category_id = '" . $zq_sub_cats->fields['categories_id'] . "'
-                         and product_type_id = '" . $zf_type . "'";
+                         where category_id = '" . (int)$zq_sub_cats->fields['categories_id'] . "'
+                         and product_type_id = '" . (int)$zf_type . "'";
 
       $zq_type_to_cat = $db->Execute($zp_sql);
 
       if ($zq_type_to_cat->RecordCount() < 1) {
-        $za_insert_sql_data = array('category_id' => $zq_sub_cats->fields['categories_id'],
-                                    'product_type_id' => $zf_type);
+        $za_insert_sql_data = array('category_id' => (int)$zq_sub_cats->fields['categories_id'],
+                                    'product_type_id' => (int)$zf_type);
         zen_db_perform(TABLE_PRODUCT_TYPES_TO_CATEGORY, $za_insert_sql_data);
       }
       zen_restrict_sub_categories($zq_sub_cats->fields['categories_id'], $zf_type);
@@ -3074,12 +3046,12 @@ function zen_copy_products_attributes($products_id_from, $products_id_to) {
 // Recursive algorithim to restrict all sub_categories to a rpoduct type
   function zen_remove_restrict_sub_categories($zf_cat_id, $zf_type) {
     global $db;
-    $zp_sql = "select categories_id from " . TABLE_CATEGORIES . " where parent_id = '" . $zf_cat_id . "'";
+    $zp_sql = "select categories_id from " . TABLE_CATEGORIES . " where parent_id = '" . (int)$zf_cat_id . "'";
     $zq_sub_cats = $db->Execute($zp_sql);
     while (!$zq_sub_cats->EOF) {
         $sql = "delete from " .  TABLE_PRODUCT_TYPES_TO_CATEGORY . "
-                where category_id = '" . $zq_sub_cats->fields['categories_id'] . "'
-                and product_type_id = '" . $zf_type . "'";
+                where category_id = '" . (int)$zq_sub_cats->fields['categories_id'] . "'
+                and product_type_id = '" . (int)$zf_type . "'";
 
         $db->Execute($sql);
       zen_remove_restrict_sub_categories($zq_sub_cats->fields['categories_id'], $zf_type);
@@ -3098,22 +3070,22 @@ function zen_copy_products_attributes($products_id_from, $products_id_to) {
     function zen_get_show_product_switch($lookup, $field, $suffix= 'SHOW_', $prefix= '_INFO', $field_prefix= '_', $field_suffix='') {
       global $db;
 
-      $sql = "select products_type from " . TABLE_PRODUCTS . " where products_id='" . $lookup . "'";
+      $sql = "select products_type from " . TABLE_PRODUCTS . " where products_id='" . (int)$lookup . "'";
       $type_lookup = $db->Execute($sql);
 
-      $sql = "select type_handler from " . TABLE_PRODUCT_TYPES . " where type_id = '" . $type_lookup->fields['products_type'] . "'";
+      $sql = "select type_handler from " . TABLE_PRODUCT_TYPES . " where type_id = '" . (int)$type_lookup->fields['products_type'] . "'";
       $show_key = $db->Execute($sql);
 
       $zv_key = strtoupper($suffix . $show_key->fields['type_handler'] . $prefix . $field_prefix . $field . $field_suffix);
 
-      $sql = "select configuration_key, configuration_value from " . TABLE_PRODUCT_TYPE_LAYOUT . " where configuration_key='" . $zv_key . "'";
+      $sql = "select configuration_key, configuration_value from " . TABLE_PRODUCT_TYPE_LAYOUT . " where configuration_key='" . zen_db_input($zv_key) . "'";
       $zv_key_value = $db->Execute($sql);
 //echo 'I CAN SEE - look ' . $lookup . ' - field ' . $field . ' - key ' . $zv_key . ' value ' . $zv_key_value->fields['configuration_value'] .'<br>';
 
       if ($zv_key_value->RecordCount() > 0) {
         return $zv_key_value->fields['configuration_value'];
       } else {
-        $sql = "select configuration_key, configuration_value from " . TABLE_CONFIGURATION . " where configuration_key='" . $zv_key . "'";
+        $sql = "select configuration_key, configuration_value from " . TABLE_CONFIGURATION . " where configuration_key='" . zen_db_input($zv_key) . "'";
         $zv_key_value = $db->Execute($sql);
         if ($zv_key_value->RecordCount() > 0) {
           return $zv_key_value->fields['configuration_value'];
@@ -3129,10 +3101,10 @@ function zen_copy_products_attributes($products_id_from, $products_id_to) {
     function zen_get_show_product_switch_name($lookup, $field, $suffix= 'SHOW_', $prefix= '_INFO', $field_prefix= '_', $field_suffix='') {
       global $db;
 
-      $sql = "select products_type from " . TABLE_PRODUCTS . " where products_id='" . $lookup . "'";
+      $sql = "select products_type from " . TABLE_PRODUCTS . " where products_id='" . (int)$lookup . "'";
       $type_lookup = $db->Execute($sql);
 
-      $sql = "select type_handler from " . TABLE_PRODUCT_TYPES . " where type_id = '" . $type_lookup->fields['products_type'] . "'";
+      $sql = "select type_handler from " . TABLE_PRODUCT_TYPES . " where type_id = '" . (int)$type_lookup->fields['products_type'] . "'";
       $show_key = $db->Execute($sql);
 
 
@@ -3204,12 +3176,12 @@ function zen_copy_products_attributes($products_id_from, $products_id_to) {
 // update salemaker product prices per category per product
   function zen_update_salemaker_product_prices($salemaker_id) {
     global $db;
-    $zv_categories = $db->Execute("select sale_categories_selected from " . TABLE_SALEMAKER_SALES . " where sale_id = '" . $salemaker_id . "'");
+    $zv_categories = $db->Execute("select sale_categories_selected from " . TABLE_SALEMAKER_SALES . " where sale_id = '" . (int)$salemaker_id . "'");
 
     $za_salemaker_categories = zen_parse_salemaker_categories($zv_categories->fields['sale_categories_selected']);
     $n = sizeof($za_salemaker_categories);
     for ($i=0; $i<$n; $i++) {
-      $update_products_price = $db->Execute("select products_id from " . TABLE_PRODUCTS_TO_CATEGORIES . " where categories_id='" . $za_salemaker_categories[$i] . "'");
+      $update_products_price = $db->Execute("select products_id from " . TABLE_PRODUCTS_TO_CATEGORIES . " where categories_id='" . (int)$za_salemaker_categories[$i] . "'");
       while (!$update_products_price->EOF) {
         zen_update_products_price_sorter($update_products_price->fields['products_id']);
         $update_products_price->MoveNext();
@@ -3222,7 +3194,7 @@ function zen_copy_products_attributes($products_id_from, $products_id_to) {
   function zen_has_product_discounts($look_up) {
     global $db;
 
-    $check_discount_query = "select products_id from " . TABLE_PRODUCTS_DISCOUNT_QUANTITY . " where products_id='" . $look_up . "'";
+    $check_discount_query = "select products_id from " . TABLE_PRODUCTS_DISCOUNT_QUANTITY . " where products_id='" . (int)$look_up . "'";
     $check_discount = $db->Execute($check_discount_query);
 
     if ($check_discount->RecordCount() > 0) {
@@ -3237,18 +3209,18 @@ function zen_copy_products_attributes($products_id_from, $products_id_to) {
   function zen_copy_discounts_to_product($copy_from, $copy_to) {
     global $db;
 
-    $check_discount_type_query = "select products_discount_type, products_discount_type_from, products_mixed_discount_quantity from " . TABLE_PRODUCTS . " where products_id='" . $copy_from . "'";
+    $check_discount_type_query = "select products_discount_type, products_discount_type_from, products_mixed_discount_quantity from " . TABLE_PRODUCTS . " where products_id='" . (int)$copy_from . "'";
     $check_discount_type = $db->Execute($check_discount_type_query);
 
-    $db->Execute("update " . TABLE_PRODUCTS . " set products_discount_type='" . $check_discount_type->fields['products_discount_type'] . "', products_discount_type_from='" . $check_discount_type->fields['products_discount_type_from'] . "', products_mixed_discount_quantity='" . $check_discount_type->fields['products_mixed_discount_quantity'] . "' where products_id='" . $copy_to . "'");
+    $db->Execute("update " . TABLE_PRODUCTS . " set products_discount_type='" . $check_discount_type->fields['products_discount_type'] . "', products_discount_type_from='" . $check_discount_type->fields['products_discount_type_from'] . "', products_mixed_discount_quantity='" . $check_discount_type->fields['products_mixed_discount_quantity'] . "' where products_id='" . (int)$copy_to . "'");
 
-    $check_discount_query = "select * from " . TABLE_PRODUCTS_DISCOUNT_QUANTITY . " where products_id='" . $copy_from . "' order by discount_id";
+    $check_discount_query = "select * from " . TABLE_PRODUCTS_DISCOUNT_QUANTITY . " where products_id='" . (int)$copy_from . "' order by discount_id";
     $check_discount = $db->Execute($check_discount_query);
     $cnt_discount=1;
     while (!$check_discount->EOF) {
       $db->Execute("insert into " . TABLE_PRODUCTS_DISCOUNT_QUANTITY . "
                   (discount_id, products_id, discount_qty, discount_price )
-                  values ('" . $cnt_discount . "', '" . $copy_to . "', '" . $check_discount->fields['discount_qty'] . "', '" . $check_discount->fields['discount_price'] . "')");
+                  values ('" . (int)$cnt_discount . "', '" . (int)$copy_to . "', '" . $check_discount->fields['discount_qty'] . "', '" . $check_discount->fields['discount_price'] . "')");
       $cnt_discount++;
       $check_discount->MoveNext();
     }
@@ -3290,11 +3262,11 @@ function zen_copy_products_attributes($products_id_from, $products_id_to) {
 
     if (empty($language)) $language = $_SESSION['languages_id'];
 
-    $product_lookup = $db->Execute("select " . $what_field . " as lookup_field
+    $product_lookup = $db->Execute("select " . zen_db_input($what_field) . " as lookup_field
                               from " . TABLE_PRODUCTS . " p, " . TABLE_PRODUCTS_DESCRIPTION . " pd
-                              where  p.products_id ='" . $product_id . "'
+                              where  p.products_id ='" . (int)$product_id . "'
                               and pd.products_id = p.products_id
-                              and pd.language_id = '" . $language . "'");
+                              and pd.language_id = '" . (int)$language . "'");
 
     $return_field = $product_lookup->fields['lookup_field'];
 
@@ -3416,7 +3388,7 @@ function zen_copy_products_attributes($products_id_from, $products_id_to) {
     global $db;
     $orders_comments_query = "SELECT osh.comments from " .
                               TABLE_ORDERS_STATUS_HISTORY . " osh
-                              where osh.orders_id = '" . $orders_id . "'
+                              where osh.orders_id = '" . (int)$orders_id . "'
                               order by osh.orders_status_history_id
                               limit 1";
 

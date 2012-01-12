@@ -4,10 +4,10 @@
  * General functions used throughout Zen Cart
  *
  * @package functions
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: functions_general.php 16312 2010-05-22 08:13:42Z wilt $
+ * @version $Id: functions_general.php 19726 2011-10-07 19:05:18Z drbyte $
  */
 if (!defined('IS_ADMIN_FLAG')) {
   die('Illegal Access');
@@ -27,7 +27,7 @@ if (!defined('IS_ADMIN_FLAG')) {
   function zen_redirect($url, $httpResponseCode = '') {
     global $request_type;
     // Are we loading an SSL page?
-    if ( (ENABLE_SSL == true) && ($request_type == 'SSL') ) {
+    if ( (ENABLE_SSL == 'true') && ($request_type == 'SSL') ) {
       // yes, but a NONSSL url was supplied
       if (substr($url, 0, strlen(HTTP_SERVER . DIR_WS_CATALOG)) == HTTP_SERVER . DIR_WS_CATALOG) {
         // So, change it to SSL, based on site's configuration for SSL
@@ -149,7 +149,7 @@ if (!defined('IS_ADMIN_FLAG')) {
     if (is_array($_GET) && (sizeof($_GET) > 0)) {
       reset($_GET);
       while (list($key, $value) = each($_GET)) {
-        if ( (strlen($value) > 0) && ($key != 'main_page') && ($key != zen_session_name()) && ($key != 'error') && (!in_array($key, $exclude_array)) && ($key != 'x') && ($key != 'y') ) {
+        if ( (!in_array($key, $exclude_array)) && (strlen($value) > 0) && ($key != 'main_page') && ($key != zen_session_name()) && ($key != 'error') && ($key != 'x') && ($key != 'y') ) {
           if ( (SEARCH_ENGINE_FRIENDLY_URLS == 'true') && ($search_engine_safe == true) ) {
 //    die ('here');
             $get_url .= $key . '/' . rawurlencode(stripslashes($value)) . '/';

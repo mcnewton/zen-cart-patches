@@ -4,10 +4,10 @@
  * HTML-generating functions used throughout the core
  *
  * @package functions
- * @copyright Copyright 2003-2009 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: html_output.php 16306 2010-05-21 21:24:03Z wilt $
+ * @version $Id: html_output.php 19355 2011-08-21 21:12:09Z drbyte $
  */
 
 /*
@@ -158,7 +158,7 @@
  * The HTML image wrapper function
  */
   function zen_image($src, $alt = '', $width = '', $height = '', $parameters = '') {
-    global $template_dir;
+    global $template_dir, $zco_notifier;
 
     // soft clean the alt tag
     $alt = zen_clean_html($alt);
@@ -186,6 +186,7 @@
     if (function_exists('handle_image')) {
       $newimg = handle_image($src, $alt, $width, $height, $parameters);
       list($src, $alt, $width, $height, $parameters) = $newimg;
+      $zco_notifier->notify('NOTIFY_HANDLE_IMAGE', array($newimg));
     }
 
     // Convert width/height to int for proper validation.
@@ -241,14 +242,14 @@
        // override on missing image to allow for proportional and required/not required
       if (IMAGE_REQUIRED == 'false') {
         return false;
-      } else {
+      } else if (substr($src, 0, 4) != 'http') {
         $image .= ' width="' . intval(SMALL_IMAGE_WIDTH) . '" height="' . intval(SMALL_IMAGE_HEIGHT) . '"';
       }
     }
 
     // inject rollover class if one is defined. NOTE: This could end up with 2 "class" elements if $parameters contains "class" already.
     if (defined('IMAGE_ROLLOVER_CLASS') && IMAGE_ROLLOVER_CLASS != '') {
-    	$parameters .= (zen_not_null($parameters) ? ' ' : '') . 'class="rollover"';
+      $parameters .= (zen_not_null($parameters) ? ' ' : '') . 'class="rollover"';
     }
     // add $parameters to the tag output
     if (zen_not_null($parameters)) $image .= ' ' . $parameters;
@@ -286,7 +287,7 @@
 
     // inject rollover class if one is defined. NOTE: This could end up with 2 "class" elements if $parameters contains "class" already.
     if (defined('IMAGE_ROLLOVER_CLASS') && IMAGE_ROLLOVER_CLASS != '') {
-    	$parameters .= (zen_not_null($parameters) ? ' ' : '') . 'class="rollover"';
+      $parameters .= (zen_not_null($parameters) ? ' ' : '') . 'class="rollover"';
     }
 
     $zco_notifier->notify('PAGE_OUTPUT_IMAGE_BUTTON');
@@ -359,7 +360,7 @@
     if (zen_not_null($parameters)) $form .= ' ' . $parameters;
 
     $form .= '>';
-
+    if (strtolower($method) == 'post') $form .= '<input type="hidden" name="securityToken" value="' . $_SESSION['securityToken'] . '" />';
     return $form;
   }
 

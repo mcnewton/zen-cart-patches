@@ -1,26 +1,12 @@
 <?php
-//
-// +----------------------------------------------------------------------+
-// |zen-cart Open Source E-commerce                                       |
-// +----------------------------------------------------------------------+
-// | Copyright (c) 2003 The zen-cart developers                           |
-// |                                                                      |   
-// | http://www.zen-cart.com/index.php                                    |   
-// |                                                                      |   
-// | Portions Copyright (c) 2003 osCommerce                               |
-// +----------------------------------------------------------------------+
-// | This source file is subject to version 2.0 of the GPL license,       |
-// | that is bundled with this package in the file LICENSE, and is        |
-// | available through the world-wide-web at the following url:           |
-// | http://www.zen-cart.com/license/2_0.txt.                             |
-// | If you did not receive a copy of the zen-cart license and are unable |
-// | to obtain it through the world-wide-web, please send a note to       |
-// | license@zen-cart.com so we can mail you a copy immediately.          |
-// +----------------------------------------------------------------------+
-//  $Id: currencies.php 1969 2005-09-13 06:57:21Z drbyte $
-//
+/**
+ * @package admin
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
+ * @copyright Portions Copyright 2003 osCommerce
+ * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
+ * @version $Id: currencies.php 19054 2011-07-08 07:02:41Z drbyte $
+ */
 
-////
 // Class to handle currencies
 // TABLES: currencies
   class currencies {
@@ -30,17 +16,17 @@
     function currencies() {
       global $db;
       $this->currencies = array();
-      $currencies = $db->Execute("select code, title, symbol_left, symbol_right, decimal_point, 
-                                         thousands_point, decimal_places, value 
+      $currencies = $db->Execute("select code, title, symbol_left, symbol_right, decimal_point,
+                                         thousands_point, decimal_places, value
                                   from " . TABLE_CURRENCIES);
 
       while (!$currencies->EOF) {
-	$this->currencies[$currencies->fields['code']] = array('title' => $currencies->fields['title'],
+	      $this->currencies[$currencies->fields['code']] = array('title' => $currencies->fields['title'],
                                                        'symbol_left' => $currencies->fields['symbol_left'],
                                                        'symbol_right' => $currencies->fields['symbol_right'],
                                                        'decimal_point' => $currencies->fields['decimal_point'],
                                                        'thousands_point' => $currencies->fields['thousands_point'],
-                                                       'decimal_places' => $currencies->fields['decimal_places'],
+                                                       'decimal_places' => (int)$currencies->fields['decimal_places'],
                                                        'value' => $currencies->fields['value']);
         $currencies->MoveNext();
       }
@@ -67,8 +53,11 @@
       return $this->currencies[$code]['value'];
     }
 
+    function get_decimal_places($code) {
+      return $this->currencies[$code]['decimal_places'];
+    }
+
     function display_price($products_price, $products_tax, $quantity = 1) {
       return $this->format(zen_add_tax($products_price, $products_tax) * $quantity);
     }
   }
-?>

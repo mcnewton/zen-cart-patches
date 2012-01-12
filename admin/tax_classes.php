@@ -1,24 +1,12 @@
 <?php
-//
-// +----------------------------------------------------------------------+
-// |zen-cart Open Source E-commerce                                       |
-// +----------------------------------------------------------------------+
-// | Copyright (c) 2003 The zen-cart developers                           |
-// |                                                                      |
-// | http://www.zen-cart.com/index.php                                    |
-// |                                                                      |
-// | Portions Copyright (c) 2003 osCommerce                               |
-// +----------------------------------------------------------------------+
-// | This source file is subject to version 2.0 of the GPL license,       |
-// | that is bundled with this package in the file LICENSE, and is        |
-// | available through the world-wide-web at the following url:           |
-// | http://www.zen-cart.com/license/2_0.txt.                             |
-// | If you did not receive a copy of the zen-cart license and are unable |
-// | to obtain it through the world-wide-web, please send a note to       |
-// | license@zen-cart.com so we can mail you a copy immediately.          |
-// +----------------------------------------------------------------------+
-//  $Id: tax_classes.php 7167 2007-10-03 23:02:17Z drbyte $
-//
+/**
+ * @package admin
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
+ * @copyright Portions Copyright 2003 osCommerce
+ * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
+ * @version $Id: tax_classes.php 19330 2011-08-07 06:32:56Z drbyte $
+ */
+
   require('includes/application_top.php');
 
   $action = (isset($_GET['action']) ? $_GET['action'] : '');
@@ -58,7 +46,7 @@
           $messageStack->add_session(ERROR_ADMIN_DEMO, 'caution');
           zen_redirect(zen_href_link(FILENAME_TAX_CLASSES, 'page=' . $_GET['page']));
         }
-        $tax_class_id = zen_db_prepare_input($_GET['tID']);
+        $tax_class_id = zen_db_prepare_input($_POST['tID']);
 
         $sql = "select tax_class_id from " . TABLE_TAX_RATES . " where tax_class_id='" . $tax_class_id . "'";
         $result = $db->Execute($sql);
@@ -191,14 +179,14 @@
 
       $contents = array('form' => zen_draw_form('classes', FILENAME_TAX_CLASSES, 'page=' . $_GET['page'] . '&tID=' . $tcInfo->tax_class_id . '&action=save'));
       $contents[] = array('text' => TEXT_INFO_EDIT_INTRO);
-      $contents[] = array('text' => '<br>' . TEXT_INFO_CLASS_TITLE . '<br>' . zen_draw_input_field('tax_class_title', $tcInfo->tax_class_title, zen_set_field_length(TABLE_TAX_CLASS, 'tax_class_title')));
-      $contents[] = array('text' => '<br>' . TEXT_INFO_CLASS_DESCRIPTION . '<br>' . zen_draw_input_field('tax_class_description', $tcInfo->tax_class_description, zen_set_field_length(TABLE_TAX_CLASS, 'tax_class_description')));
+      $contents[] = array('text' => '<br>' . TEXT_INFO_CLASS_TITLE . '<br>' . zen_draw_input_field('tax_class_title', htmlspecialchars($tcInfo->tax_class_title, ENT_COMPAT, CHARSET, TRUE), zen_set_field_length(TABLE_TAX_CLASS, 'tax_class_title')));
+      $contents[] = array('text' => '<br>' . TEXT_INFO_CLASS_DESCRIPTION . '<br>' . zen_draw_input_field('tax_class_description', htmlspecialchars($tcInfo->tax_class_description, ENT_COMPAT, CHARSET, TRUE), zen_set_field_length(TABLE_TAX_CLASS, 'tax_class_description')));
       $contents[] = array('align' => 'center', 'text' => '<br>' . zen_image_submit('button_update.gif', IMAGE_UPDATE) . '&nbsp;<a href="' . zen_href_link(FILENAME_TAX_CLASSES, 'page=' . $_GET['page'] . '&tID=' . $tcInfo->tax_class_id) . '">' . zen_image_button('button_cancel.gif', IMAGE_CANCEL) . '</a>');
       break;
     case 'delete':
       $heading[] = array('text' => '<b>' . TEXT_INFO_HEADING_DELETE_TAX_CLASS . '</b>');
 
-      $contents = array('form' => zen_draw_form('classes', FILENAME_TAX_CLASSES, 'page=' . $_GET['page'] . '&tID=' . $tcInfo->tax_class_id . '&action=deleteconfirm'));
+      $contents = array('form' => zen_draw_form('classes', FILENAME_TAX_CLASSES, 'page=' . $_GET['page'] . '&action=deleteconfirm') . zen_draw_hidden_field('tID', $tcInfo->tax_class_id));
       $contents[] = array('text' => TEXT_INFO_DELETE_INTRO);
       $contents[] = array('text' => '<br><b>' . $tcInfo->tax_class_title . '</b>');
       $contents[] = array('align' => 'center', 'text' => '<br>' . zen_image_submit('button_delete.gif', IMAGE_DELETE) . '&nbsp;<a href="' . zen_href_link(FILENAME_TAX_CLASSES, 'page=' . $_GET['page'] . '&tID=' . $tcInfo->tax_class_id) . '">' . zen_image_button('button_cancel.gif', IMAGE_CANCEL) . '</a>');

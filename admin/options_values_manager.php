@@ -1,16 +1,16 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: options_values_manager.php 17903 2010-10-09 21:20:37Z wilt $
+ * @version $Id: options_values_manager.php 18924 2011-06-13 04:34:20Z drbyte $
  */
 
   require('includes/application_top.php');
 
   // verify option names and values
-  $chk_option_names = $db->Execute("select count(*) as count from " . TABLE_PRODUCTS_OPTIONS . " where language_id='" . $_SESSION['languages_id'] . "' limit 1");
+  $chk_option_names = $db->Execute("select count(*) as count from " . TABLE_PRODUCTS_OPTIONS . " where language_id='" . (int)$_SESSION['languages_id'] . "' limit 1");
   if ($chk_option_names->fields['count'] < 1) {
     $messageStack->add_session(ERROR_DEFINE_OPTION_NAMES, 'caution');
     zen_redirect(zen_href_link(FILENAME_OPTIONS_NAME_MANAGER));
@@ -73,7 +73,7 @@
             $check= $db->Execute("select pov.products_options_values_id, pov.products_options_values_name, pov.language_id
                                 from " . TABLE_PRODUCTS_OPTIONS_VALUES . " pov
                                 left join " . TABLE_PRODUCTS_OPTIONS_VALUES_TO_PRODUCTS_OPTIONS . " pov2po on pov.products_options_values_id = pov2po.products_options_values_id
-                                where pov.language_id= '" . $languages[$i]['id'] . "'
+                                where pov.language_id= '" . (int)$languages[$i]['id'] . "'
                                 and pov.products_options_values_name='" . zen_db_input($value_name) . "'
                                 and pov2po.products_options_id ='" . (int)$option_id .
                                 "'");
@@ -122,7 +122,7 @@
             $check= $db->Execute("select pov.products_options_values_id, pov.products_options_values_name, pov.language_id
                                 from " . TABLE_PRODUCTS_OPTIONS_VALUES . " pov
                                 left join " . TABLE_PRODUCTS_OPTIONS_VALUES_TO_PRODUCTS_OPTIONS . " pov2po on pov.products_options_values_id = pov2po.products_options_values_id
-                                where pov.language_id= '" . $languages[$i]['id'] . "'
+                                where pov.language_id= '" . (int)$languages[$i]['id'] . "'
                                 and pov.products_options_values_name='" . zen_db_input($value_name) . "'
                                 and pov2po.products_options_id ='" . (int)$option_id .
                                 "'");
@@ -179,17 +179,17 @@
 // copy option values based on existance of another option value
     case 'copy_options_values_one_to_another':
 
-      $options_id_from = $_POST['options_id_from'];
-      $options_values_values_id_from = $_POST['options_values_values_id_from'];
+      $options_id_from = (int)$_POST['options_id_from'];
+      $options_values_values_id_from = (int)$_POST['options_values_values_id_from'];
 
-      $options_id_to = $_POST['options_id_to'];
-      $options_values_values_id_to = $_POST['options_values_values_id_to'];
+      $options_id_to = (int)$_POST['options_id_to'];
+      $options_values_values_id_to = (int)$_POST['options_values_values_id_to'];
 
       // one category of products or all products
       if ($_POST['copy_to_categories_id'] != '') {
-        $products_only = $db->Execute("select ptc.products_id from " . TABLE_PRODUCTS_TO_CATEGORIES  . " ptc left join " . TABLE_PRODUCTS_ATTRIBUTES . " pa on pa.products_id=ptc.products_id where ptc.categories_id='" . $_POST['copy_to_categories_id'] . "' and (pa.options_id='" . $options_id_from . "' and pa.options_values_id='" . $options_values_values_id_from . "')");
+        $products_only = $db->Execute("select ptc.products_id from " . TABLE_PRODUCTS_TO_CATEGORIES  . " ptc left join " . TABLE_PRODUCTS_ATTRIBUTES . " pa on pa.products_id=ptc.products_id where ptc.categories_id='" . (int)$_POST['copy_to_categories_id'] . "' and (pa.options_id='" . (int)$options_id_from . "' and pa.options_values_id='" . (int)$options_values_values_id_from . "')");
       } else {
-        $products_only = $db->Execute("select pa.products_id from " . TABLE_PRODUCTS_ATTRIBUTES  . " pa where pa.options_id='" . $options_id_from . "' and pa.options_values_id='" . $options_values_values_id_from . "'");
+        $products_only = $db->Execute("select pa.products_id from " . TABLE_PRODUCTS_ATTRIBUTES  . " pa where pa.options_id='" . (int)$options_id_from . "' and pa.options_values_id='" . (int)$options_values_values_id_from . "'");
       }
 
 /*
@@ -207,7 +207,7 @@ die('I SEE match from: ' . $options_id_from . '-' . $options_values_values_id_fr
       if ($_POST['copy_to_categories_id'] == '') {
         $zc_categories = ' All Products ';
       } else {
-        $zc_categories = ' Category: ' . $_POST['copy_to_categories_id'];
+        $zc_categories = ' Category: ' . (int)$_POST['copy_to_categories_id'];
       }
 
       $new_attribute=0;
@@ -257,16 +257,16 @@ die('I SEE match from: ' . $options_id_from . '-' . $options_values_values_id_fr
 // copy option values based on existance of another option value
     case 'copy_options_values_one_to_another_options_id':
 
-      $options_id_from = $_POST['options_id_from'];
-      $options_values_values_id_from = $_POST['options_values_values_id_from'];
-      $copy_from_products_id = $_POST['copy_from_products_id'];
+      $options_id_from = (int)$_POST['options_id_from'];
+      $options_values_values_id_from = (int)$_POST['options_values_values_id_from'];
+      $copy_from_products_id = (int)$_POST['copy_from_products_id'];
 
-      $options_id_to = $_POST['options_id_to'];
-      $options_values_values_id_to = $_POST['options_values_values_id_to'];
+      $options_id_to = (int)$_POST['options_id_to'];
+      $options_values_values_id_to = (int)$_POST['options_values_values_id_to'];
 
       // one category of products or all products
       if ($_POST['copy_to_categories_id'] != '') {
-        $products_only = $db->Execute("select distinct ptc.products_id from " . TABLE_PRODUCTS_TO_CATEGORIES  . " ptc left join " . TABLE_PRODUCTS_ATTRIBUTES . " pa on pa.products_id=ptc.products_id where ptc.categories_id='" . $_POST['copy_to_categories_id'] . "' and (pa.options_id='" . $options_id_to . "')");
+        $products_only = $db->Execute("select distinct ptc.products_id from " . TABLE_PRODUCTS_TO_CATEGORIES  . " ptc left join " . TABLE_PRODUCTS_ATTRIBUTES . " pa on pa.products_id=ptc.products_id where ptc.categories_id='" . (int)$_POST['copy_to_categories_id'] . "' and (pa.options_id='" . $options_id_to . "')");
       } else {
         $products_only = $db->Execute("select distinct pa.products_id from " . TABLE_PRODUCTS_ATTRIBUTES  . " pa where pa.options_id='" . $options_id_to . "'");
       }
@@ -322,7 +322,7 @@ die('I SEE match from products_id:' . $copy_from_products_id . ' options_id_from
       if ($_POST['copy_to_categories_id'] == '') {
         $zc_categories = ' All Products ';
       } else {
-        $zc_categories = ' Category: ' . $_POST['copy_to_categories_id'];
+        $zc_categories = ' Category: ' . (int)$_POST['copy_to_categories_id'];
       }
 
       $new_attribute=0;
@@ -416,12 +416,12 @@ die('I SEE match from products_id:' . $copy_from_products_id . ' options_id_from
 
     case ('delete_options_values_of_option_name'):
 
-      $options_id_from = $_POST['options_id_from'];
-      $options_values_values_id_from = $_POST['options_values_values_id_from'];
+      $options_id_from = (int)$_POST['options_id_from'];
+      $options_values_values_id_from = (int)$_POST['options_values_values_id_from'];
 
       // one category of products or all products
       if ($_POST['copy_to_categories_id'] != '') {
-        $products_only = $db->Execute("select ptc.products_id from " . TABLE_PRODUCTS_TO_CATEGORIES  . " ptc left join " . TABLE_PRODUCTS_ATTRIBUTES . " pa on pa.products_id=ptc.products_id where ptc.categories_id='" . $_POST['copy_to_categories_id'] . "' and (pa.options_id='" . $options_id_from . "' and pa.options_values_id='" . $options_values_values_id_from . "')");
+        $products_only = $db->Execute("select ptc.products_id from " . TABLE_PRODUCTS_TO_CATEGORIES  . " ptc left join " . TABLE_PRODUCTS_ATTRIBUTES . " pa on pa.products_id=ptc.products_id where ptc.categories_id='" . (int)$_POST['copy_to_categories_id'] . "' and (pa.options_id='" . $options_id_from . "' and pa.options_values_id='" . $options_values_values_id_from . "')");
       } else {
         $products_only = $db->Execute("select pa.products_id from " . TABLE_PRODUCTS_ATTRIBUTES  . " pa where pa.options_id='" . $options_id_from . "' and pa.options_values_id='" . $options_values_values_id_from . "'");
       }
@@ -429,7 +429,7 @@ die('I SEE match from products_id:' . $copy_from_products_id . ' options_id_from
       if ($_POST['copy_to_categories_id'] == '') {
         $zc_categories = ' All Products ';
       } else {
-        $zc_categories = ' Category: ' . $_POST['copy_to_categories_id'];
+        $zc_categories = ' Category: ' . (int)$_POST['copy_to_categories_id'];
       }
 
       $new_attribute=0;
@@ -636,7 +636,6 @@ function go_option() {
               <tr>
                 <td colspan="5" class="smallText">
 <?php
-    $per_page = MAX_ROW_LISTS_OPTIONS;
 //    $values = "select pov.products_options_values_id, pov.products_options_values_name, pov2po.products_options_id, pov.products_options_values_sort_order from " . TABLE_PRODUCTS_OPTIONS_VALUES . " pov left join " . TABLE_PRODUCTS_OPTIONS_VALUES_TO_PRODUCTS_OPTIONS . " pov2po on pov.products_options_values_id = pov2po.products_options_values_id where pov.language_id = '" . (int)$_SESSION['languages_id'] . "' and pov2po.products_options_values_id !='" . PRODUCTS_OPTIONS_VALUES_TEXT_ID . "' order by LPAD(pov2po.products_options_id,11,'0'), LPAD(pov.products_options_values_sort_order,11,'0'), pov.products_options_values_name";
     $values = "select pov.products_options_values_id, pov.products_options_values_name, pov2po.products_options_id, pov.products_options_values_sort_order from " . TABLE_PRODUCTS_OPTIONS_VALUES . " pov left join " . TABLE_PRODUCTS_OPTIONS_VALUES_TO_PRODUCTS_OPTIONS . " pov2po on pov.products_options_values_id = pov2po.products_options_values_id     left join " . TABLE_PRODUCTS_OPTIONS . " po on pov2po.products_options_id = po.products_options_id where pov.language_id = '" . (int)$_SESSION['languages_id'] . "' and po.language_id = '" . (int)$_SESSION['languages_id'] . "' and po.language_id = pov.language_id and pov2po.products_options_values_id !='" . PRODUCTS_OPTIONS_VALUES_TEXT_ID . "' order by  po.products_options_name, LPAD(pov.products_options_values_sort_order,11,'0'), pov.products_options_values_name";
     if (!isset($_GET['value_page'])) {
@@ -646,9 +645,10 @@ function go_option() {
     $next_value_page = $_GET['value_page'] + 1;
 
     $value_query = $db->Execute($values);
-
-    $value_page_start = ($per_page * $_GET['value_page']) - $per_page;
     $num_rows = $value_query->RecordCount();
+
+    $per_page = (MAX_ROW_LISTS_OPTIONS == '') ? $num_rows : (int)MAX_ROW_LISTS_OPTIONS;
+    $value_page_start = ($per_page * $_GET['value_page']) - $per_page;
 
     if ($num_rows <= $per_page) {
       $num_pages = 1;
@@ -735,7 +735,7 @@ function go_option() {
 <?php
         $options_values = $db->Execute("select products_options_id, products_options_name, products_options_type
                                        from " . TABLE_PRODUCTS_OPTIONS . "
-                                       where language_id = '" . (int)$_SESSION['languages_id'] . "' and products_options_type !='" . PRODUCTS_OPTIONS_TYPE_TEXT . "' and products_options_type !='" . PRODUCTS_OPTIONS_TYPE_FILE . "'
+                                       where language_id = '" . (int)$_SESSION['languages_id'] . "' and products_options_type !='" . (int)PRODUCTS_OPTIONS_TYPE_TEXT . "' and products_options_type !='" . (int)PRODUCTS_OPTIONS_TYPE_FILE . "'
                                        order by products_options_name");
 
         while (!$options_values->EOF) {
@@ -802,7 +802,7 @@ function go_option() {
 <?php
       $options_values = $db->Execute("select products_options_id, products_options_name, products_options_type
                                       from " . TABLE_PRODUCTS_OPTIONS . "
-                                      where language_id = '" . $_SESSION['languages_id'] . "' and products_options_type !='" . PRODUCTS_OPTIONS_TYPE_TEXT . "' and products_options_type !='" . PRODUCTS_OPTIONS_TYPE_FILE . "'
+                                      where language_id = '" . (int)$_SESSION['languages_id'] . "' and products_options_type !='" . (int)PRODUCTS_OPTIONS_TYPE_TEXT . "' and products_options_type !='" . (int)PRODUCTS_OPTIONS_TYPE_FILE . "'
                                       order by products_options_name");
 
       while (!$options_values->EOF) {
@@ -863,7 +863,7 @@ function go_option() {
 */
 
   // build dropdown for option_name from
-  $options_values_from = $db->Execute("select * from " . TABLE_PRODUCTS_OPTIONS . " where language_id = '" . $_SESSION['languages_id'] . "' and products_options_name !='' and products_options_type !='" . PRODUCTS_OPTIONS_TYPE_TEXT . "' and products_options_type !='" . PRODUCTS_OPTIONS_TYPE_FILE . "' order by products_options_name");
+  $options_values_from = $db->Execute("select * from " . TABLE_PRODUCTS_OPTIONS . " where language_id = '" . (int)$_SESSION['languages_id'] . "' and products_options_name !='' and products_options_type !='" . (int)PRODUCTS_OPTIONS_TYPE_TEXT . "' and products_options_type !='" . (int)PRODUCTS_OPTIONS_TYPE_FILE . "' order by products_options_name");
   while(!$options_values_from->EOF) {
     $option_from_dropdown .= "\n" . '  <option name="' . $options_values_from->fields['products_options_name'] . '" value="' . $options_values_from->fields['products_options_id'] . '">' . $options_values_from->fields['products_options_name'] . '</option>';
     $options_values_from->MoveNext();
@@ -878,7 +878,7 @@ function go_option() {
   $option_to_dropdown.= "\n" . '</select>';
 
   // build dropdown for option_values from
-  $options_values_values_from = $db->Execute("select * from " . TABLE_PRODUCTS_OPTIONS_VALUES . " where language_id = '" . $_SESSION['languages_id'] . "' and products_options_values_id !='0' order by products_options_values_name");
+  $options_values_values_from = $db->Execute("select * from " . TABLE_PRODUCTS_OPTIONS_VALUES . " where language_id = '" . (int)$_SESSION['languages_id'] . "' and products_options_values_id !='0' order by products_options_values_name");
   while(!$options_values_values_from->EOF) {
     $show_option_name= '&nbsp;&nbsp;&nbsp;[' . strtoupper(zen_get_products_options_name_from_value($options_values_values_from->fields['products_options_values_id'])) . ']';
     $option_values_from_dropdown .= "\n" . '  <option name="' . $options_values_values_from->fields['products_options_values_name'] . '" value="' . $options_values_values_from->fields['products_options_values_id'] . '">' . $options_values_values_from->fields['products_options_values_name'] . $show_option_name . '</option>'; echo zen_draw_hidden_field('option_value_from_filter', $_GET['options_id_from']);

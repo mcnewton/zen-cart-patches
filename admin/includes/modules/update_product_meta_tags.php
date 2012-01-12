@@ -1,10 +1,10 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: update_product_meta_tags.php 15885 2010-04-11 16:47:04Z wilt $
+ * @version $Id: update_product_meta_tags.php 19772 2011-10-11 15:13:26Z wilt $
  */
 if (!defined('IS_ADMIN_FLAG')) {
   die('Illegal Access');
@@ -27,7 +27,7 @@ if (!defined('IS_ADMIN_FLAG')) {
                                   );
 
           if ($action == 'new_product_meta_tags') {
-            $insert_sql_data = array( 'products_id' =>  $products_id);
+            $insert_sql_data = array( 'products_id' => (int)$products_id);
             $insert_sql_data = array( 'products_date_added' =>  'now()');
 
             $sql_data_array = array_merge($sql_data_array, $insert_sql_data);
@@ -41,7 +41,7 @@ if (!defined('IS_ADMIN_FLAG')) {
           }
 
 // check if new meta tags or existing
-          $check_meta_tags_description = $db->Execute("select products_id from " . TABLE_META_TAGS_PRODUCTS_DESCRIPTION . " where products_id='" . $products_id . "'");
+          $check_meta_tags_description = $db->Execute("select products_id from " . TABLE_META_TAGS_PRODUCTS_DESCRIPTION . " where products_id='" . (int)$products_id . "'");
           if ($check_meta_tags_description->RecordCount() <= 0) {
             $action = 'new_product_meta_tags';
           }
@@ -54,14 +54,14 @@ if (!defined('IS_ADMIN_FLAG')) {
                                     'metatags_description' => zen_db_prepare_input($_POST['metatags_description'][$language_id]));
 
             if ($action == 'new_product_meta_tags') {
-              $insert_sql_data = array('products_id' => $products_id,
-                                       'language_id' => $language_id);
+              $insert_sql_data = array('products_id' => (int)$products_id,
+                                       'language_id' => (int)$language_id);
 
               $sql_data_array = array_merge($sql_data_array, $insert_sql_data);
 
               zen_db_perform(TABLE_META_TAGS_PRODUCTS_DESCRIPTION, $sql_data_array);
             } elseif ($action == 'update_product_meta_tags') {
-              if (empty($_POST['metatags_title'][$language_id]) && empty($_POST['metatags_keywords'][$language_id]) && empty($_POST['metatags_description'][$language_id])) {
+              if ($n == 1 && empty($_POST['metatags_title'][$language_id]) && empty($_POST['metatags_keywords'][$language_id]) && empty($_POST['metatags_description'][$language_id])) {
                 $remove_products_metatag = "DELETE from " . TABLE_META_TAGS_PRODUCTS_DESCRIPTION . " WHERE products_id = '" . (int)$products_id . "' and language_id = '" . (int)$language_id . "'";
                 $db->Execute($remove_products_metatag);
               } else {

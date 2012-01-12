@@ -2,13 +2,13 @@
 /**
  * Version Manager Class
  *
- * This class is used during the installation and upgrade processes *
+ * This class is used during the installation and upgrade processes
  * @package Installer
  * @access private
- * @copyright Copyright 2003-2009 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: class.installer_version_manager.php 13999 2009-07-28 16:23:19Z drbyte $
+ * @version $Id: class.installer_version_manager.php 18736 2011-05-18 04:56:45Z drbyte $
  */
 
 
@@ -29,7 +29,7 @@
       /**
        * The version that this edition of the installer is designed to support
        */
-      $this->latest_version = '1.3.9';
+      $this->latest_version = '1.5.0';
 
       /**
        * Check to see if the configuration table can be found...thus validating the installation, in part.
@@ -53,12 +53,10 @@
 
     function check_check_all_versions() {
       if (!$this->zdb_configuration_table_found) return false;
-//      $this->version103 = $this->check_version_103();
-//      $this->version104 = $this->check_version_104();
       $this->version110 = $this->check_version_110();
       $this->version111 = $this->check_version_111();
-      $this->version112 = $this->check_version_112();
-//      $this->version113 = $this->check_version_113();  // there were no db changes for 1.1.3
+      $this->version112 = $this->check_version_112();  // no way to determine
+      $this->version113 = $this->check_version_113();  // there were no db changes for 1.1.3
       $this->version114 = $this->check_version_114();
       $this->version1141 = $this->check_version_1141();
       $this->version120 = $this->check_version_120();
@@ -78,9 +76,8 @@
       $this->version137 = $this->check_version_137();
       $this->version138 = $this->check_version_138();
       $this->version139 = $this->check_version_139();
+      $this->version150 = $this->check_version_150();
 
-//        if ($this->version103 == true)  $retVal = '1.0.3';
-//        if ($this->version104 == true)  $retVal = '1.0.4';
         if ($this->version110 == true)  $retVal = '1.1.0';
         if ($this->version111 == true)  $retVal = '1.1.1';
         if ($this->version112 == true)  $retVal = '1.1.2 or 1.1.3';
@@ -102,6 +99,7 @@
         if ($this->version137 == true) $retVal = '1.3.7';
         if ($this->version138 == true) $retVal = '1.3.8';
         if ($this->version139 == true) $retVal = '1.3.9';
+        if ($this->version150 == true) $retVal = '1.5.0';
 
       return $retVal;
     }
@@ -131,28 +129,15 @@
 
     function check_version_112() {
       global $db_test;
-      // test to see if they have run the 1.1.1 -> 1.1.2 update
-      $ccmodule_installed='false';
-			$got_v1_1_2 = false;
-      $sql = "SELECT configuration_value FROM " . DB_PREFIX . "configuration WHERE configuration_key = 'MODULE_PAYMENT_CC_STATUS'";
-      $result = $db_test->Execute($sql);
-      if ($result->RecordCount()>0 && $result->fields['configuration_value'] == 'True') { $ccmodule_installed = 'true'; }
-      $sql = "SELECT count(*) as count FROM " . DB_PREFIX . "configuration WHERE configuration_key = 'MODULE_PAYMENT_CC_STORE_NUMBER'";
-      $result = $db_test->Execute($sql);
-      if (ZC_UPG_DEBUG==true) echo 'v112-count=' . $result->fields['count'] .'(0 or 1 is okay)<br>';
-      if ($result->fields['count'] < 1 && $ccmodule_installed=='true') {
-        $got_v1_1_2 = false;
-      } else {
-        $got_v1_1_2 = true;
-        $zdb_ver = '1.1.2 or 1.1.3';
-      }
-      return $got_v1_1_2;
+      if (ZC_UPG_DEBUG==true) echo '112-unknown-no way to determine<br>';
+      return true;
     } //end of 1.1.2 check
 
     function check_version_113(){
     // there were no critical SQL changes from v1.1.2 to v1.1.3 -- just to change a default, but such change shouldn't
     // be necessary if the installed shop/store is already functional, unless can't get free-shipping for 0-weight to work
       if (ZC_UPG_DEBUG==true) echo '113-unknown-no way to determine<br>';
+      return true;
     }
 
     function check_version_114(){
@@ -714,16 +699,19 @@
         $got_v1_3_9a = true;
       }
       //2nd check for v1.3.9
-      $sql = "show fields from " . DB_PREFIX . "authorizenet";
-      $result = $db_test->Execute($sql);
-      while (!$result->EOF) {
-        if (ZC_UPG_DEBUG==true) echo "139b-fields-'transaction_id'->bigint=" . $result->fields['Field'] . '->' . $result->fields['Type'] . '<br>';
-        if  ($result->fields['Field'] == 'transaction_id') {
-          if (strstr(strtoupper($result->fields['Type']),'BIGINT'))  {
-            $got_v1_3_9b = true;
+      $tables = $db_test->Execute("SHOW TABLES like '" . DB_PREFIX . "authorizenet'");
+      if ($tables->RecordCount() > 0) {
+        $sql = "show fields from " . DB_PREFIX . "authorizenet";
+        $result = $db_test->Execute($sql);
+        while (!$result->EOF) {
+          if (ZC_UPG_DEBUG==true) echo "139b-fields-'transaction_id'->bigint=" . $result->fields['Field'] . '->' . $result->fields['Type'] . '<br>';
+          if  ($result->fields['Field'] == 'transaction_id') {
+            if (strstr(strtoupper($result->fields['Type']),'BIGINT'))  {
+              $got_v1_3_9b = true;
+            }
           }
+        $result->MoveNext();
         }
-      $result->MoveNext();
       }
 
       if (ZC_UPG_DEBUG==true) {
@@ -738,6 +726,45 @@
       return $got_v1_3_9;
     } //end of 1.3.9 check
 
+
+
+
+    function check_version_150() {
+      global $db_test;
+      $got_v1_5_0 = false;
+      $got_v1_5_0a = false;
+      $got_v1_5_0b = false;
+      //1st check for v1.5.0
+      $sql = "show fields from " . DB_PREFIX . "admin";
+      $result = $db_test->Execute($sql);
+      while (!$result->EOF) {
+        if (ZC_UPG_DEBUG==true) echo "150-fields-'reset_token'" . $result->fields['Field'] . '->' . $result->fields['Type'] . '<br>';
+        if  ($result->fields['Field'] == 'reset_token') {
+          $got_v1_5_0a = true;
+        }
+        $result->MoveNext();
+      }
+      //2nd check for v1.5.0
+      $sql = "show fields from " . DB_PREFIX . "admin";
+      $result = $db_test->Execute($sql);
+      while (!$result->EOF) {
+        if (ZC_UPG_DEBUG==true) echo "150-fields-'last_failed_ip'" . $result->fields['Field'] . '->' . $result->fields['Type'] . '<br>';
+        if  ($result->fields['Field'] == 'last_failed_ip') {
+          $got_v1_5_0b = true;
+        }
+        $result->MoveNext();
+      }
+      if (ZC_UPG_DEBUG==true) {
+        echo '1.5.0a='.$got_v1_5_0a.'<br>';
+        echo '1.5.0b='.$got_v1_5_0b.'<br>';
+      }
+      // evaluate all 1.5.0 checks
+      if ($got_v1_5_0a && $got_v1_5_0b ) {
+        $got_v1_5_0 = true;
+        if (ZC_UPG_DEBUG==true) echo '<br>Got 1.5.0<br>';
+      }
+      return $got_v1_5_0;
+    } //end of 1.5.0 check
 
 
 

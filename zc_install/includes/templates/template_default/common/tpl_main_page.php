@@ -2,10 +2,10 @@
 /**
  * @package Installer
  * @access private
- * @copyright Copyright 2003-2007 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: tpl_main_page.php 7064 2007-09-20 10:31:48Z drbyte $
+ * @version $Id: tpl_main_page.php 19537 2011-09-20 17:14:44Z drbyte $
  */
 
   $header_template = 'tpl_header.php';
@@ -22,7 +22,7 @@
 ?>
 <div id="wrap">
   <div id="header">
-  <img src="<?php echo DIR_WS_INSTALL_TEMPLATE; ?>images/zen_header_bg.jpg" alt="Zen Cart&trade; - The Art of eCommerce" title="Zen Cart&trade;"/>
+  <img src="<?php echo DIR_WS_INSTALL_TEMPLATE; ?>images/zen_header_bg.jpg" alt="Zen Cart&reg; - The Art of eCommerce" title="Zen Cart&reg;"/>
   </div>
   <div id="content">
   <h1>:: <?php echo TEXT_PAGE_HEADING; ?></h1>
@@ -37,7 +37,7 @@
   ?>
   </div>
   <div id="footer">
-    <p>Copyright &copy; 2003-<?php echo date('Y'); ?> <a href="http://www.zen-cart.com" target="_blank">Zen Cart&trade;</a></p>
+    <p>Copyright &copy; 2003-<?php echo date('Y'); ?> <a href="http://www.zen-cart.com" target="_blank">Zen Cart&reg;</a></p>
   </div>
 </div>
 <!--  <p><a href="http://validator.w3.org/check?uri=referer">Valid XHTML 1.0 Transitional</a></p>-->

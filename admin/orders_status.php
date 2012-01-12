@@ -1,24 +1,11 @@
 <?php
-//
-// +----------------------------------------------------------------------+
-// |zen-cart Open Source E-commerce                                       |
-// +----------------------------------------------------------------------+
-// | Copyright (c) 2003 The zen-cart developers                           |
-// |                                                                      |
-// | http://www.zen-cart.com/index.php                                    |
-// |                                                                      |
-// | Portions Copyright (c) 2003 osCommerce                               |
-// +----------------------------------------------------------------------+
-// | This source file is subject to version 2.0 of the GPL license,       |
-// | that is bundled with this package in the file LICENSE, and is        |
-// | available through the world-wide-web at the following url:           |
-// | http://www.zen-cart.com/license/2_0.txt.                             |
-// | If you did not receive a copy of the zen-cart license and are unable |
-// | to obtain it through the world-wide-web, please send a note to       |
-// | license@zen-cart.com so we can mail you a copy immediately.          |
-// +----------------------------------------------------------------------+
-//  $Id: orders_status.php 1969 2005-09-13 06:57:21Z drbyte $
-//
+/**
+ * @package admin
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
+ * @copyright Portions Copyright 2003 osCommerce
+ * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
+ * @version $Id: orders_status.php 19330 2011-08-07 06:32:56Z drbyte $
+ */
 
   require('includes/application_top.php');
 
@@ -71,7 +58,7 @@
           $messageStack->add_session(ERROR_ADMIN_DEMO, 'caution');
           zen_redirect(zen_href_link(FILENAME_ORDERS_STATUS, 'page=' . $_GET['page']));
         }
-        $oID = zen_db_prepare_input($_GET['oID']);
+        $oID = zen_db_prepare_input($_POST['oID']);
 
         $orders_status = $db->Execute("select configuration_value
                                        from " . TABLE_CONFIGURATION . "
@@ -240,7 +227,7 @@
       $orders_status_inputs_string = '';
       $languages = zen_get_languages();
       for ($i=0, $n=sizeof($languages); $i<$n; $i++) {
-        $orders_status_inputs_string .= '<br>' . zen_image(DIR_WS_CATALOG_LANGUAGES . $languages[$i]['directory'] . '/images/' . $languages[$i]['image'], $languages[$i]['name']) . '&nbsp;' . zen_draw_input_field('orders_status_name[' . $languages[$i]['id'] . ']', zen_get_orders_status_name($oInfo->orders_status_id, $languages[$i]['id']));
+        $orders_status_inputs_string .= '<br>' . zen_image(DIR_WS_CATALOG_LANGUAGES . $languages[$i]['directory'] . '/images/' . $languages[$i]['image'], $languages[$i]['name']) . '&nbsp;' . zen_draw_input_field('orders_status_name[' . $languages[$i]['id'] . ']', htmlspecialchars(zen_get_orders_status_name($oInfo->orders_status_id, $languages[$i]['id']), ENT_COMPAT, CHARSET, TRUE));
       }
 
       $contents[] = array('text' => '<br>' . TEXT_INFO_ORDERS_STATUS_NAME . $orders_status_inputs_string);
@@ -250,7 +237,7 @@
     case 'delete':
       $heading[] = array('text' => '<b>' . TEXT_INFO_HEADING_DELETE_ORDERS_STATUS . '</b>');
 
-      $contents = array('form' => zen_draw_form('status', FILENAME_ORDERS_STATUS, 'page=' . $_GET['page'] . '&oID=' . $oInfo->orders_status_id  . '&action=deleteconfirm'));
+      $contents = array('form' => zen_draw_form('status', FILENAME_ORDERS_STATUS, 'page=' . $_GET['page'] . '&action=deleteconfirm') . zen_draw_hidden_field('oID', $oInfo->orders_status_id));
       $contents[] = array('text' => TEXT_INFO_DELETE_INTRO);
       $contents[] = array('text' => '<br><b>' . $oInfo->orders_status_name . '</b>');
       if ($remove_status) $contents[] = array('align' => 'center', 'text' => '<br>' . zen_image_submit('button_delete.gif', IMAGE_DELETE) . ' <a href="' . zen_href_link(FILENAME_ORDERS_STATUS, 'page=' . $_GET['page'] . '&oID=' . $oInfo->orders_status_id) . '">' . zen_image_button('button_cancel.gif', IMAGE_CANCEL) . '</a>');

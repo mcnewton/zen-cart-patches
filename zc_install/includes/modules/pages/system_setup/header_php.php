@@ -5,7 +5,7 @@
  * @copyright Copyright 2003-2010 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: header_php.php 16936 2010-07-20 17:20:01Z drbyte $
+ * @version $Id: header_php.php 18235 2010-11-23 22:41:05Z drbyte $
  * @TODO: If SSL is selected, switch into SSL mode to prove that it works.
  */
 
@@ -24,15 +24,15 @@ $enable_ssl_admin = '';
  * read existing settings instead of trying to detect from first install
  */
 if ($is_upgrade) {
-   $http_server = zen_read_config_value('HTTP_SERVER');
-   $http_catalog = zen_read_config_value('DIR_WS_CATALOG');
+   $http_server = zen_read_config_value('HTTP_SERVER', FALSE);
+   $http_catalog = zen_read_config_value('DIR_WS_CATALOG', FALSE);
    $virtual_path = str_replace('http://','',$http_server) . $http_catalog;
-   $virtual_https_server = str_replace('https://','',zen_read_config_value('HTTPS_SERVER'));
-   $virtual_https_path = $virtual_https_server . zen_read_config_value('DIR_WS_HTTPS_CATALOG');
-   $enable_ssl = zen_read_config_value('ENABLE_SSL');
-   $enable_ssl_admin = zen_read_config_value('ENABLE_SSL_ADMIN');
-   $dir_fs_www_root = zen_read_config_value('DIR_FS_CATALOG');
-   $https_catalog = zen_read_config_value('DIR_WS_HTTPS_CATALOG');
+   $virtual_https_server = str_replace('https://','',zen_read_config_value('HTTPS_SERVER', FALSE));
+   $virtual_https_path = $virtual_https_server . zen_read_config_value('DIR_WS_HTTPS_CATALOG', FALSE);
+   $enable_ssl = zen_read_config_value('ENABLE_SSL', FALSE);
+   $enable_ssl_admin = zen_read_config_value('ENABLE_SSL_ADMIN', FALSE);
+   $dir_fs_www_root = zen_read_config_value('DIR_FS_CATALOG', FALSE);
+   $https_catalog = zen_read_config_value('DIR_WS_HTTPS_CATALOG', FALSE);
 
    $http_server = $zc_install->trimTrailingSlash($http_server);
    $http_catalog = $zc_install->trimTrailingSlash($http_catalog);

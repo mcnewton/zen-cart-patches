@@ -1,24 +1,11 @@
 <?php
-//
-// +----------------------------------------------------------------------+
-// |zen-cart Open Source E-commerce                                       |
-// +----------------------------------------------------------------------+
-// | Copyright (c) 2004 The zen-cart developers                           |
-// |                                                                      |
-// | http://www.zen-cart.com/index.php                                    |
-// |                                                                      |
-// | Portions Copyright (c) 2003 osCommerce                               |
-// +----------------------------------------------------------------------+
-// | This source file is subject to version 2.0 of the GPL license,       |
-// | that is bundled with this package in the file LICENSE, and is        |
-// | available through the world-wide-web at the following url:           |
-// | http://www.zen-cart.com/license/2_0.txt.                             |
-// | If you did not receive a copy of the zen-cart license and are unable |
-// | to obtain it through the world-wide-web, please send a note to       |
-// | license@zen-cart.com so we can mail you a copy immediately.          |
-// +----------------------------------------------------------------------+
-//  $Id: music_genre.php 2331 2005-11-10 07:58:16Z drbyte $
-//
+/**
+ * @package admin
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
+ * @copyright Portions Copyright 2003 osCommerce
+ * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
+ * @version $Id: music_genre.php 19330 2011-08-07 06:32:56Z drbyte $
+ */
 
   require('includes/application_top.php');
 
@@ -57,23 +44,10 @@
           $messageStack->add_session(ERROR_ADMIN_DEMO, 'caution');
           zen_redirect(zen_href_link(FILENAME_MUSIC_GENRE, 'page=' . $_GET['page']));
         }
-        $music_genre_id = zen_db_prepare_input($_GET['mID']);
+        $music_genre_id = zen_db_prepare_input($_POST['mID']);
 
-/* There are no images associated with Music Genres, so this section is commented out:
-        if (isset($_POST['delete_image']) && ($_POST['delete_image'] == 'on')) {
-          $music_genre = $db->Execute("select music_genre_image
-                                        from " . TABLE_MUSIC_GENRE . "
-                                        where music_genre_id = '" . (int)$music_genre_id . "'");
-
-          $image_location = DIR_FS_CATALOG_IMAGES . $music_genre->fields['music_genre_image'];
-
-          if (file_exists($image_location)) @unlink($image_location);
-        }
-*/
         $db->Execute("delete from " . TABLE_MUSIC_GENRE . "
                       where music_genre_id = '" . (int)$music_genre_id . "'");
-//        $db->Execute("delete from " . TABLE_MUSIC_GENRE_INFO . "
-//                      where music_genre_id = '" . (int)$music_genre_id . "'");
 
         if (isset($_POST['delete_products']) && ($_POST['delete_products'] == 'on')) {
           $products = $db->Execute("select products_id
@@ -213,16 +187,15 @@
 
       $contents = array('form' => zen_draw_form('music_genre', FILENAME_MUSIC_GENRE, 'page=' . $_GET['page'] . '&mID=' . $aInfo->music_genre_id . '&action=save', 'post', 'enctype="multipart/form-data"'));
       $contents[] = array('text' => TEXT_EDIT_INTRO);
-      $contents[] = array('text' => '<br />' . TEXT_MUSIC_GENRE_NAME . '<br>' . zen_draw_input_field('music_genre_name', $aInfo->music_genre_name, zen_set_field_length(TABLE_MUSIC_GENRE, 'music_genre_name')));
+      $contents[] = array('text' => '<br />' . TEXT_MUSIC_GENRE_NAME . '<br>' . zen_draw_input_field('music_genre_name', htmlspecialchars($aInfo->music_genre_name, ENT_COMPAT, CHARSET, TRUE), zen_set_field_length(TABLE_MUSIC_GENRE, 'music_genre_name')));
       $contents[] = array('align' => 'center', 'text' => '<br>' . zen_image_submit('button_save.gif', IMAGE_SAVE) . ' <a href="' . zen_href_link(FILENAME_MUSIC_GENRE, 'page=' . $_GET['page'] . '&mID=' . $aInfo->music_genre_id) . '">' . zen_image_button('button_cancel.gif', IMAGE_CANCEL) . '</a>');
       break;
     case 'delete':
       $heading[] = array('text' => '<b>' . TEXT_HEADING_DELETE_MUSIC_GENRE . '</b>');
 
-      $contents = array('form' => zen_draw_form('music_genre', FILENAME_MUSIC_GENRE, 'page=' . $_GET['page'] . '&mID=' . $aInfo->music_genre_id . '&action=deleteconfirm'));
+      $contents = array('form' => zen_draw_form('music_genre', FILENAME_MUSIC_GENRE, 'page=' . $_GET['page'] . '&action=deleteconfirm') . zen_draw_hidden_field('mID', $aInfo->music_genre_id));
       $contents[] = array('text' => TEXT_DELETE_INTRO);
       $contents[] = array('text' => '<br><b>' . $aInfo->music_genre_name . '</b>');
-//      $contents[] = array('text' => '<br>' . zen_draw_checkbox_field('delete_image', '', true) . ' ' . TEXT_DELETE_IMAGE);
 
       if ($aInfo->products_count > 0) {
         $contents[] = array('text' => '<br>' . zen_draw_checkbox_field('delete_products') . ' ' . TEXT_DELETE_PRODUCTS);

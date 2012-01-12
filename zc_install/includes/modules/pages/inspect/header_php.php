@@ -2,10 +2,10 @@
 /**
  * @package Installer
  * @access private
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: header_php.php 16908 2010-07-15 19:45:12Z drbyte $
+ * @version $Id: header_php.php 19328 2011-08-06 22:53:47Z drbyte $
  *
  * @TODO - http://dev.mysql.com/doc/refman/5.0/en/user-resources.html
  */
@@ -19,13 +19,13 @@
   $configWriteOverride = (isset($_GET['overrideconfig'])) ? true : false;
   if (file_exists('../includes/configure.php')) {
     // read the existing configure.php file(s) to get values and guess whether it looks like a valid prior install
-    if (zen_read_config_value('HTTP_SERVER')      == 'http://localhost') $zen_cart_previous_version_installed = 'maybe';
-    if (zen_read_config_value('DIR_FS_CATALOG')   == '/var/www/html/') $zen_cart_previous_version_installed = 'maybe';
-    if (zen_read_config_value('HTTP_SERVER')      != '' ) $zen_cart_previous_version_installed = true;
-    if (zen_read_config_value('DIR_WS_CLASSES')   != '' ) $zen_cart_previous_version_installed = true;
-    if (zen_read_config_value('DIR_FS_CATALOG')   != '' ) $zen_cart_previous_version_installed = true;
-    if (strpos(zen_read_config_value('DIR_FS_SQL_CACHE'),'/path/to/')>0) $zen_cart_previous_version_installed = false;
-    if (zen_read_config_value('DB_DATABASE')      == '' ) $zen_cart_previous_version_installed = false;
+    if (zen_read_config_value('HTTP_SERVER', FALSE)      == 'http://localhost') $zen_cart_previous_version_installed = 'maybe';
+    if (zen_read_config_value('DIR_FS_CATALOG', FALSE)   == '/var/www/html/') $zen_cart_previous_version_installed = 'maybe';
+    if (zen_read_config_value('HTTP_SERVER', FALSE)      != '' ) $zen_cart_previous_version_installed = true;
+    if (zen_read_config_value('DIR_WS_CLASSES', FALSE)   != '' ) $zen_cart_previous_version_installed = true;
+    if (zen_read_config_value('DIR_FS_CATALOG', FALSE)   != '' ) $zen_cart_previous_version_installed = true;
+    if (strpos(zen_read_config_value('DIR_FS_SQL_CACHE', FALSE),'/path/to/')>0) $zen_cart_previous_version_installed = false;
+    if (zen_read_config_value('DB_DATABASE', FALSE)      == '' ) $zen_cart_previous_version_installed = false;
 
     //read the configure.php file and look for hints that it's just a copy of dist-configure.php
     $lines = file('../includes/configure.php');
@@ -33,15 +33,15 @@
       if (substr_count($line,'dist-configure.php') > 0) $zen_cart_previous_version_installed = false;
     } //end foreach
 
-    $zdb_type     = zen_read_config_value('DB_TYPE');
-    $zdb_prefix   = zen_read_config_value('DB_PREFIX');
-    $zdb_coll     = zen_read_config_value('DB_CHARSET');
-    if ($zdb_coll != 'utf8') $zdb_coll = 'latin1';
-    $zdb_server   = zen_read_config_value('DB_SERVER');
-    $zdb_user     = zen_read_config_value('DB_SERVER_USERNAME');
-    $zdb_pwd      = zen_read_config_value('DB_SERVER_PASSWORD');
-    $zdb_name     = zen_read_config_value('DB_DATABASE');
-    $zdb_sql_cache= zen_read_config_value('DIR_FS_SQL_CACHE');
+    $zdb_type     = zen_read_config_value('DB_TYPE', FALSE);
+    $zdb_prefix   = zen_read_config_value('DB_PREFIX', FALSE);
+    $zdb_coll     = zen_read_config_value('DB_CHARSET', FALSE);
+    if ($zdb_coll != 'latin1') $zdb_coll = 'utf8';
+    $zdb_server   = zen_read_config_value('DB_SERVER', FALSE);
+    $zdb_user     = zen_read_config_value('DB_SERVER_USERNAME', FALSE);
+    $zdb_pwd      = zen_read_config_value('DB_SERVER_PASSWORD', FALSE);
+    $zdb_name     = zen_read_config_value('DB_DATABASE', FALSE);
+    $zdb_sql_cache= zen_read_config_value('DIR_FS_SQL_CACHE', FALSE);
     if (strpos($zdb_sql_cache,'/path/to/')>0) $zdb_sql_cache=''; // /path/to/ comes from dist-configure.php. Invalid, thus make null.
 
     if (ZC_UPG_DEBUG==true) {
@@ -165,27 +165,28 @@
   if (!zen_not_null($disabled_funcs)) $disabled_funcs = ini_get("disable_functions");
   if (zen_not_null($disabled_funcs)) $status_check[] = array('Importance' => 'Recommended', 'Title' => LABEL_DISABLED_FUNCTIONS, 'Status' => $disabled_funcs, 'Class' => (@substr_count($disabled_funcs,'set_time_limit') ? 'WARN' : 'NA'), 'HelpURL' =>ERROR_CODE_DISABLE_FUNCTIONS, ERROR_TEXT_DISABLE_FUNCTIONS);
 
-  // Check Register Globals
-  $register_globals = ini_get("register_globals");
-  if ($register_globals == '' || $register_globals =='0' || strtoupper($register_globals) =='OFF') {
-    $register_globals = OFF; // Having register globals "off" is more secure
-    $this_class='OK';
-  } else {
-    $register_globals = "<span class='errors'>".ON.'</span>';
-    $this_class='WARN';
+  if (version_compare(PHP_VERSION, 5.4, '<')) {
+    // Check Register Globals
+    $register_globals = ini_get("register_globals");
+    if ($register_globals == '' || $register_globals =='0' || strtoupper($register_globals) =='OFF') {
+      $register_globals = OFF; // Having register globals "off" is more secure
+      $this_class='OK';
+    } else {
+      $register_globals = "<span class='errors'>".ON.'</span>';
+      $this_class='WARN';
+    }
+    $status_check[] = array('Importance' => 'Info', 'Title' => LABEL_REGISTER_GLOBALS, 'Status' => $register_globals, 'Class' => $this_class, 'HelpURL' =>ERROR_CODE_REGISTER_GLOBALS_ON, 'HelpLabel'=>ERROR_TEXT_REGISTER_GLOBALS_ON);
   }
-  $status_check[] = array('Importance' => 'Info', 'Title' => LABEL_REGISTER_GLOBALS, 'Status' => $register_globals, 'Class' => $this_class, 'HelpURL' =>ERROR_CODE_REGISTER_GLOBALS_ON, 'HelpLabel'=>ERROR_TEXT_REGISTER_GLOBALS_ON);
-
   //Check MySQL version
   $mysql_support = (function_exists( 'mysql_connect' )) ? ON : OFF;
   $mysql_version = (function_exists('mysql_get_server_info')) ? @mysql_get_server_info() : UNKNOWN;
   $mysql_version = ($mysql_version == '') ? UNKNOWN : $mysql_version ;
   //if (is_object($db_test)) $mysql_qry=$db_test->get_server_info();
-  $mysql_ver_class = ($mysql_version<'3.23.00') ? 'FAIL' : 'OK';
-  $mysql_ver_class = ($mysql_version == UNKNOWN || $mysql_version > '5.2') ? 'WARN' : $mysql_ver_class;
+  $mysql_ver_class = ($mysql_version<'4.1.0') ? 'FAIL' : 'OK';
+  $mysql_ver_class = ($mysql_version == UNKNOWN || $mysql_version > '5.6') ? 'WARN' : $mysql_ver_class;
 
   $status_check[] = array('Importance' => 'Critical', 'Title' => LABEL_MYSQL_AVAILABLE, 'Status' => $mysql_support, 'Class' => ($mysql_support==ON) ? 'OK' : 'FAIL', 'HelpURL' =>ERROR_CODE_DB_NOTSUPPORTED, 'HelpLabel'=>ERROR_TEXT_DB_NOTSUPPORTED);
-  if ($mysql_version != UNKNOWN || ($mysql_version == UNKNOWN && $advanced_mode)) $status_check[] = array('Importance' => 'Info', 'Title' => LABEL_MYSQL_VER, 'Status' => $mysql_version, 'Class' => $mysql_ver_class, 'HelpURL' =>($mysql_version > '5.0' ? ERROR_CODE_DB_MYSQL5 : ERROR_CODE_DB_VER_UNKNOWN), 'HelpLabel'=>($mysql_version > '5.0' ? ERROR_TEXT_DB_MYSQL5 : ERROR_TEXT_DB_VER_UNKNOWN) );
+  if ($mysql_version != UNKNOWN || ($mysql_version == UNKNOWN && $advanced_mode)) $status_check[] = array('Importance' => 'Info', 'Title' => LABEL_MYSQL_VER, 'Status' => $mysql_version, 'Class' => $mysql_ver_class, 'HelpURL' =>($mysql_version > '5.6' ? ERROR_CODE_DB_MYSQL5 : ERROR_CODE_DB_VER_UNKNOWN), 'HelpLabel'=>($mysql_version > '5.6' ? ERROR_TEXT_DB_MYSQL5 : ERROR_TEXT_DB_VER_UNKNOWN) );
 
   //DB Privileges
 if (false) { // DISABLED THIS CODEBLOCK FOR NOW....
@@ -227,7 +228,7 @@ if (false) { // DISABLED THIS CODEBLOCK FOR NOW....
   $err_code = '';
   $php_ver = '';
 
-  if ($zc_install->test_php_version('<', "4.3.2", ERROR_TEXT_PHP_OLD_VERSION, ERROR_CODE_PHP_OLD_VERSION, ($zen_cart_allow_database_upgrade == false) )) {
+  if ($zc_install->test_php_version('<', "5.2.3", ERROR_TEXT_PHP_OLD_VERSION, ERROR_CODE_PHP_OLD_VERSION, ($zen_cart_allow_database_upgrade == false) )) {
     if ($zen_cart_allow_database_upgrade == false) {
       $php_ver = '<span class="errors">'.$zc_install->php_version.' {*** '. MUST_UPGRADE . ' ***}</span>';
       $this_class = 'FAIL';
@@ -241,9 +242,16 @@ if (false) { // DISABLED THIS CODEBLOCK FOR NOW....
   }
   $status_check[] = array('Importance' => 'Critical', 'Title' => LABEL_PHP_VER, 'Status' => $php_ver, 'Class' => $this_class, 'HelpURL' =>$err_code, 'HelpLabel'=>$err_text);
 
-  // SAFE MODE check
-  $safe_mode = (ini_get("safe_mode")) ? "<span class='errors'>" . ON . '</span>' : OFF;
-  $status_check[] = array('Importance' => 'Critical', 'Title' => LABEL_SAFE_MODE, 'Status' => $safe_mode, 'Class' => ($safe_mode==OFF) ? 'OK' : 'FAIL', 'HelpURL' =>ERROR_CODE_SAFE_MODE_ON, 'HelpLabel'=>ERROR_TEXT_SAFE_MODE_ON);
+  //PHP Version Check
+  if (version_compare(PHP_VERSION, 5.4, '>=')) {
+    $status_check[] = array('Importance' => 'Critical', 'Title' => LABEL_PHP_VER, 'Status' => PHP_VERSION, 'Class' => 'WARN', 'HelpURL' =>'', 'HelpLabel'=>'This ZC version is not yet tested with this version of PHP.');
+  }
+
+  if (version_compare(PHP_VERSION, 5.4, '<')) {
+    // SAFE MODE check
+    $safe_mode = (ini_get("safe_mode")) ? "<span class='errors'>" . ON . '</span>' : OFF;
+    $status_check[] = array('Importance' => 'Critical', 'Title' => LABEL_SAFE_MODE, 'Status' => $safe_mode, 'Class' => ($safe_mode==OFF) ? 'OK' : 'FAIL', 'HelpURL' =>ERROR_CODE_SAFE_MODE_ON, 'HelpLabel'=>ERROR_TEXT_SAFE_MODE_ON);
+  }
 
   //PHP support for Sessions check
   $php_ext_sessions = (@extension_loaded('session')) ? ON : OFF;
@@ -304,11 +312,12 @@ if (false) { // DISABLED THIS CODEBLOCK FOR NOW....
   if ($zdb_sql_cache != '') $status_check[] = array('Importance' => 'Recommended', 'Title' => LABEL_CURRENT_CACHE_PATH, 'Status' => $zdb_sql_cache . '&nbsp;&nbsp;-->' . $zdb_sql_cache_writable , 'Class' => ($zdb_sql_cache_writable ==WRITABLE) ? 'OK' : 'WARN', 'HelpURL' =>ERROR_CODE_CACHE_DIR_ISWRITEABLE, 'HelpLabel'=>ERROR_TEXT_CACHE_DIR_ISWRITEABLE);
   $status_check[] = array('Importance' => 'Recommended', 'Title' => LABEL_SUGGESTED_CACHE_PATH, 'Status' => $suggested_cache, 'Class' => $sugg_cache_class, 'HelpURL' =>$sugg_cache_code, 'HelpLabel'=>$sugg_cache_text);
 
+if (version_compare(PHP_VERSION, 5.4, '<')) {
   //PHP MagicQuotesRuntime
   $status_check[] = array('Importance' => 'Recommended', 'Title' => LABEL_PHP_MAG_QT_RUN, 'Status' => $php_magic_quotes_runtime , 'Class' => ($php_magic_quotes_runtime=='OFF')?'OK':'FAIL', 'HelpURL' =>ERROR_CODE_MAGIC_QUOTES_RUNTIME, 'HelpLabel'=>ERROR_TEXT_MAGIC_QUOTES_RUNTIME);
   //PHP MagicQuotesSybase
   $status_check[] = array('Importance' => 'Recommended', 'Title' => LABEL_PHP_MAG_QT_SYBASE, 'Status' => $php_magic_quotes_sybase , 'Class' => ($php_magic_quotes_sybase=='OFF')?'OK':'FAIL', 'HelpURL' =>ERROR_CODE_MAGIC_QUOTES_SYBASE, 'HelpLabel'=>ERROR_TEXT_MAGIC_QUOTES_SYBASE);
-
+}
   //PHP GD support check
   $php_ext_gd =       (@extension_loaded('gd'))      ? ON : OFF;
   $status_check[] = array('Importance' => 'Optional', 'Title' => LABEL_PHP_EXT_GD, 'Status' => $php_ext_gd , 'Class' => ($php_ext_gd==ON)?'OK':'WARN', 'HelpURL' =>ERROR_CODE_GD_SUPPORT, 'HelpLabel'=>ERROR_TEXT_GD_SUPPORT);
@@ -318,7 +327,7 @@ if (false) { // DISABLED THIS CODEBLOCK FOR NOW....
   $status_check[] = array('Importance' => 'Optional', 'Title' => LABEL_GD_VER, 'Status' => $gd_ver , 'Class' => ($php_ext_gd==ON && strstr($gd_ver,'2.') )?'OK':'WARN', 'HelpURL' =>ERROR_CODE_GD_SUPPORT, 'HelpLabel'=>ERROR_TEXT_GD_SUPPORT);
   }
 
-  //check for zLib Compression Support
+ //check for zLib Compression Support
   $php_ext_zlib =     (@extension_loaded('zlib'))    ? ON : OFF;
   $status_check[] = array('Importance' => '', 'Title' => LABEL_PHP_EXT_ZLIB, 'Status' => $php_ext_zlib, 'Class' => ($php_ext_zlib==ON)?'OK':'WARN', 'HelpURL' =>'', 'HelpLabel'=>'');
 
@@ -344,6 +353,19 @@ if (false) { // DISABLED THIS CODEBLOCK FOR NOW....
   //Upload TMP dir setting
   $upload_tmp_dir = ini_get("upload_tmp_dir");
   $status_check[] = array('Importance' => 'Info', 'Title' => LABEL_UPLOAD_TMP_DIR, 'Status' => $upload_tmp_dir, 'Class' => 'OK', 'HelpURL' =>'', 'HelpLabel'=>'');
+
+  //htaccess check
+  $testPath = $_SERVER['HTTP_HOST'] . $_SERVER['SCRIPT_NAME'];
+  $testPath = 'http://' . substr($testPath, 0, strpos($testPath, '/zc_install')) . '/includes/filenames.php';
+  if (function_exists('curl_init'))
+  {
+    $resultCurl = get_web_page($testPath);
+  } else
+  {
+    $resultCurl = 'UNKNOWN';
+  }
+  $htaccessSupport = (isset($resultCurl['http_code']) && ($resultCurl['http_code'] == '403' || $resultCurl['http_code'] == '404')) ? ON : (($resultCurl == 'UNKNOWN') ? LABEL_COULD_NOT_TEST_HTACCESS : OFF);
+  $status_check[] = array('Importance' => 'Optional', 'Title' => LABEL_HTACCESS_SUPPORT, 'Status' => $htaccessSupport, 'Class' => ($htaccessSupport==ON)?'OK':'WARN', 'HelpURL' =>'', 'HelpLabel'=>'');
 
   //Check for XML Support
   $xml_support = function_exists('xml_parser_create') ? ON : OFF;
@@ -512,3 +534,29 @@ if (false) { // DISABLED THIS CODEBLOCK FOR NOW....
   } else {
     $zc_install->logDetails('System Inspection Results: ' . str_replace(array('<br />', '<br>', '&nbsp;'), '', $data));
   }
+function get_web_page( $url )
+{
+    $options = array(
+        CURLOPT_RETURNTRANSFER => true,     // return web page
+        CURLOPT_HEADER         => false,    // don't return headers
+        CURLOPT_FOLLOWLOCATION => true,     // follow redirects
+        CURLOPT_ENCODING       => "",       // handle all encodings
+        CURLOPT_AUTOREFERER    => true,     // set referer on redirect
+        CURLOPT_CONNECTTIMEOUT => 120,      // timeout on connect
+        CURLOPT_TIMEOUT        => 120,      // timeout on response
+        CURLOPT_MAXREDIRS      => 10,       // stop after 10 redirects
+    );
+
+    $ch      = curl_init( $url );
+    curl_setopt_array( $ch, $options );
+    $content = curl_exec( $ch );
+    $err     = curl_errno( $ch );
+    $errmsg  = curl_error( $ch );
+    $header  = curl_getinfo( $ch );
+    curl_close( $ch );
+
+    $header['errno']   = $err;
+    $header['errmsg']  = $errmsg;
+    $header['content'] = $content;
+    return $header;
+}

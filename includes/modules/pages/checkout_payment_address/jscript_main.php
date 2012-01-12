@@ -6,7 +6,7 @@
  * @copyright Copyright 2003-2010 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: jscript_main.php 16186 2010-05-03 18:38:57Z drbyte $
+ * @version $Id: jscript_main.php 17016 2010-07-27 06:54:42Z drbyte $
  */
 ?>
 <script language="javascript" type="text/javascript"><!--
@@ -176,3 +176,4 @@ function check_form(form_name) {
   }
 }
 //--></script>
+

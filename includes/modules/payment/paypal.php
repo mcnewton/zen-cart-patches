@@ -3,10 +3,10 @@
  * paypal.php payment module class for PayPal Website Payments Standard (IPN) method
  *
  * @package paymentMethod
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: paypal.php 15735 2010-03-29 07:13:53Z drbyte $
+ * @version $Id: paypal.php 19363 2011-08-26 14:52:30Z drbyte $
  */
 
 define('MODULE_PAYMENT_PAYPAL_TAX_OVERRIDE', 'true');
@@ -54,7 +54,7 @@ class paypal extends base {
   function paypal($paypal_ipn_id = '') {
     global $order, $messageStack;
     $this->code = 'paypal';
-    $this->codeVersion = '1.3.9';
+    $this->codeVersion = '1.5.0';
     if (IS_ADMIN_FLAG === true) {
       $this->title = MODULE_PAYMENT_PAYPAL_TEXT_ADMIN_TITLE; // Payment Module title in Admin
       if (IS_ADMIN_FLAG === true && defined('MODULE_PAYMENT_PAYPAL_IPN_DEBUG') && MODULE_PAYMENT_PAYPAL_IPN_DEBUG != 'Off') $this->title .= '<span class="alert"> (debug mode active)</span>';
@@ -71,7 +71,7 @@ class paypal extends base {
     if (is_object($order)) $this->update_status();
     $this->form_action_url = 'https://' . MODULE_PAYMENT_PAYPAL_HANDLER;
 
-    if (PROJECT_VERSION_MAJOR != '1' && substr(PROJECT_VERSION_MINOR, 0, 3) != '3.9') $this->enabled = false;
+    if (PROJECT_VERSION_MAJOR != '1' && substr(PROJECT_VERSION_MINOR, 0, 3) != '5.0') $this->enabled = false;
 
     // verify table structure
     if (IS_ADMIN_FLAG === true) $this->tableCheckup();
@@ -158,7 +158,6 @@ class paypal extends base {
     $optionsTrans = array();
     $buttonArray = array();
 
-    $this->totalsum = $order->info['total'];
 
     // save the session stuff permanently in case paypal loses the session
     $_SESSION['ppipn_key_to_remove'] = session_id();
@@ -174,7 +173,8 @@ class paypal extends base {
     $my_currency = select_pp_currency();
     $this->transaction_currency = $my_currency;
 
-    $this->transaction_amount = ($this->totalsum * $currencies->get_value($my_currency));
+    $this->totalsum = $order->info['total'] = zen_round($order->info['total'], 2);
+    $this->transaction_amount = zen_round($this->totalsum * $currencies->get_value($my_currency), $currencies->get_decimal_places($my_currency));
 
     $telephone = preg_replace('/\D/', '', $order->customer['telephone']);
     if ($telephone != '') {
@@ -237,7 +237,7 @@ class paypal extends base {
     $optionsShip['no_shipping'] = MODULE_PAYMENT_PAYPAL_ADDRESS_REQUIRED;
     if (MODULE_PAYMENT_PAYPAL_ADDRESS_OVERRIDE == '1') $optionsShip['address_override'] = MODULE_PAYMENT_PAYPAL_ADDRESS_OVERRIDE;
     // prepare cart contents details where possible
-    if (MODULE_PAYMENT_PAYPAL_DETAILED_CART == 'Yes') $optionsLineItems = ipn_getLineItemDetails();
+    if (MODULE_PAYMENT_PAYPAL_DETAILED_CART == 'Yes') $optionsLineItems = ipn_getLineItemDetails($my_currency);
     if (sizeof($optionsLineItems) > 0) {
       $optionsLineItems['cmd'] = '_cart';
 //      $optionsLineItems['num_cart_items'] = sizeof($order->products);
@@ -274,6 +274,9 @@ class paypal extends base {
     // if line-item info is invalid, use aggregate:
     if (sizeof($optionsLineItems) > 0) $optionsAggregate = $optionsLineItems;
 
+    if (defined('MODULE_PAYMENT_PAYPAL_LOGO_IMAGE')) $optionsCore['cpp_logo_image'] = urlencode(MODULE_PAYMENT_LOGO_IMAGE);
+    if (defined('MODULE_PAYMENT_PAYPAL_CART_BORDER_COLOR')) $optionsCore['cpp_cart_border_color'] = MODULE_PAYMENT_PAYPAL_CART_BORDER_COLOR;
+
     // prepare submission
     $options = array_merge($optionsCore, $optionsCust, $optionsPhone, $optionsShip, $optionsTrans, $optionsAggregate);
     //ipn_debug_email('Keys for submission: ' . print_r($options, true));
@@ -292,7 +295,7 @@ class paypal extends base {
 
       $buttonArray[] = zen_draw_hidden_field($name, $value);
     }
-    $process_button_string = implode("\n", $buttonArray) . "\n";
+    $process_button_string = "\n" . implode("\n", $buttonArray) . "\n";
 
     $_SESSION['paypal_transaction_info'] = array($this->transaction_amount, $this->transaction_currency);
     return $process_button_string;
@@ -488,7 +491,7 @@ class paypal extends base {
     }
     $db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) values ('Enable PayPal Module', 'MODULE_PAYMENT_PAYPAL_STATUS', 'True', 'Do you want to accept PayPal payments?', '6', '0', 'zen_cfg_select_option(array(\'True\', \'False\'), ', now())");
     $db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) values ('Business ID', 'MODULE_PAYMENT_PAYPAL_BUSINESS_ID','".STORE_OWNER_EMAIL_ADDRESS."', 'Primary email address for your PayPal account.<br />NOTE: This must match <strong>EXACTLY </strong>the primary email address on your PayPal account settings.  It <strong>IS case-sensitive</strong>, so please check your PayPal profile preferences at paypal.com and be sure to enter the EXACT same primary email address here.', '6', '2', now())");
-    $db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) values ('Transaction Currency', 'MODULE_PAYMENT_PAYPAL_CURRENCY', 'Selected Currency', 'Which currency should the order be sent to PayPal as? <br />NOTE: if an unsupported currency is sent to PayPal, it will be auto-converted to USD.', '6', '3', 'zen_cfg_select_option(array(\'Selected Currency\', \'Only USD\', \'Only AUD\', \'Only CAD\', \'Only EUR\', \'Only GBP\', \'Only CHF\', \'Only CZK\', \'Only DKK\', \'Only HKD\', \'Only HUF\', \'Only JPY\', \'Only NOK\', \'Only NZD\', \'Only PLN\', \'Only SEK\', \'Only SGD\', \'Only THB\', \'Only MXN\', \'Only ILS\', \'Only PHP\', \'Only TWD\', \'Only BRL\', \'Only MYR\'), ', now())");
+    $db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) values ('Transaction Currency', 'MODULE_PAYMENT_PAYPAL_CURRENCY', 'Selected Currency', 'Which currency should the order be sent to PayPal as? <br />NOTE: if an unsupported currency is sent to PayPal, it will be auto-converted to USD.', '6', '3', 'zen_cfg_select_option(array(\'Selected Currency\', \'Only USD\', \'Only AUD\', \'Only CAD\', \'Only EUR\', \'Only GBP\', \'Only CHF\', \'Only CZK\', \'Only DKK\', \'Only HKD\', \'Only HUF\', \'Only JPY\', \'Only NOK\', \'Only NZD\', \'Only PLN\', \'Only SEK\', \'Only SGD\', \'Only THB\', \'Only MXN\', \'Only ILS\', \'Only PHP\', \'Only TWD\', \'Only BRL\', \'Only MYR\', \'Only TKD\'), ', now())");
     $db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, use_function, set_function, date_added) values ('Payment Zone', 'MODULE_PAYMENT_PAYPAL_ZONE', '0', 'If a zone is selected, only enable this payment method for that zone.', '6', '4', 'zen_get_zone_class_title', 'zen_cfg_pull_down_zone_classes(', now())");
     $db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, use_function, date_added) values ('Set Pending Notification Status', 'MODULE_PAYMENT_PAYPAL_PROCESSING_STATUS_ID', '" . DEFAULT_ORDERS_STATUS_ID .  "', 'Set the status of orders made with this payment module that are not yet completed to this value<br />(\'Pending\' recommended)', '6', '5', 'zen_cfg_pull_down_order_statuses(', 'zen_get_order_status_name', now())");
     $db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, use_function, date_added) values ('Set Order Status', 'MODULE_PAYMENT_PAYPAL_ORDER_STATUS_ID', '2', 'Set the status of orders made with this payment module that have completed payment to this value<br />(\'Processing\' recommended)', '6', '6', 'zen_cfg_pull_down_order_statuses(', 'zen_get_order_status_name', now())");
@@ -594,7 +597,7 @@ class paypal extends base {
     }
 
     $PDTstatus = ($pdtTXN_is_unique && $PDTstatus);
-
+    if ($PDTstatus == TRUE) $this->transaction_id = $this->pdtData['txn_id'];
     return $PDTstatus;
   }
 

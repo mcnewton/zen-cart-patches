@@ -3,10 +3,10 @@
  * record_companies sidebox - displays list of record companies for customer to filter products on
  *
  * @package templateSystem
- * @copyright Copyright 2003-2005 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: record_companies.php 2834 2006-01-11 22:16:37Z birdbrain $
+ * @version $Id: record_companies.php 18922 2011-06-13 03:23:35Z drbyte $
  */
 
   $record_company_query = "select record_company_id, record_company_name
@@ -27,7 +27,7 @@
     }
 
     while (!$record_company->EOF) {
-      $record_company_name = ((strlen($record_company->fields['record_company_name']) > MAX_DISPLAY_RECORD_COMPANY_NAME_LEN) ? substr($record_company->fields['record_company_name'], 0, MAX_DISPLAY_RECORD_COMPANY_NAME_LEN) . '..' : $record_company->fields['record_company_name']);
+      $record_company_name = ((strlen($record_company->fields['record_company_name']) > (int)MAX_DISPLAY_RECORD_COMPANY_NAME_LEN) ? substr($record_company->fields['record_company_name'], 0, (int)MAX_DISPLAY_RECORD_COMPANY_NAME_LEN) . '..' : $record_company->fields['record_company_name']);
       $record_company_array[] = array('id' => $record_company->fields['record_company_id'],
                                        'text' => $record_company_name);
 
@@ -39,4 +39,3 @@
     $title_link = false;
     require($template->get_template_dir($column_box_default, DIR_WS_TEMPLATE, $current_page_base,'common') . '/' . $column_box_default);
   }
-?>

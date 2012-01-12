@@ -2,10 +2,10 @@
 /**
  * @package Installer
  * @access private
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: header_php.php 15933 2010-04-13 13:20:55Z drbyte $
+ * @version $Id: header_php.php 18695 2011-05-04 05:24:19Z drbyte $
  */
 
 /*
@@ -27,7 +27,7 @@
 /////////////////////////////////////////////////////////////////////
 //this is the latest database-version-level that this script knows how to inspect and upgrade to.
 //it is used to determine whether to stay on the upgrade page when done, or continue to the finished page
-$latest_version = '1.3.9';
+$latest_version = '1.5.0';
 
 ///////////////////////////////////
 $is_upgrade = true; //that's what this page is all about!
@@ -82,6 +82,11 @@ $sniffer_text = '';
 
 //display options based on what was found -- THESE SHOULD BE PROCESSED IN REVERSE ORDER, NEWEST VERSION FIRST... !
 //that way only the "earliest-required" upgrade is suggested first.
+    $needs_v1_5_0=false;
+    if (!$dbinfo->version150) {
+      $sniffer_text =  ' upgrade v1.3.9 to v1.5.0';
+      $needs_v1_5_0=true;
+    }
     $needs_v1_3_9=false;
     if (!$dbinfo->version139) {
       $sniffer_text =  ' upgrade v1.3.8 to v1.3.9';
@@ -218,175 +223,181 @@ if (ZC_UPG_DEBUG2==true) {
   echo '<br>137='.$dbinfo->version137;
   echo '<br>138='.$dbinfo->version138;
   echo '<br>139='.$dbinfo->version139;
+  echo '<br>150='.$dbinfo->version150;
   echo '<br>';
   }
 
 // IF FORM WAS SUBMITTED, CHECK SELECTIONS AND PERFORM THEM
   if (isset($_POST['submit'])) {
-   $sniffer_text =  '';
-   $sniffer_version = '';
-   $nothing_to_process = false;
-   if (is_array($_POST['version'])) {
-   if (ZC_UPG_DEBUG2==true) foreach($_POST['version'] as $value) { echo 'Selected: ' . $value.'<br />';}
-     reset($_POST['version']);
-     if (sizeof($_POST['version'])) $zc_install->updateAdminIpList();
-     while (list(, $value) = each($_POST['version'])) {
-     $sniffer_file = '';
-      switch ($value) {
-       case '1.0.4':  // upgrading from v1.0.4 to 1.1.1
-          if ($dbinfo->version111) continue;  // if prerequisite not completed, or already done, skip
-          $sniffer_file = '_upgrade_zencart_104_to_111.sql';
-          if (ZC_UPG_DEBUG2==true) echo '<br>'.$sniffer_file.'<br>';
-          $got_v1_1_1 = true;
-          $db_upgraded_to_version='1.1.1';
-          break;
-       case '1.1.0':  // upgrading from v1.1.0 to 1.1.1
-          if (!$dbinfo->version110 || $dbinfo->version111) continue; // if don't have prerequisite, or if already done this step
-          $sniffer_file = '_upgrade_zencart_110_to_111.sql';
-          if (ZC_UPG_DEBUG2==true) echo $sniffer_file.'<br>';
-          $got_v1_1_1 = true; //after processing this step, this will be the new version-level
-          $db_upgraded_to_version='1.1.1';
-          break;
-       case '1.1.1':  // upgrading from v1.1.1 to 1.1.2
-          if (!$dbinfo->version111 || $dbinfo->version112) continue;
-          $sniffer_file = '_upgrade_zencart_110_to_112.sql';
-          if (ZC_UPG_DEBUG2==true) echo $sniffer_file.'<br>';
-          $got_v1_1_2 = true; //after processing this step, this will be the new version-level
-          $db_upgraded_to_version='1.1.2';
-          break;
-       case '1.1.2-or-1.1.3':  // upgrading from v1.1.2 or v.1.13  TO   1.1.4
-          if (!$dbinfo->version112 || $dbinfo->version114) continue;
-          $sniffer_file = '_upgrade_zencart_112_to_114.sql';
-          if (ZC_UPG_DEBUG2==true) echo $sniffer_file.'<br>';
-          $got_v1_1_4 = true;
-          $got_v1_1_4_patch1 = true; //after processing this step, this will be the new version-level
-          $db_upgraded_to_version='1.1.4-1';
-          break;
-       case '1.1.4':  // upgrading from v1.1.4 to 1.1.4 patch1
-          if (!$dbinfo->version114 || $dbinfo->version1141) continue;
-          $sniffer_file = '_upgrade_zencart_114_patch1.sql';
-          if (ZC_UPG_DEBUG2==true) echo $sniffer_file.'<br>';
-          $got_v1_1_4_patch1 = true; //after processing this step, this will be the new version-level
-          $db_upgraded_to_version='1.1.4-1';
-          break;
-       case '1.1.4u':  // upgrading from v1.1.4 TO v1.2.0  ('u' implies "upgrade", rather than just the patch1)
-          if (!$dbinfo->version114 || $dbinfo->version120) continue;
-          $sniffer_file = '_upgrade_zencart_114_to_120.sql';
-          if (ZC_UPG_DEBUG2==true) echo $sniffer_file.'<br>';
-          $got_v1_2_0 = true; //after processing this step, this will be the new version-level
-          $db_upgraded_to_version='1.2.0';
-          break;
-       case '1.2.0':  // upgrading from v1.2.0 TO v1.2.1
-          if (!$dbinfo->version120 || $dbinfo->version121) continue;   // if prerequisite not completed, or already done, skip
-          $sniffer_file = '_upgrade_zencart_120_to_121.sql';
-          if (ZC_UPG_DEBUG2==true) echo $sniffer_file.'<br>';
-          $got_v1_2_1 = true; //after processing this step, this will be the new version-level
-          $db_upgraded_to_version='1.2.1';
-          break;
-       case '1.2.1':  // upgrading from v1.2.1 TO v1.2.2
+    $sniffer_text =  '';
+    $sniffer_version = '';
+    $nothing_to_process = false;
+    if (is_array($_POST['version'])) {
+      if (ZC_UPG_DEBUG2==true) foreach($_POST['version'] as $value) { echo 'Selected: ' . $value.'<br />';}
+      reset($_POST['version']);
+      if (sizeof($_POST['version'])) $zc_install->updateAdminIpList();
+      while (list(, $value) = each($_POST['version'])) {
+        $sniffer_file = '';
+        switch ($value) {
+          case '1.0.4':  // upgrading from v1.0.4 to 1.1.1
+            if ($dbinfo->version111) continue;  // if prerequisite not completed, or already done, skip
+            $sniffer_file = '_upgrade_zencart_104_to_111.sql';
+            if (ZC_UPG_DEBUG2==true) echo '<br>'.$sniffer_file.'<br>';
+            $got_v1_1_1 = true;
+            $db_upgraded_to_version='1.1.1';
+            break;
+          case '1.1.0':  // upgrading from v1.1.0 to 1.1.1
+            if (!$dbinfo->version110 || $dbinfo->version111) continue; // if don't have prerequisite, or if already done this step
+            $sniffer_file = '_upgrade_zencart_110_to_111.sql';
+            if (ZC_UPG_DEBUG2==true) echo $sniffer_file.'<br>';
+            $got_v1_1_1 = true; //after processing this step, this will be the new version-level
+            $db_upgraded_to_version='1.1.1';
+            break;
+          case '1.1.1':  // upgrading from v1.1.1 to 1.1.2
+            if (!$dbinfo->version111 || $dbinfo->version112) continue;
+            $sniffer_file = '_upgrade_zencart_110_to_112.sql';
+            if (ZC_UPG_DEBUG2==true) echo $sniffer_file.'<br>';
+            $got_v1_1_2 = true; //after processing this step, this will be the new version-level
+            $db_upgraded_to_version='1.1.2';
+            break;
+          case '1.1.2-or-1.1.3':  // upgrading from v1.1.2 or v.1.13  TO   1.1.4
+            if (!$dbinfo->version112 || $dbinfo->version114) continue;
+            $sniffer_file = '_upgrade_zencart_112_to_114.sql';
+            if (ZC_UPG_DEBUG2==true) echo $sniffer_file.'<br>';
+            $got_v1_1_4 = true;
+            $got_v1_1_4_patch1 = true; //after processing this step, this will be the new version-level
+            $db_upgraded_to_version='1.1.4-1';
+            break;
+          case '1.1.4':  // upgrading from v1.1.4 to 1.1.4 patch1
+            if (!$dbinfo->version114 || $dbinfo->version1141) continue;
+            $sniffer_file = '_upgrade_zencart_114_patch1.sql';
+            if (ZC_UPG_DEBUG2==true) echo $sniffer_file.'<br>';
+            $got_v1_1_4_patch1 = true; //after processing this step, this will be the new version-level
+            $db_upgraded_to_version='1.1.4-1';
+            break;
+          case '1.1.4u':  // upgrading from v1.1.4 TO v1.2.0  ('u' implies "upgrade", rather than just the patch1)
+            if (!$dbinfo->version114 || $dbinfo->version120) continue;
+            $sniffer_file = '_upgrade_zencart_114_to_120.sql';
+            if (ZC_UPG_DEBUG2==true) echo $sniffer_file.'<br>';
+            $got_v1_2_0 = true; //after processing this step, this will be the new version-level
+            $db_upgraded_to_version='1.2.0';
+            break;
+          case '1.2.0':  // upgrading from v1.2.0 TO v1.2.1
+            if (!$dbinfo->version120 || $dbinfo->version121) continue;   // if prerequisite not completed, or already done, skip
+            $sniffer_file = '_upgrade_zencart_120_to_121.sql';
+            if (ZC_UPG_DEBUG2==true) echo $sniffer_file.'<br>';
+            $got_v1_2_1 = true; //after processing this step, this will be the new version-level
+            $db_upgraded_to_version='1.2.1';
+            break;
+          case '1.2.1':  // upgrading from v1.2.1 TO v1.2.2
 //          if (!$dbinfo->version121 || $dbinfo->version122) continue;   // if prerequisite not completed, or already done, skip
-          $sniffer_file = '_upgrade_zencart_121_to_122.sql';
-          if (ZC_UPG_DEBUG2==true) echo $sniffer_file.'<br>';
-          $got_v1_2_2 = true; //after processing this step, this will be the new version-level
-          $db_upgraded_to_version='1.2.2';
-          break;
-       case '1.2.2':  // upgrading from v1.2.2 TO v1.2.3
+            $sniffer_file = '_upgrade_zencart_121_to_122.sql';
+            if (ZC_UPG_DEBUG2==true) echo $sniffer_file.'<br>';
+            $got_v1_2_2 = true; //after processing this step, this will be the new version-level
+            $db_upgraded_to_version='1.2.2';
+            break;
+          case '1.2.2':  // upgrading from v1.2.2 TO v1.2.3
 //          if (!$dbinfo->version122 || $dbinfo->version123) continue;  // if prerequisite not completed, or already done, skip
-          $sniffer_file = '_upgrade_zencart_122_to_123.sql';
-          if (ZC_UPG_DEBUG2==true) echo $sniffer_file.'<br>';
-          $got_v1_2_3 = true; //after processing this step, this will be the new version-level
-          $db_upgraded_to_version='1.2.3';
-          break;
-       case '1.2.3':  // upgrading from v1.2.3 TO v1.2.4
+            $sniffer_file = '_upgrade_zencart_122_to_123.sql';
+            if (ZC_UPG_DEBUG2==true) echo $sniffer_file.'<br>';
+            $got_v1_2_3 = true; //after processing this step, this will be the new version-level
+            $db_upgraded_to_version='1.2.3';
+            break;
+          case '1.2.3':  // upgrading from v1.2.3 TO v1.2.4
 //          if (!$dbinfo->version123 || $dbinfo->version124) continue;  // if prerequisite not completed, or already done, skip
-          $sniffer_file = '_upgrade_zencart_123_to_124.sql';
-          if (ZC_UPG_DEBUG2==true) echo $sniffer_file.'<br>';
-          $got_v1_2_4 = true; //after processing this step, this will be the new version-level
-          $db_upgraded_to_version='1.2.4';
-          break;
-       case '1.2.4':  // upgrading from v1.2.4 TO v1.2.5
+            $sniffer_file = '_upgrade_zencart_123_to_124.sql';
+            if (ZC_UPG_DEBUG2==true) echo $sniffer_file.'<br>';
+            $got_v1_2_4 = true; //after processing this step, this will be the new version-level
+            $db_upgraded_to_version='1.2.4';
+            break;
+          case '1.2.4':  // upgrading from v1.2.4 TO v1.2.5
 //          if (!$dbinfo->version124 || $dbinfo->version125) continue;  // if prerequisite not completed, or already done, skip
-          $sniffer_file = '_upgrade_zencart_124_to_125.sql';
-          if (ZC_UPG_DEBUG2==true) echo $sniffer_file.'<br>';
-          $got_v1_2_5 = true; //after processing this step, this will be the new version-level
-          $db_upgraded_to_version='1.2.5';
-          break;
-       case '1.2.5':  // upgrading from v1.2.5 TO v1.2.6
+            $sniffer_file = '_upgrade_zencart_124_to_125.sql';
+            if (ZC_UPG_DEBUG2==true) echo $sniffer_file.'<br>';
+            $got_v1_2_5 = true; //after processing this step, this will be the new version-level
+            $db_upgraded_to_version='1.2.5';
+            break;
+          case '1.2.5':  // upgrading from v1.2.5 TO v1.2.6
 //          if (!$dbinfo->version125 || $dbinfo->version126) continue;  // if prerequisite not completed, or already done, skip
-          $sniffer_file = '_upgrade_zencart_125_to_126.sql';
-          if (ZC_UPG_DEBUG2==true) echo $sniffer_file.'<br>';
-          $got_v1_2_6 = true; //after processing this step, this will be the new version-level
-          $db_upgraded_to_version='1.2.6';
-          break;
-       case '1.2.6':  // upgrading from v1.2.6 TO v1.2.7
+            $sniffer_file = '_upgrade_zencart_125_to_126.sql';
+            if (ZC_UPG_DEBUG2==true) echo $sniffer_file.'<br>';
+            $got_v1_2_6 = true; //after processing this step, this will be the new version-level
+            $db_upgraded_to_version='1.2.6';
+            break;
+          case '1.2.6':  // upgrading from v1.2.6 TO v1.2.7
 //          if (!$dbinfo->version126 || $dbinfo->version127) continue;  // if prerequisite not completed, or already done, skip
-          $sniffer_file = '_upgrade_zencart_126_to_127.sql';
-          if (ZC_UPG_DEBUG2==true) echo $sniffer_file.'<br>';
-          $got_v1_2_7 = true; //after processing this step, this will be the new version-level
-          $db_upgraded_to_version='1.2.7';
-          break;
-       case '1.2.7':  // upgrading from v1.2.7 TO v1.3.0
+            $sniffer_file = '_upgrade_zencart_126_to_127.sql';
+            if (ZC_UPG_DEBUG2==true) echo $sniffer_file.'<br>';
+            $got_v1_2_7 = true; //after processing this step, this will be the new version-level
+            $db_upgraded_to_version='1.2.7';
+            break;
+          case '1.2.7':  // upgrading from v1.2.7 TO v1.3.0
 //          if (!$dbinfo->version127 || $dbinfo->version130) continue;  // if prerequisite not completed, or already done, skip
-          $sniffer_file = '_upgrade_zencart_127_to_130.sql';
-          if (ZC_UPG_DEBUG2==true) echo $sniffer_file.'<br>';
-          $got_v1_3_0 = true; //after processing this step, this will be the new version-level
-          $db_upgraded_to_version='1.3.0';
-          break;
-       case '1.3.0':  // upgrading from v1.3.0 TO 1.3.0.1
+            $sniffer_file = '_upgrade_zencart_127_to_130.sql';
+            if (ZC_UPG_DEBUG2==true) echo $sniffer_file.'<br>';
+            $got_v1_3_0 = true; //after processing this step, this will be the new version-level
+            $db_upgraded_to_version='1.3.0';
+            break;
+          case '1.3.0':  // upgrading from v1.3.0 TO 1.3.0.1
 //          if (!$dbinfo->version130 || $dbinfo->version1301) continue;  // if prerequisite not completed, or already done, skip
-          $sniffer_file = '_upgrade_zencart_130_to_1301.sql';
-          if (ZC_UPG_DEBUG2==true) echo $sniffer_file.'<br>';
-          $got_v1_3_0_1 = true; //after processing this step, this will be the new version-level
-          $db_upgraded_to_version='1.3.0.1';
-          break;
-       case '1.3.0.1':  // upgrading from v1.3.0.1 TO 1.3.0.2
+            $sniffer_file = '_upgrade_zencart_130_to_1301.sql';
+            if (ZC_UPG_DEBUG2==true) echo $sniffer_file.'<br>';
+            $got_v1_3_0_1 = true; //after processing this step, this will be the new version-level
+            $db_upgraded_to_version='1.3.0.1';
+            break;
+          case '1.3.0.1':  // upgrading from v1.3.0.1 TO 1.3.0.2
 //          if (!$dbinfo->version1301 || $dbinfo->version1302) continue;  // if prerequisite not completed, or already done, skip
-          $sniffer_file = '_upgrade_zencart_1301_to_1302.sql';
-          if (ZC_UPG_DEBUG2==true) echo $sniffer_file.'<br>';
-          $got_v1_3_0_2 = true; //after processing this step, this will be the new version-level
-          $db_upgraded_to_version='1.3.0.2';
-          break;
-       case '1.3.0.2':  // upgrading from v1.3.0.2 TO 1.3.5
+            $sniffer_file = '_upgrade_zencart_1301_to_1302.sql';
+            if (ZC_UPG_DEBUG2==true) echo $sniffer_file.'<br>';
+            $got_v1_3_0_2 = true; //after processing this step, this will be the new version-level
+            $db_upgraded_to_version='1.3.0.2';
+            break;
+          case '1.3.0.2':  // upgrading from v1.3.0.2 TO 1.3.5
 //          if (!$dbinfo->version1302 || $dbinfo->version135) continue;  // if prerequisite not completed, or already done, skip
-          $sniffer_file = '_upgrade_zencart_1302_to_135.sql';
-          if (ZC_UPG_DEBUG2==true) echo $sniffer_file.'<br>';
-          $got_v1_3_5 = true; //after processing this step, this will be the new version-level
-          $db_upgraded_to_version='1.3.5';
-          break;
-       case '1.3.5':  // upgrading from v1.3.5 TO 1.3.6
+            $sniffer_file = '_upgrade_zencart_1302_to_135.sql';
+            if (ZC_UPG_DEBUG2==true) echo $sniffer_file.'<br>';
+            $got_v1_3_5 = true; //after processing this step, this will be the new version-level
+            $db_upgraded_to_version='1.3.5';
+            break;
+          case '1.3.5':  // upgrading from v1.3.5 TO 1.3.6
 //          if (!$dbinfo->version135 || $dbinfo->version136) continue;  // if prerequisite not completed, or already done, skip
-          $sniffer_file = '_upgrade_zencart_135_to_136.sql';
-          if (ZC_UPG_DEBUG2==true) echo $sniffer_file.'<br>';
-          $got_v1_3_6 = true; //after processing this step, this will be the new version-level
-          $db_upgraded_to_version='1.3.6';
-          break;
-       case '1.3.6':  // upgrading from v1.3.6 TO 1.3.7
+            $sniffer_file = '_upgrade_zencart_135_to_136.sql';
+            if (ZC_UPG_DEBUG2==true) echo $sniffer_file.'<br>';
+            $got_v1_3_6 = true; //after processing this step, this will be the new version-level
+            $db_upgraded_to_version='1.3.6';
+            break;
+          case '1.3.6':  // upgrading from v1.3.6 TO 1.3.7
 //          if (!$dbinfo->version135 || $dbinfo->version137) continue;  // if prerequisite not completed, or already done, skip
-          $sniffer_file = '_upgrade_zencart_136_to_137.sql';
-          if (ZC_UPG_DEBUG2==true) echo $sniffer_file.'<br>';
-          $got_v1_3_7 = true; //after processing this step, this will be the new version-level
-          $db_upgraded_to_version='1.3.7';
-          break;
-       case '1.3.7':  // upgrading from v1.3.7 TO 1.3.8
+            $sniffer_file = '_upgrade_zencart_136_to_137.sql';
+            if (ZC_UPG_DEBUG2==true) echo $sniffer_file.'<br>';
+            $got_v1_3_7 = true; //after processing this step, this will be the new version-level
+            $db_upgraded_to_version='1.3.7';
+            break;
+          case '1.3.7':  // upgrading from v1.3.7 TO 1.3.8
 //          if (!$dbinfo->version137 || $dbinfo->version138) continue;  // if prerequisite not completed, or already done, skip
-          $sniffer_file = '_upgrade_zencart_137_to_138.sql';
-          if (ZC_UPG_DEBUG2==true) echo $sniffer_file.'<br>';
-          $got_v1_3_8 = true; //after processing this step, this will be the new version-level
-          $db_upgraded_to_version='1.3.8';
-          break;
-       case '1.3.8':  // upgrading from v1.3.8 TO 1.3.9
+            $sniffer_file = '_upgrade_zencart_137_to_138.sql';
+            if (ZC_UPG_DEBUG2==true) echo $sniffer_file.'<br>';
+            $got_v1_3_8 = true; //after processing this step, this will be the new version-level
+            $db_upgraded_to_version='1.3.8';
+            break;
+          case '1.3.8':  // upgrading from v1.3.8 TO 1.3.9
 //          if (!$dbinfo->version138 || $dbinfo->version139) continue;  // if prerequisite not completed, or already done, skip
-          $sniffer_file = '_upgrade_zencart_138_to_139.sql';
-          if (ZC_UPG_DEBUG2==true) echo $sniffer_file.'<br>';
-          $got_v1_3_9 = true; //after processing this step, this will be the new version-level
-          $db_upgraded_to_version='1.3.9';
-          if (file_exists(DIR_WS_INCLUDES . '../extras/curltest.php')) @unlink(DIR_WS_INCLUDES . '../extras/curltest.php');
-          if (file_exists(DIR_WS_INCLUDES . 'modules/payment/paypal/ipn_application_top.php')) @unlink(DIR_WS_INCLUDES . 'modules/payment/paypal/ipn_application_top.php');
-          break;
-
-       default:
-       $nothing_to_process=true;
-       } // end while
+            $sniffer_file = '_upgrade_zencart_138_to_139.sql';
+            if (ZC_UPG_DEBUG2==true) echo $sniffer_file.'<br>';
+            $got_v1_3_9 = true; //after processing this step, this will be the new version-level
+            $db_upgraded_to_version='1.3.9';
+            break;
+       case '1.3.9':  // upgrading from v1.3.9 TO 1.5.0
+            $sniffer_file = '_upgrade_zencart_139_to_150.sql';
+            if (ZC_UPG_DEBUG2==true) echo $sniffer_file.'<br>';
+            $got_v1_5_0 = true; //after processing this step, this will be the new version-level
+            $db_upgraded_to_version='1.5.0';
+            break;
+          default:
+            $nothing_to_process=true;
+        } // end switch
+        if (file_exists(DIR_WS_INCLUDES . '../extras/curltest.php')) @unlink(DIR_WS_INCLUDES . '../extras/curltest.php');
+        if (file_exists(DIR_WS_INCLUDES . 'modules/payment/paypal/ipn_application_top.php')) @unlink(DIR_WS_INCLUDES . 'modules/payment/paypal/ipn_application_top.php');
 
         //check for errors
         $zc_install->test_store_configure(ERROR_TEXT_STORE_CONFIGURE,ERROR_CODE_STORE_CONFIGURE);
@@ -397,11 +408,11 @@ if (ZC_UPG_DEBUG2==true) {
           $zc_install->verifyAdminCredentials($_POST['adminid'], $_POST['adminpwd']);
         } //end if !fatal_error
 
-       if (ZC_UPG_DEBUG2==true) echo 'Processing ['.$sniffer_file.']...<br />';
-       if ($zc_install->error == false && $nothing_to_process==false) {
-        //open database connection to run queries against it
-        $db = new queryFactory;
-        $db->Connect(DB_SERVER, DB_SERVER_USERNAME, DB_SERVER_PASSWORD, DB_DATABASE) or die("Unable to connect to database");
+        if (ZC_UPG_DEBUG2==true) echo 'Processing ['.$sniffer_file.']...<br />';
+        if ($zc_install->error == false && $nothing_to_process==false) {
+          //open database connection to run queries against it
+          $db = new queryFactory;
+          $db->Connect(DB_SERVER, DB_SERVER_USERNAME, DB_SERVER_PASSWORD, DB_DATABASE) or die("Unable to connect to database");
 
           // load the upgrade.sql file(s) relative to the required step(s)
           $query_results = executeSql('sql/'. DB_TYPE . $sniffer_file, DB_DATABASE, DB_PREFIX);
@@ -419,16 +430,22 @@ if (ZC_UPG_DEBUG2==true) {
              $messageStack->add('upgrade','Note: '.$query_results['ignored'].' statements ignored. See "upgrade_exceptions" table for additional details.', 'caution');
            }
 /*           if (zen_not_null($query_results['output'])) {
-             foreach ($query_results['output'] as $value) {
+           foreach ($query_results['output'] as $value) {
 echo 'CAUTION: '.$value.'<br />';
-               if (zen_not_null($value)) $messageStack->add('INFO: '.$value, 'caution');
-             }
+             if (zen_not_null($value)) $messageStack->add('INFO: '.$value, 'caution');
            }
+         }
 */
-          $failed_entries += $query_results['ignored'];
-          $db->Close();
-          } // end if "no error"
-     } // end while - version loop
+        $failed_entries += $query_results['ignored'];
+
+        if ($db_upgraded_to_version == '1.5.0') {
+          $zc_install->addSuperUser();
+        }
+
+        $db->Close();
+      } // end if "no error"
+
+    } // end while - version loop
     if ($failed_entries !=0 ) {
       $zc_install->setError('<span class="errors">NOTE: Skipped upgrade statements: '.$failed_entries.'<br />See details at bottom of page for your inspection.<br />(Details also logged in the "upgrade_exceptions" table.)</span><br />Note: In most cases, these failed statements can be ignored, <br />as they are indications that certain settings may have already been set on your site. <br />If all the suggested upgrade steps have been completed (no recommendations left), <br />you may proceed to Skip Upgrades and continue configuring your site.','85', false);
     }
@@ -481,4 +498,3 @@ echo 'CAUTION: '.$value.'<br />';
  }
 
   $adminName = (isset($_POST['adminid'])) ? $_POST['adminid'] : '';
-?>

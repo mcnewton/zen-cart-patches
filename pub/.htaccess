@@ -1,7 +1,7 @@
 #
-# @copyright Copyright 2003-2010 Zen Cart Development Team
+# @copyright Copyright 2003-2011 Zen Cart Development Team
 # @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
-# @version $Id: .htaccess 16111 2010-04-29 22:39:02Z drbyte $
+# @version $Id: .htaccess 18695 2011-05-04 05:24:19Z drbyte $
 #
 
 ## the following line is needed to allow Download-By-Redirect to work
@@ -29,15 +29,20 @@
 </FilesMatch>
 
 # but now allow just *certain* necessary files:
-<FilesMatch ".*\.(zip|ZIP|pdf|PDF|mp3|MP3|swf|SWF|wma|WMA|wmv|WMV)$">
+<FilesMatch ".*\.(zip|ZIP|gzip|pdf|PDF|mp3|MP3|swf|SWF|wma|WMA|wmv|WMV|wav|epub)$">
   Order Allow,Deny
   Allow from all
-  
-  # tell all downloads to automatically be treated as "save as" instead of launching in an application directly
-  # (just uncomment the next 2 lines by removing the '#'):
-#  ForceType application/octet-stream
-#  Header set Content-Disposition attachment
 </FilesMatch>
+
+<IfModule mod_headers.c>
+  <FilesMatch ".*\.(zip|ZIP|gzip|pdf|PDF|mp3|MP3|swf|SWF|wma|WMA|wmv|WMV|wav|epub)$">
+    # tell all downloads to automatically be treated as "save as" instead of launching in an application directly
+    # ALERT: ForceType requires Apache2 or later. If using older version of Apache, it will need mod_mime installed. Or just comment out the ForceType line below
+    # (to disable, just comment the next 2 lines by adding a '#' at the beginning of each):
+    ForceType application/octet-stream
+    Header set Content-Disposition attachment
+  </FilesMatch>
+</IfModule>
 
 IndexIgnore */*
 

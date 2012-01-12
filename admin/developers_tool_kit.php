@@ -1,10 +1,10 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: developers_tool_kit.php 17890 2010-10-08 21:29:11Z wilt $
+ * @version $Id: developers_tool_kit.php 18695 2011-05-04 05:24:19Z drbyte $
  */
 
   require('includes/application_top.php');
@@ -16,7 +16,7 @@
 
   $configuration_key_lookup = zen_db_prepare_input($_POST['configuration_key'], false);
   if (isset($_GET['configuration_key_lookup']) && $_GET['configuration_key_lookup'] != '') {
-    $configuration_key_lookup = strtoupper($_GET['configuration_key_lookup']);
+    $configuration_key_lookup = zen_db_prepare_input(strtoupper($_GET['configuration_key_lookup']), false);
     $_POST['configuration_key'] = strtoupper($_GET['configuration_key_lookup']);
     $_POST['zv_files'] = 1;
     $_POST['zv_filestype'] = $_POST['zv_filestype'];
@@ -77,6 +77,9 @@
         case(4):
           $file_extensions = array('.html', '.txt');
           break;
+        case(5):
+          $file_extensions = array('.js');
+          break;
         default:
           $file_extensions = array('.php', '.css');
           break;
@@ -104,11 +107,9 @@
       $original_array = $directory_array;
       $root_array = array();
 // if not html/txt
-    if ($filetypesincluded != 4) {
+    if ($filetypesincluded != 3 && $filetypesincluded != 4 && $filetypesincluded != 5) {
       $root_array[] = DIR_FS_CATALOG . 'index.php';
       $root_array[] = DIR_FS_CATALOG . 'ipn_main_handler.php';
-      $root_array[] = DIR_FS_CATALOG . 'ipn_test.php';
-      $root_array[] = DIR_FS_CATALOG . 'ipn_test_return.php';
       $root_array[] = DIR_FS_CATALOG . 'page_not_found.php';
     }
 
@@ -124,9 +125,13 @@
 
       // if appears to be a constant ask about configuration table
       $check_database = true;
-      $check_configure = $db->Execute("select * from " . TABLE_CONFIGURATION . " where configuration_key='" . strtoupper($configuration_key_lookup) . "'");
+      $sql = "select * from " . TABLE_CONFIGURATION . " where configuration_key=:zcconfigkey:";
+      $sql = $db->BindVars($sql, ':zcconfigkey:', strtoupper($configuration_key_lookup), 'string');
+      $check_configure = $db->Execute($sql);
       if ($check_configure->RecordCount() < 1) {
-        $check_configure = $db->Execute("select * from " . TABLE_PRODUCT_TYPE_LAYOUT . " where configuration_key='" . strtoupper($configuration_key_lookup) . "'");
+        $sql = "select * from " . TABLE_PRODUCT_TYPE_LAYOUT . " where configuration_key=:zcconfigkey:";
+        $sql = $db->BindVars($sql, ':zcconfigkey:', strtoupper($configuration_key_lookup), 'string');
+        $check_configure = $db->Execute($sql);
       }
       if ($check_configure->RecordCount() >= 1) {
         $links = '<strong><span class="alert">' . TEXT_SEARCH_DATABASE_TABLES . '</span></strong> ' . '<a href="' . zen_href_link(FILENAME_DEVELOPERS_TOOL_KIT, 'action=' . 'locate_configuration' . '&configuration_key_lookup=' . $configuration_key_lookup) . '">' . $configuration_key_lookup . '</a><br /><br />';
@@ -209,7 +214,7 @@
   // don't do any 'action' if clicked on the Check for Updates button
   if (isset($_GET['vcheck']) && $_GET['vcheck']=='yes') $action = '';
 
-  $current_category_id = (isset($_GET['current_category_id']) ? $_GET['current_category_id'] : $current_category_id);
+  $current_category_id = (isset($_GET['current_category_id']) ? (int)$_GET['current_category_id'] : (int)$current_category_id);
   $found= 'true';
 
   switch($action) {
@@ -221,9 +226,13 @@
       $found = 'false';
       $zv_files_group = $_POST['zv_files'];
 
-      $check_configure = $db->Execute("select * from " . TABLE_CONFIGURATION . " where configuration_key='" . $_POST['configuration_key'] . "'");
+      $sql = "select * from " . TABLE_CONFIGURATION . " where configuration_key=:zcconfigkey:";
+      $sql = $db->BindVars($sql, ':zcconfigkey:', $_POST['configuration_key'], 'string');
+      $check_configure = $db->Execute($sql);
       if ($check_configure->RecordCount() < 1) {
-        $check_configure = $db->Execute("select * from " . TABLE_PRODUCT_TYPE_LAYOUT . " where configuration_key='" . $_POST['configuration_key'] . "'");
+        $sql = "select * from " . TABLE_PRODUCT_TYPE_LAYOUT . " where configuration_key=:zcconfigkey:";
+        $sql = $db->BindVars($sql, ':zcconfigkey:', $_POST['configuration_key'], 'string');
+        $check_configure = $db->Execute($sql);
         if ($check_configure->RecordCount() < 1) {
           // build filenames to search
           switch ($zv_files_group) {
@@ -471,7 +480,12 @@
           getDirList(DIR_FS_CATALOG . DIR_WS_INCLUDES, $zv_filestype_group);
           $sub_dir_files_catalog = $sub_dir_files;
 
-          $check_dir = array_merge($sub_dir_files_catalog);
+// get email
+          $sub_dir_files = array();
+          getDirList(DIR_FS_EMAIL_TEMPLATES, $zv_filestype_group);
+          $sub_dir_files_email = $sub_dir_files;
+
+          $check_dir = array_merge($sub_dir_files_catalog, $sub_dir_files_email);
           for ($i = 0, $n = sizeof($check_dir); $i < $n; $i++) {
             $zv_add_dir= str_replace('//', '/', $check_dir[$i] . '/');
             if (strstr($zv_add_dir, DIR_WS_ADMIN) == '') {
@@ -571,9 +585,9 @@ if (isset($show_configuration_info) && $show_configuration_info == 'true') {
           </tr>
 <?php
   if ($show_products_type_layout == 'true') {
-    $check_configure_group = $db->Execute("select * from " . TABLE_PRODUCT_TYPES . " where type_id='" . $check_configure->fields['product_type_id'] . "'");
+    $check_configure_group = $db->Execute("select * from " . TABLE_PRODUCT_TYPES . " where type_id='" . (int)$check_configure->fields['product_type_id'] . "'");
   } else {
-    $check_configure_group = $db->Execute("select * from " . TABLE_CONFIGURATION_GROUP . " where configuration_group_id='" . $check_configure->fields['configuration_group_id'] . "'");
+    $check_configure_group = $db->Execute("select * from " . TABLE_CONFIGURATION_GROUP . " where configuration_group_id='" . (int)$check_configure->fields['configuration_group_id'] . "'");
   }
 ?>
 
@@ -809,7 +823,8 @@ if (false) {
                                               array('id' => '1', 'text' => TEXT_ALL_FILES_LOOKUP_PHP),
                                               array('id' => '2', 'text' => TEXT_ALL_FILES_LOOKUP_PHPCSS),
                                               array('id' => '3', 'text' => TEXT_ALL_FILES_LOOKUP_CSS),
-                                              array('id' => '4', 'text' => TEXT_ALL_FILES_LOOKUP_HTMLTXT)
+                                              array('id' => '4', 'text' => TEXT_ALL_FILES_LOOKUP_HTMLTXT),
+                                              array('id' => '5', 'text' => TEXT_ALL_FILES_LOOKUP_JS)
                                                     );
 
                 echo '<strong>' . TEXT_ALL_FILESTYPE_LOOKUPS . '</strong>' . '<br />' . zen_draw_pull_down_menu('zv_filestype', $za_lookup_filetype, '0');

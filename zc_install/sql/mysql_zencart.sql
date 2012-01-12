@@ -2,10 +2,10 @@
 # * Main Zen Cart SQL Load for MySQL databases
 # * @package Installer
 # * @access private
-# * @copyright Copyright 2003-2010 Zen Cart Development Team
+# * @copyright Copyright 2003-2011 Zen Cart Development Team
 # * @copyright Portions Copyright 2003 osCommerce
 # * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
-# * @version $Id: mysql_zencart.sql 17918 2010-10-10 04:45:45Z drbyte $
+# * @version $Id: mysql_zencart.sql 20043 2011-12-06 23:07:06Z drbyte $
 #
 
 ############ IMPORTANT INSTRUCTIONS ###############
@@ -86,11 +86,24 @@ CREATE TABLE admin (
   admin_id int(11) NOT NULL auto_increment,
   admin_name varchar(32) NOT NULL default '',
   admin_email varchar(96) NOT NULL default '',
+  admin_profile int(11) NOT NULL default '0',
   admin_pass varchar(40) NOT NULL default '',
-  admin_level tinyint(1) NOT NULL default '1',
+  prev_pass1 varchar(40) NOT NULL default '',
+  prev_pass2 varchar(40) NOT NULL default '',
+  prev_pass3 varchar(40) NOT NULL default '',
+  pwd_last_change_date datetime NOT NULL default '0000-00-00 00:00:00',
+  reset_token varchar(60) NOT NULL default '',
+  last_modified datetime NOT NULL default '0000-00-00 00:00:00',
+  last_login_date datetime NOT NULL default '0000-00-00 00:00:00',
+  last_login_ip varchar(15) NOT NULL default '',
+  failed_logins smallint(4) unsigned NOT NULL default '0',
+  lockout_expires int(11) NOT NULL default '0',
+  last_failed_attempt datetime NOT NULL default '0000-00-00 00:00:00',
+  last_failed_ip varchar(15) NOT NULL default '',
   PRIMARY KEY  (admin_id),
   KEY idx_admin_name_zen (admin_name),
-  KEY idx_admin_email_zen (admin_email)
+  KEY idx_admin_email_zen (admin_email),
+  KEY idx_admin_profile_zen (admin_profile)
 ) ENGINE=MyISAM;
 
 # --------------------------------------------------------
@@ -101,18 +114,80 @@ CREATE TABLE admin (
 
 DROP TABLE IF EXISTS admin_activity_log;
 CREATE TABLE admin_activity_log (
-  log_id int(15) NOT NULL auto_increment,
+  log_id bigint(15) NOT NULL auto_increment,
   access_date datetime NOT NULL default '0001-01-01 00:00:00',
   admin_id int(11) NOT NULL default '0',
   page_accessed varchar(80) NOT NULL default '',
-  page_parameters text,
-  ip_address varchar(15) NOT NULL default '',
+  page_parameters text default '',
+  ip_address varchar(20) NOT NULL default '',
+  flagged tinyint NOT NULL default '0',
+  attention varchar(255) NOT NULL default '',
+  gzpost mediumblob NOT NULL default '',
   PRIMARY KEY  (log_id),
   KEY idx_page_accessed_zen (page_accessed),
   KEY idx_access_date_zen (access_date),
+  KEY idx_flagged_zen (flagged),
   KEY idx_ip_zen (ip_address)
 ) ENGINE=MyISAM;
 
+# --------------------------------------------------------
+
+#
+# Table structure for table 'admin_menu'
+#
+
+DROP TABLE IF EXISTS admin_menus;
+CREATE TABLE admin_menus (
+  menu_key VARCHAR(32) NOT NULL DEFAULT '',
+  language_key VARCHAR(255) NOT NULL DEFAULT '',
+  sort_order INT(11) NOT NULL DEFAULT 0,
+  UNIQUE KEY menu_key (menu_key)
+) ENGINE=MyISAM;
+
+# --------------------------------------------------------
+
+#
+# Table structure for table 'admin_pages'
+#
+
+DROP TABLE IF EXISTS admin_pages;
+CREATE TABLE admin_pages (
+  page_key VARCHAR(32) NOT NULL DEFAULT '',
+  language_key VARCHAR(255) NOT NULL DEFAULT '',
+  main_page varchar(64) NOT NULL default '',
+  page_params varchar(64) NOT NULL default '',
+  menu_key varchar(32) NOT NULL default '',
+  display_on_menu char(1) NOT NULL default 'N',
+  sort_order int(11) NOT NULL default 0,
+  UNIQUE KEY page_key (page_key)
+) ENGINE=MyISAM;
+
+# --------------------------------------------------------
+
+#
+# Table structure for table 'admin_profiles'
+#
+
+DROP TABLE IF EXISTS admin_profiles;
+CREATE TABLE admin_profiles (
+  profile_id int(11) NOT NULL AUTO_INCREMENT,
+  profile_name varchar(64) NOT NULL default '',
+  PRIMARY KEY (profile_id)
+) ENGINE=MyISAM;
+
+# --------------------------------------------------------
+
+#
+# Table structure for table 'admin_pages_to_profiles'
+#
+
+DROP TABLE IF EXISTS admin_pages_to_profiles;
+CREATE TABLE admin_pages_to_profiles (
+  profile_id int(11) NOT NULL default '0',
+  page_key varchar(32) NOT NULL default '',
+  UNIQUE KEY profile_page (profile_id, page_key),
+  UNIQUE KEY page_profile (page_key, profile_id)
+) ENGINE=MyISAM;
 
 # --------------------------------------------------------
 
@@ -1803,7 +1878,7 @@ CREATE TABLE salemaker_sales (
 
 DROP TABLE IF EXISTS sessions;
 CREATE TABLE sessions (
-  sesskey varchar(32) NOT NULL default '',
+  sesskey varchar(64) NOT NULL default '',
   expiry int(11) unsigned NOT NULL default '0',
   value mediumblob NOT NULL,
   PRIMARY KEY  (sesskey)
@@ -1897,7 +1972,7 @@ CREATE TABLE whos_online (
   customer_id int(11) default NULL,
   full_name varchar(64) NOT NULL default '',
   session_id varchar(128) NOT NULL default '',
-  ip_address varchar(15) NOT NULL default '',
+  ip_address varchar(20) NOT NULL default '',
   time_entry varchar(14) NOT NULL default '',
   time_last_click varchar(14) NOT NULL default '',
   last_page_url varchar(255) NOT NULL default '',
@@ -1947,21 +2022,6 @@ CREATE TABLE zones_to_geo_zones (
 ) ENGINE=MyISAM;
 
 
-#
-# Database table for customers_wishlist
-#
-
-DROP TABLE IF EXISTS customers_wishlist;
-CREATE TABLE customers_wishlist (
-  products_id int(13) NOT NULL default '0',
-  customers_id int(13) NOT NULL default '0',
-  products_model varchar(13) default NULL,
-  products_name varchar(64) NOT NULL default '',
-  products_price decimal(8,2) NOT NULL default '0.00',
-  final_price decimal(8,2) NOT NULL default '0.00',
-  products_quantity int(2) NOT NULL default '0',
-  wishlist_name varchar(64) default NULL
-) ENGINE=MyISAM;
 
 
 
@@ -1975,12 +2035,8 @@ CREATE TABLE customers_wishlist (
 
 
 
+# default data
 
-
-
-
-
-# data
 INSERT INTO template_select VALUES (1, 'classic', '0');
 
 # 1 - Default, 2 - USA, 3 - Spain, 4 - Singapore, 5 - Germany, 6 - UK/GB
@@ -1991,7 +2047,119 @@ INSERT INTO address_format VALUES (4, '$firstname $lastname$cr$streets$cr$city (
 INSERT INTO address_format VALUES (5, '$firstname $lastname$cr$streets$cr$postcode $city$cr$country','$city / $country');
 INSERT INTO address_format VALUES (6, '$firstname $lastname$cr$streets$cr$city$cr$state$cr$postcode$cr$country','$postcode / $country');
 
-INSERT INTO admin VALUES (1, 'Admin', 'admin@localhost', '351683ea4e19efe34874b501fdbf9792:9b', 1);
+INSERT INTO admin (admin_id, admin_name, admin_email, admin_pass, admin_profile, last_modified) VALUES
+ (1, 'Admin', 'admin@localhost', '351683ea4e19efe34874b501fdbf9792:9b', 1, now());
+
+# Insert default data into admin profiles table
+INSERT INTO admin_profiles (profile_id, profile_name) VALUES (1, 'Superuser');
+
+# Insert default data into admin_menus table
+INSERT INTO admin_menus (menu_key, language_key, sort_order)
+VALUES ('configuration', 'BOX_HEADING_CONFIGURATION', 1),
+       ('catalog', 'BOX_HEADING_CATALOG', 2),
+       ('modules', 'BOX_HEADING_MODULES', 3),
+       ('customers', 'BOX_HEADING_CUSTOMERS', 4),
+       ('taxes', 'BOX_HEADING_LOCATION_AND_TAXES', 5),
+       ('localization', 'BOX_HEADING_LOCALIZATION', 6),
+       ('reports', 'BOX_HEADING_REPORTS', 7),
+       ('tools', 'BOX_HEADING_TOOLS', 8),
+       ('gv', 'BOX_HEADING_GV_ADMIN', 9),
+       ('access', 'BOX_HEADING_ADMIN_ACCESS', 10),
+       ('extras', 'BOX_HEADING_EXTRAS', 11);
+
+# Insert data into admin_pages table
+INSERT INTO admin_pages (page_key, language_key, main_page, page_params, menu_key, display_on_menu, sort_order)
+VALUES ('configMyStore', 'BOX_CONFIGURATION_MY_STORE', 'FILENAME_CONFIGURATION', 'gID=1', 'configuration', 'Y', 1),
+       ('configMinimumValues', 'BOX_CONFIGURATION_MINIMUM_VALUES', 'FILENAME_CONFIGURATION', 'gID=2', 'configuration', 'Y', 2),
+       ('configMaximumValues', 'BOX_CONFIGURATION_MAXIMUM_VALUES', 'FILENAME_CONFIGURATION', 'gID=3', 'configuration', 'Y', 3),
+       ('configImages', 'BOX_CONFIGURATION_IMAGES', 'FILENAME_CONFIGURATION', 'gID=4', 'configuration', 'Y', 4),
+       ('configCustomerDetails', 'BOX_CONFIGURATION_CUSTOMER_DETAILS', 'FILENAME_CONFIGURATION', 'gID=5', 'configuration', 'Y', 5),
+       ('configShipping', 'BOX_CONFIGURATION_SHIPPING_PACKAGING', 'FILENAME_CONFIGURATION', 'gID=7', 'configuration', 'Y', 6),
+       ('configProductListing', 'BOX_CONFIGURATION_PRODUCT_LISTING', 'FILENAME_CONFIGURATION', 'gID=8', 'configuration', 'Y', 7),
+       ('configStock', 'BOX_CONFIGURATION_STOCK', 'FILENAME_CONFIGURATION', 'gID=9', 'configuration', 'Y', 8),
+       ('configLogging', 'BOX_CONFIGURATION_LOGGING', 'FILENAME_CONFIGURATION', 'gID=10', 'configuration', 'Y', 9),
+       ('configEmail', 'BOX_CONFIGURATION_EMAIL_OPTIONS', 'FILENAME_CONFIGURATION', 'gID=12', 'configuration', 'Y', 10),
+       ('configAttributes', 'BOX_CONFIGURATION_ATTRIBUTE_OPTIONS', 'FILENAME_CONFIGURATION', 'gID=13', 'configuration', 'Y', 11),
+       ('configGzipCompression', 'BOX_CONFIGURATION_GZIP_COMPRESSION', 'FILENAME_CONFIGURATION', 'gID=14', 'configuration', 'Y', 12),
+       ('configSessions', 'BOX_CONFIGURATION_SESSIONS', 'FILENAME_CONFIGURATION', 'gID=15', 'configuration', 'Y', 13),
+       ('configRegulations', 'BOX_CONFIGURATION_REGULATIONS', 'FILENAME_CONFIGURATION', 'gID=11', 'configuration', 'Y', 14),
+       ('configGvCoupons', 'BOX_CONFIGURATION_GV_COUPONS', 'FILENAME_CONFIGURATION', 'gID=16', 'configuration', 'Y', 15),
+       ('configCreditCards', 'BOX_CONFIGURATION_CREDIT_CARDS', 'FILENAME_CONFIGURATION', 'gID=17', 'configuration', 'Y', 16),
+       ('configProductInfo', 'BOX_CONFIGURATION_PRODUCT_INFO', 'FILENAME_CONFIGURATION', 'gID=18', 'configuration', 'Y', 17),
+       ('configLayoutSettings', 'BOX_CONFIGURATION_LAYOUT_SETTINGS', 'FILENAME_CONFIGURATION', 'gID=19', 'configuration', 'Y', 18),
+       ('configWebsiteMaintenance', 'BOX_CONFIGURATION_WEBSITE_MAINTENANCE', 'FILENAME_CONFIGURATION', 'gID=20', 'configuration', 'Y', 19),
+       ('configNewListing', 'BOX_CONFIGURATION_NEW_LISTING', 'FILENAME_CONFIGURATION', 'gID=21', 'configuration', 'Y', 20),
+       ('configFeaturedListing', 'BOX_CONFIGURATION_FEATURED_LISTING', 'FILENAME_CONFIGURATION', 'gID=22', 'configuration', 'Y', 21),
+       ('configAllListing', 'BOX_CONFIGURATION_ALL_LISTING', 'FILENAME_CONFIGURATION', 'gID=23', 'configuration', 'Y', 22),
+       ('configIndexListing', 'BOX_CONFIGURATION_INDEX_LISTING', 'FILENAME_CONFIGURATION', 'gID=24', 'configuration', 'Y', 23),
+       ('configDefinePageStatus', 'BOX_CONFIGURATION_DEFINE_PAGE_STATUS', 'FILENAME_CONFIGURATION', 'gID=25', 'configuration', 'Y', 24),
+       ('configEzPagesSettings', 'BOX_CONFIGURATION_EZPAGES_SETTINGS', 'FILENAME_CONFIGURATION', 'gID=30', 'configuration', 'Y', 25),
+       ('categories', 'BOX_CATALOG_CATEGORIES_PRODUCTS', 'FILENAME_CATEGORIES', '', 'catalog', 'Y', 1),
+       ('productTypes', 'BOX_CATALOG_PRODUCT_TYPES', 'FILENAME_PRODUCT_TYPES', '', 'catalog', 'Y', 2),
+       ('priceManager', 'BOX_CATALOG_PRODUCTS_PRICE_MANAGER', 'FILENAME_PRODUCTS_PRICE_MANAGER', '', 'catalog', 'Y', 3),
+       ('optionNames', 'BOX_CATALOG_CATEGORIES_OPTIONS_NAME_MANAGER', 'FILENAME_OPTIONS_NAME_MANAGER', '', 'catalog', 'Y', 4),
+       ('optionValues', 'BOX_CATALOG_CATEGORIES_OPTIONS_VALUES_MANAGER', 'FILENAME_OPTIONS_VALUES_MANAGER', '', 'catalog', 'Y', 5),
+       ('attributes', 'BOX_CATALOG_CATEGORIES_ATTRIBUTES_CONTROLLER', 'FILENAME_ATTRIBUTES_CONTROLLER', '', 'catalog', 'Y', 6),
+       ('downloads', 'BOX_CATALOG_CATEGORIES_ATTRIBUTES_DOWNLOADS_MANAGER', 'FILENAME_DOWNLOADS_MANAGER', '', 'catalog', 'Y', 7),
+       ('optionNameSorter', 'BOX_CATALOG_PRODUCT_OPTIONS_NAME', 'FILENAME_PRODUCTS_OPTIONS_NAME', '', 'catalog', 'Y', 8),
+       ('optionValueSorter', 'BOX_CATALOG_PRODUCT_OPTIONS_VALUES', 'FILENAME_PRODUCTS_OPTIONS_VALUES', '', 'catalog', 'Y', 9),
+       ('manufacturers', 'BOX_CATALOG_MANUFACTURERS', 'FILENAME_MANUFACTURERS', '', 'catalog', 'Y', 10),
+       ('reviews', 'BOX_CATALOG_REVIEWS', 'FILENAME_REVIEWS', '', 'catalog', 'Y', 11),
+       ('specials', 'BOX_CATALOG_SPECIALS', 'FILENAME_SPECIALS', '', 'catalog', 'Y', 12),
+       ('featured', 'BOX_CATALOG_FEATURED', 'FILENAME_FEATURED', '', 'catalog', 'Y', 13),
+       ('salemaker', 'BOX_CATALOG_SALEMAKER', 'FILENAME_SALEMAKER', '', 'catalog', 'Y', 14),
+       ('productsExpected', 'BOX_CATALOG_PRODUCTS_EXPECTED', 'FILENAME_PRODUCTS_EXPECTED', '', 'catalog', 'Y', 15),
+       ('product', 'BOX_CATALOG_PRODUCT', 'FILENAME_PRODUCT', '', 'catalog', 'N', 16),
+       ('productsToCategories', 'BOX_CATALOG_PRODUCTS_TO_CATEGORIES', 'FILENAME_PRODUCTS_TO_CATEGORIES', '', 'catalog', 'N', 17),
+       ('payment', 'BOX_MODULES_PAYMENT', 'FILENAME_MODULES', 'set=payment', 'modules', 'Y', 1),
+       ('shipping', 'BOX_MODULES_SHIPPING', 'FILENAME_MODULES', 'set=shipping', 'modules', 'Y', 2),
+       ('orderTotal', 'BOX_MODULES_ORDER_TOTAL', 'FILENAME_MODULES', 'set=ordertotal', 'modules', 'Y', 3),
+       ('customers', 'BOX_CUSTOMERS_CUSTOMERS', 'FILENAME_CUSTOMERS', '', 'customers', 'Y', 1),
+       ('orders', 'BOX_CUSTOMERS_ORDERS', 'FILENAME_ORDERS', '', 'customers', 'Y', 2),
+       ('groupPricing', 'BOX_CUSTOMERS_GROUP_PRICING', 'FILENAME_GROUP_PRICING', '', 'customers', 'Y', 3),
+       ('paypal', 'BOX_CUSTOMERS_PAYPAL', 'FILENAME_PAYPAL', '', 'customers', 'Y', 4),
+       ('invoice', 'BOX_CUSTOMERS_INVOICE', 'FILENAME_ORDERS_INVOICE', '', 'customers', 'N', 5),
+       ('packingslip', 'BOX_CUSTOMERS_PACKING_SLIP', 'FILENAME_ORDERS_PACKINGSLIP', '', 'customers', 'N', 6),
+       ('linkpointReview', 'BOX_CUSTOMERS_LINKPOINT_REVIEW', 'FILENAME_LINKPOINT_REVIEW', '', 'customers', 'Y', 7),
+       ('countries', 'BOX_TAXES_COUNTRIES', 'FILENAME_COUNTRIES', '', 'taxes', 'Y', 1),
+       ('zones', 'BOX_TAXES_ZONES', 'FILENAME_ZONES', '', 'taxes', 'Y', 2),
+       ('geoZones', 'BOX_TAXES_GEO_ZONES', 'FILENAME_GEO_ZONES', '', 'taxes', 'Y', 3),
+       ('taxClasses', 'BOX_TAXES_TAX_CLASSES', 'FILENAME_TAX_CLASSES', '', 'taxes', 'Y', 4),
+       ('taxRates', 'BOX_TAXES_TAX_RATES', 'FILENAME_TAX_RATES', '', 'taxes', 'Y', 5),
+       ('currencies', 'BOX_LOCALIZATION_CURRENCIES', 'FILENAME_CURRENCIES', '', 'localization', 'Y', 1),
+       ('languages', 'BOX_LOCALIZATION_LANGUAGES', 'FILENAME_LANGUAGES', '', 'localization', 'Y', 2),
+       ('ordersStatus', 'BOX_LOCALIZATION_ORDERS_STATUS', 'FILENAME_ORDERS_STATUS', '', 'localization', 'Y', 3),
+       ('reportCustomers', 'BOX_REPORTS_ORDERS_TOTAL', 'FILENAME_STATS_CUSTOMERS', '', 'reports', 'Y', 1),
+       ('reportReferrals', 'BOX_REPORTS_CUSTOMERS_REFERRALS', 'FILENAME_STATS_CUSTOMERS_REFERRALS', '', 'reports', 'Y', 2),
+       ('reportLowStock', 'BOX_REPORTS_PRODUCTS_LOWSTOCK', 'FILENAME_STATS_PRODUCTS_LOWSTOCK', '', 'reports', 'Y', 3),
+       ('reportProductsSold', 'BOX_REPORTS_PRODUCTS_PURCHASED', 'FILENAME_STATS_PRODUCTS_PURCHASED', '', 'reports', 'Y', 4),
+       ('reportProductsViewed', 'BOX_REPORTS_PRODUCTS_VIEWED', 'FILENAME_STATS_PRODUCTS_VIEWED', '', 'reports', 'Y', 5),
+       ('templateSelect', 'BOX_TOOLS_TEMPLATE_SELECT', 'FILENAME_TEMPLATE_SELECT', '', 'tools', 'Y', 1),
+       ('layoutController', 'BOX_TOOLS_LAYOUT_CONTROLLER', 'FILENAME_LAYOUT_CONTROLLER', '', 'tools', 'Y', 2),
+       ('banners', 'BOX_TOOLS_BANNER_MANAGER', 'FILENAME_BANNER_MANAGER', '', 'tools', 'Y', 3),
+       ('mail', 'BOX_TOOLS_MAIL', 'FILENAME_MAIL', '', 'tools', 'Y', 4),
+       ('newsletters', 'BOX_TOOLS_NEWSLETTER_MANAGER', 'FILENAME_NEWSLETTERS', '', 'tools', 'Y', 5),
+       ('server', 'BOX_TOOLS_SERVER_INFO', 'FILENAME_SERVER_INFO', '', 'tools', 'Y', 6),
+       ('whosOnline', 'BOX_TOOLS_WHOS_ONLINE', 'FILENAME_WHOS_ONLINE', '', 'tools', 'Y', 7),
+       ('storeManager', 'BOX_TOOLS_STORE_MANAGER', 'FILENAME_STORE_MANAGER', '', 'tools', 'Y', 9),
+       ('developersToolKit', 'BOX_TOOLS_DEVELOPERS_TOOL_KIT', 'FILENAME_DEVELOPERS_TOOL_KIT', '', 'tools', 'Y', 10),
+       ('ezpages', 'BOX_TOOLS_EZPAGES', 'FILENAME_EZPAGES_ADMIN', '', 'tools', 'Y', 11),
+       ('definePagesEditor', 'BOX_TOOLS_DEFINE_PAGES_EDITOR', 'FILENAME_DEFINE_PAGES_EDITOR', '', 'tools', 'Y', 12),
+       ('sqlPatch', 'BOX_TOOLS_SQLPATCH', 'FILENAME_SQLPATCH', '', 'tools', 'Y', 13),
+       ('couponAdmin', 'BOX_COUPON_ADMIN', 'FILENAME_COUPON_ADMIN', '', 'gv', 'Y', 1),
+       ('couponRestrict', 'BOX_COUPON_RESTRICT', 'FILENAME_COUPON_RESTRICT', '', 'gv', 'N', 1),
+       ('gvQueue', 'BOX_GV_ADMIN_QUEUE', 'FILENAME_GV_QUEUE', '', 'gv', 'Y', 2),
+       ('gvMail', 'BOX_GV_ADMIN_MAIL', 'FILENAME_GV_MAIL', '', 'gv', 'Y', 3),
+       ('gvSent', 'BOX_GV_ADMIN_SENT', 'FILENAME_GV_SENT', '', 'gv', 'Y', 4),
+       ('profiles', 'BOX_ADMIN_ACCESS_PROFILES', 'FILENAME_PROFILES', '', 'access', 'Y', 1),
+       ('users', 'BOX_ADMIN_ACCESS_USERS', 'FILENAME_USERS', '', 'access', 'Y', 2),
+       ('pageRegistration', 'BOX_ADMIN_ACCESS_PAGE_REGISTRATION', 'FILENAME_ADMIN_PAGE_REGISTRATION', '', 'access', 'Y', 3),
+       ('adminlogs', 'BOX_ADMIN_ACCESS_LOGS', 'FILENAME_ADMIN_ACTIVITY', '', 'access', 'Y', 4),
+       ('recordArtists', 'BOX_CATALOG_RECORD_ARTISTS', 'FILENAME_RECORD_ARTISTS', '', 'extras', 'Y', 1),
+       ('recordCompanies', 'BOX_CATALOG_RECORD_COMPANY', 'FILENAME_RECORD_COMPANY', '', 'extras', 'Y', 2),
+       ('musicGenre', 'BOX_CATALOG_MUSIC_GENRE', 'FILENAME_MUSIC_GENRE', '', 'extras', 'Y', 3),
+       ('mediaManager', 'BOX_CATALOG_MEDIA_MANAGER', 'FILENAME_MEDIA_MANAGER', '', 'extras', 'Y', 4),
+       ('mediaTypes', 'BOX_CATALOG_MEDIA_TYPES', 'FILENAME_MEDIA_TYPES', '', 'extras', 'Y', 5);
 
 INSERT INTO banners (banners_title, banners_url, banners_image, banners_group, banners_html_text, expires_impressions, expires_date, date_scheduled, date_added, date_status_change, status, banners_open_new_windows, banners_on_ssl, banners_sort_order) VALUES ('Zen Cart', 'http://www.zen-cart.com', 'banners/zencart_468_60_02.gif', 'Wide-Banners', '', 0, NULL, NULL, '2004-01-11 20:59:12', NULL, 1, 1, 1, 0);
 INSERT INTO banners (banners_title, banners_url, banners_image, banners_group, banners_html_text, expires_impressions, expires_date, date_scheduled, date_added, date_status_change, status, banners_open_new_windows, banners_on_ssl, banners_sort_order) VALUES ('Zen Cart the art of e-commerce', 'http://www.zen-cart.com', 'banners/125zen_logo.gif', 'SideBox-Banners', '', 0, NULL, NULL, '2004-01-11 20:59:12', NULL, 1, 1, 1, 0);
@@ -1999,13 +2167,14 @@ INSERT INTO banners (banners_title, banners_url, banners_image, banners_group, b
 INSERT INTO banners (banners_title, banners_url, banners_image, banners_group, banners_html_text, expires_impressions, expires_date, date_scheduled, date_added, date_status_change, status, banners_open_new_windows, banners_on_ssl, banners_sort_order) VALUES ('if you have to think ... you haven''t been Zenned!', 'http://www.zen-cart.com', 'banners/think_anim.gif', 'Wide-Banners', '', 0, NULL, NULL, '2004-01-12 20:53:18', NULL, 1, 1, 1, 0);
 INSERT INTO banners (banners_title, banners_url, banners_image, banners_group, banners_html_text, expires_impressions, expires_date, date_scheduled, date_added, date_status_change, status, banners_open_new_windows, banners_on_ssl, banners_sort_order) VALUES ('Zen Cart the art of e-commerce', 'http://www.zen-cart.com', 'banners/bw_zen_88wide.gif', 'BannersAll', '', 0, NULL, NULL, '2005-05-13 10:54:38', NULL, 1, 1, 1, 10);
 INSERT INTO banners (banners_title, banners_url, banners_image, banners_group, banners_html_text, expires_impressions, expires_date, date_scheduled, date_added, date_status_change, status, banners_open_new_windows, banners_on_ssl, banners_sort_order) VALUES ('Start Accepting Credit Cards For Your Business Today!', 'http://www.zen-cart.com/partners/payment', 'banners/cardsvcs_468x60.gif', 'Wide-Banners', '', 0, NULL, NULL, '2006-03-13 11:02:43', NULL, 1, 1, 1, 0);
-INSERT INTO banners (banners_title, banners_url, banners_image, banners_group, banners_html_text, expires_impressions, expires_date, date_scheduled, date_added, date_status_change, status, banners_open_new_windows, banners_on_ssl, banners_sort_order) VALUES ('eStart Your Web Store with Zen Cart(tm)', 'http://www.lulu.com/content/466605', 'banners/big-book-ad.gif', 'Wide-Banners', '', '0', NULL, NULL, '2007-02-10 00:00:00',NULL,'1','1','1','1');
-INSERT INTO banners (banners_title, banners_url, banners_image, banners_group, banners_html_text, expires_impressions, expires_date, date_scheduled, date_added, date_status_change, status, banners_open_new_windows, banners_on_ssl, banners_sort_order) VALUES ('eStart Your Web Store with Zen Cart(tm)', 'http://www.lulu.com/content/466605', 'banners/tall-book.gif', 'SideBox-Banners', '', '0', NULL, NULL, '2007-02-10 00:00:00',NULL,'1','1','1','1');
-INSERT INTO banners (banners_title, banners_url, banners_image, banners_group, banners_html_text, expires_impressions, expires_date, date_scheduled, date_added, date_status_change, status, banners_open_new_windows, banners_on_ssl, banners_sort_order) VALUES ('eStart Your Web Store with Zen Cart(tm)', 'http://www.lulu.com/content/466605', 'banners/tall-book.gif', 'BannersAll', '', '0', NULL, NULL, '2007-02-10 00:00:00',NULL,'1','1','1','15');
+INSERT INTO banners (banners_title, banners_url, banners_image, banners_group, banners_html_text, expires_impressions, expires_date, date_scheduled, date_added, date_status_change, status, banners_open_new_windows, banners_on_ssl, banners_sort_order) VALUES ('eStart Your Web Store with Zen Cart(R)', 'http://www.lulu.com/content/466605', 'banners/big-book-ad.gif', 'Wide-Banners', '', '0', NULL, NULL, '2007-02-10 00:00:00',NULL,'1','1','1','1');
+INSERT INTO banners (banners_title, banners_url, banners_image, banners_group, banners_html_text, expires_impressions, expires_date, date_scheduled, date_added, date_status_change, status, banners_open_new_windows, banners_on_ssl, banners_sort_order) VALUES ('eStart Your Web Store with Zen Cart(R)', 'http://www.lulu.com/content/466605', 'banners/tall-book.gif', 'SideBox-Banners', '', '0', NULL, NULL, '2007-02-10 00:00:00',NULL,'1','1','1','1');
+INSERT INTO banners (banners_title, banners_url, banners_image, banners_group, banners_html_text, expires_impressions, expires_date, date_scheduled, date_added, date_status_change, status, banners_open_new_windows, banners_on_ssl, banners_sort_order) VALUES ('eStart Your Web Store with Zen Cart(R)', 'http://www.lulu.com/content/466605', 'banners/tall-book.gif', 'BannersAll', '', '0', NULL, NULL, '2007-02-10 00:00:00',NULL,'1','1','1','15');
 
 
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) VALUES ('Store Name', 'STORE_NAME', 'Zen Cart', 'The name of my store', '1', '1', now());
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) VALUES ('Store Owner', 'STORE_OWNER', 'Team Zen Cart', 'The name of my store owner', '1', '2', now());
+INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) VALUES ('Telephone - Customer Service', 'STORE_TELEPHONE_CUSTSERVICE', '', 'Enter a telephone number for customers to reach your Customer Service department. This number may be sent as part of payment transaction details.', '1', '3', now());
 
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, use_function, set_function, date_added) VALUES ('Country', 'STORE_COUNTRY', '223', 'The country my store is located in <br /><br /><strong>Note: Please remember to update the store zone.</strong>', '1', '6', 'zen_get_country_name', 'zen_cfg_pull_down_country_list(', now());
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, use_function, set_function, date_added) VALUES ('Zone', 'STORE_ZONE', '18', 'The zone my store is located in', '1', '7', 'zen_cfg_get_zone_name', 'zen_cfg_pull_down_zone_list(', now());
@@ -2017,7 +2186,7 @@ INSERT INTO configuration (configuration_title, configuration_key, configuration
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) VALUES ('Use Search-Engine Safe URLs (still in development)', 'SEARCH_ENGINE_FRIENDLY_URLS', 'false', 'Use search-engine safe urls for all site links', '6', '12', 'zen_cfg_select_option(array(\'true\', \'false\'), ', now());
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) VALUES ('Display Cart After Adding Product', 'DISPLAY_CART', 'true', 'Display the shopping cart after adding a product (or return back to their origin)', '1', '14', 'zen_cfg_select_option(array(\'true\', \'false\'), ', now());
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) VALUES ('Default Search Operator', 'ADVANCED_SEARCH_DEFAULT_OPERATOR', 'and', 'Default search operators', '1', '17', 'zen_cfg_select_option(array(\'and\', \'or\'), ', now());
-INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) VALUES ('Store Address and Phone', 'STORE_NAME_ADDRESS', 'Store Name\nAddress\nCountry\nPhone', 'This is the Store Name, Address and Phone used on printable documents and displayed online', '1', '18', 'zen_cfg_textarea(', now());
+INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) VALUES ('Store Address and Phone', 'STORE_NAME_ADDRESS', 'Store Name\nAddress\nCountry\nPhone', 'This is the Store Name, Address and Phone used on printable documents and displayed online', '1', '7', 'zen_cfg_textarea(', now());
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) VALUES ('Show Category Counts', 'SHOW_COUNTS', 'true', 'Count recursively how many products are in each category', '1', '19', 'zen_cfg_select_option(array(\'true\', \'false\'), ', now());
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) VALUES ('Tax Decimal Places', 'TAX_DECIMAL_PLACES', '0', 'Pad the tax value this amount of decimal places', '1', '20', now());
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) VALUES ('Display Prices with Tax', 'DISPLAY_PRICE_WITH_TAX', 'false', 'Display prices with tax included (true) or add the tax at the end (false)', '1', '21', 'zen_cfg_select_option(array(\'true\', \'false\'), ', now());
@@ -2027,7 +2196,7 @@ INSERT INTO configuration (configuration_title, configuration_key, configuration
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) VALUES ('Sales Tax Display Status', 'STORE_TAX_DISPLAY_STATUS', '0', 'Always show Sales Tax even when amount is $0.00?<br />0= Off<br />1= On', '1', '21', 'zen_cfg_select_option(array(\'0\', \'1\'), ', now());
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) VALUES ('Show Split Tax Lines', 'SHOW_SPLIT_TAX_CHECKOUT', 'false', 'If multiple tax rates apply, show each rate as a separate line at checkout', '1', '22', 'zen_cfg_select_option(array(\'true\', \'false\'), ', now());
 
-INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, last_modified, date_added, use_function, set_function) VALUES ('Admin Session Time Out in Seconds', 'SESSION_TIMEOUT_ADMIN', '3600', 'Enter the time in seconds. Default=3600<br />Example: 3600= 1 hour<br /><br />Note: Too few seconds can result in timeout issues when adding/editing products', 1, 40, NULL, now(), NULL, NULL);
+INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, last_modified, date_added, use_function, set_function) VALUES ('Admin Session Time Out in Seconds', 'SESSION_TIMEOUT_ADMIN', '900', 'Enter the time in seconds.<br />Max allowed is 900 for PCI Compliance Reasons.<br /> Default=900<br />Example: 900= 15 min <br /><br />Note: Too few seconds can result in timeout issues when adding/editing products', 1, 40, NULL, now(), NULL, 'zen_cfg_select_option(array(\'900\', \'600\', \'300\'), ');
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, last_modified, date_added, use_function, set_function) VALUES ('Admin Set max_execution_time for processes', 'GLOBAL_SET_TIME_LIMIT', '60', 'Enter the time in seconds for how long the max_execution_time of processes should be. Default=60<br />Example: 60= 1 minute<br /><br />Note: Changing the time limit is only needed if you are having problems with the execution time of a process', 1, 42, NULL, now(), NULL, NULL);
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) VALUES ('Show if version update available', 'SHOW_VERSION_UPDATE_IN_HEADER', 'true', 'Automatically check to see if a new version of Zen Cart is available. Enabling this can sometimes slow down the loading of Admin pages. (Displayed on main Index page after login, and Server Info page.)', 1, 44, 'zen_cfg_select_option(array(\'true\', \'false\'), ', now());
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) VALUES ('Store Status', 'STORE_STATUS', '0', 'What is your Store Status<br />0= Normal Store<br />1= Showcase no prices<br />2= Showcase with prices', '1', '25', 'zen_cfg_select_option(array(\'0\', \'1\', \'2\'), ', now());
@@ -2035,8 +2204,8 @@ INSERT INTO configuration (configuration_title, configuration_key, configuration
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, last_modified, date_added, use_function, set_function) VALUES ('Server Uptime', 'DISPLAY_SERVER_UPTIME', 'true', 'Displaying Server uptime can cause entries in error logs on some servers. (true = Display, false = don\'t display)', 1, 46, '2003-11-08 20:24:47', '0001-01-01 00:00:00', '', 'zen_cfg_select_option(array(\'true\', \'false\'),');
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, last_modified, date_added, use_function, set_function) VALUES ('Missing Page Check', 'MISSING_PAGE_CHECK', 'Page Not Found', 'Zen Cart can check for missing pages in the URL and redirect to Index page. For debugging you may want to turn this off. <br /><br /><strong>Default=On</strong><br />On = Send missing pages to \'index\'<br />Off = Don\'t check for missing pages<br />Page Not Found = display the Page-Not-Found page', 1, 48, '2003-11-08 20:24:47', '0001-01-01 00:00:00', '', 'zen_cfg_select_option(array(\'On\', \'Off\', \'Page Not Found\'),');
 
-INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) VALUES ('cURL Proxy Status', 'CURL_PROXY_REQUIRED', 'False', 'Does your host require that you use a proxy for cURL communication?', '1', '50', 'zen_cfg_select_option(array(\'True\', \'False\'), ', now());
-INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, last_modified, date_added, use_function, set_function) VALUES ('cURL Proxy Address', 'CURL_PROXY_SERVER_DETAILS', '', 'If you have GoDaddy hosting or other hosting services that require use of a proxy to talk to external sites via cURL, enter their proxy address here.<br />format: address:port<br />ie: for GoDaddy, enter: <strong>proxy.shr.secureserver.net:3128</strong> or possibly 64.202.165.130:3128', 1, 51, NULL, now(), NULL, NULL);
+INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) VALUES ('cURL Proxy Status', 'CURL_PROXY_REQUIRED', 'False', 'Does your host require that you use a proxy for cURL communication?', 6, '50', 'zen_cfg_select_option(array(\'True\', \'False\'), ', now());
+INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, last_modified, date_added, use_function, set_function) VALUES ('cURL Proxy Address', 'CURL_PROXY_SERVER_DETAILS', '', 'If you have a hosting service that requires use of a proxy to talk to external sites via cURL, enter their proxy address here.<br />format: address:port<br />ie: 127.0.0.1:3128', 6, 51, NULL, now(), NULL, NULL);
 
 
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) VALUES ('HTML Editor', 'HTML_EDITOR_PREFERENCE', 'NONE', 'Please select the HTML/Rich-Text editor you wish to use for composing Admin-related emails, newsletters, and product descriptions', '1', '110', 'zen_cfg_pull_down_htmleditors(', now());
@@ -2067,7 +2236,7 @@ INSERT INTO configuration (configuration_title, configuration_key, configuration
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) VALUES ('Nick Name', 'ENTRY_NICK_MIN_LENGTH', '3', 'Minimum length of Nick Name', '2', '1', now());
 
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) VALUES ('Address Book Entries', 'MAX_ADDRESS_BOOK_ENTRIES', '5', 'Maximum address book entries a customer is allowed to have', '3', '1', now());
-INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) VALUES ('Search Results Per Page', 'MAX_DISPLAY_SEARCH_RESULTS', '20', 'Number of products to list on a search result page', '3', '2', now());
+INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) VALUES ('Admin Search Results Per Page', 'MAX_DISPLAY_SEARCH_RESULTS', '20', 'Number of products to list on an Admin search result page', '3', '2', now());
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) VALUES ('Prev/Next Navigation Page Links', 'MAX_DISPLAY_PAGE_LINKS', '5', 'Number of \'number\' links use for page-sets', '3', '3', now());
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) VALUES ('Products on Special ', 'MAX_DISPLAY_SPECIAL_PRODUCTS', '9', 'Number of products on special to display', '3', '4', now());
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) VALUES ('New Products Module', 'MAX_DISPLAY_NEW_PRODUCTS', '9', 'Number of new products to display in a category', '3', '5', now());
@@ -2316,14 +2485,12 @@ INSERT INTO configuration (configuration_title, configuration_key, configuration
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) VALUES ('SMTP Email Mail Host', 'EMAIL_SMTPAUTH_MAIL_SERVER', 'mail.EnterYourDomain.com', 'Enter the DNS name of your SMTP mail server.<br />ie: mail.mydomain.com<br />or 55.66.77.88<br />Only required if using SMTP Authentication for email.', '12', '101', now());
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) VALUES ('SMTP Email Mail Server Port', 'EMAIL_SMTPAUTH_MAIL_SERVER_PORT', '25', 'Enter the IP port number that your SMTP mailserver operates on.<br />Only required if using SMTP Authentication for email.', '12', '101', now());
 
-INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, last_modified, date_added, use_function, set_function) VALUES ('Convert currencies for Text emails', 'CURRENCIES_TRANSLATIONS', '&pound;,£', 'What currency conversions do you need for Text emails?<br />Suggestions = &amp;pound;,&pound;:&amp;euro;,&euro;', 12, 120, NULL, '2003-11-21 00:00:00', NULL, 'zen_cfg_textarea_small(');
-
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) VALUES ('E-Mail Linefeeds', 'EMAIL_LINEFEED', 'LF', 'Defines the character sequence used to separate mail headers.', '12', '2', 'zen_cfg_select_option(array(\'LF\', \'CRLF\'),', now());
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) VALUES ('Use MIME HTML When Sending Emails', 'EMAIL_USE_HTML', 'false', 'Send e-mails in HTML format', '12', '3', 'zen_cfg_select_option(array(\'true\', \'false\'),', now());
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) VALUES ('Verify E-Mail Addresses Through DNS', 'ENTRY_EMAIL_ADDRESS_CHECK', 'false', 'Verify e-mail address through a DNS server', '6', '6', 'zen_cfg_select_option(array(\'true\', \'false\'), ', now());
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) VALUES ('Send E-Mails', 'SEND_EMAILS', 'true', 'Send out e-mails', '12', '5', 'zen_cfg_select_option(array(\'true\', \'false\'), ', now());
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) VALUES ('Email Archiving Active?', 'EMAIL_ARCHIVE', 'false', 'If you wish to have email messages archived/stored when sent, set this to "true".', '12', '6', 'zen_cfg_select_option(array(\'true\', \'false\'),', now());
-INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) VALUES ('E-Mail Friendly-Errors', 'EMAIL_FRIENDLY_ERRORS', 'false', 'Do you want to display friendly errors if emails fail?  Setting this to false will display PHP errors and likely cause the script to fail. Only set to false while troubleshooting, and true for a live shop.', '12', '7', 'zen_cfg_select_option(array(\'true\', \'false\'),', now());
+INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) VALUES ('E-Mail Friendly-Errors', 'EMAIL_FRIENDLY_ERRORS', 'true', 'Do you want to display friendly errors if emails fail?  Setting this to false will display PHP errors and likely cause the script to fail. Only set to false while troubleshooting, and true for a live shop.', '12', '7', 'zen_cfg_select_option(array(\'true\', \'false\'),', now());
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) VALUES ('Email Address (Displayed to Contact you)', 'STORE_OWNER_EMAIL_ADDRESS', 'root@localhost', 'Email address of Store Owner.  Used as "display only" when informing customers of how to contact you.', '12', '10', now());
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) VALUES ('Email Address (sent FROM)', 'EMAIL_FROM', 'Zen Cart <root@localhost>', 'Address from which email messages will be "sent" by default. Can be over-ridden at compose-time in admin modules.', '12', '11', now());
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, use_function, set_function) VALUES ('Emails must send from known domain?', 'EMAIL_SEND_MUST_BE_STORE', 'Yes', 'Does your mailserver require that all outgoing emails have their "from" address match a known domain that exists on your webserver?<br /><br />This is often required in order to prevent spoofing and spam broadcasts.  If set to Yes, this will cause the email address (sent FROM) to be used as the "from" address on all outgoing mail.', 12, 11, NULL, 'zen_cfg_select_option(array(\'No\', \'Yes\'), ');
@@ -2331,8 +2498,6 @@ INSERT INTO configuration (configuration_title, configuration_key, configuration
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) VALUES ('Send Copy of Order Confirmation Emails To', 'SEND_EXTRA_ORDER_EMAILS_TO', '', 'Send COPIES of order confirmation emails to the following email addresses, in this format: Name 1 &lt;email@address1&gt;, Name 2 &lt;email@address2&gt;', '12', '12', now());
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) VALUES ('Send Copy of Create Account Emails To - Status', 'SEND_EXTRA_CREATE_ACCOUNT_EMAILS_TO_STATUS', '0', 'Send copy of Create Account Status<br />0= off 1= on', '12', '13', 'zen_cfg_select_option(array(\'0\', \'1\'),', now());
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) VALUES ('Send Copy of Create Account Emails To', 'SEND_EXTRA_CREATE_ACCOUNT_EMAILS_TO', '', 'Send copy of Create Account emails to the following email addresses, in this format: Name 1 &lt;email@address1&gt;, Name 2 &lt;email@address2&gt;', '12', '14', now());
-INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) VALUES ('Send Copy of Tell a Friend Emails To - Status', 'SEND_EXTRA_TELL_A_FRIEND_EMAILS_TO_STATUS', '0', 'Send copy of Tell a Friend Status<br />0= off 1= on', '12', '15', 'zen_cfg_select_option(array(\'0\', \'1\'),', now());
-INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) VALUES ('Send Copy of Tell a Friend Emails To', 'SEND_EXTRA_TELL_A_FRIEND_EMAILS_TO', '', 'Send copy of Tell a Friend emails to the following email addresses, in this format: Name 1 &lt;email@address1&gt;, Name 2 &lt;email@address2&gt;', '12', '16', now());
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) VALUES ('Send Copy of Customer GV Send Emails To - Status', 'SEND_EXTRA_GV_CUSTOMER_EMAILS_TO_STATUS', '0', 'Send copy of Customer GV Send Status<br />0= off 1= on', '12', '17', 'zen_cfg_select_option(array(\'0\', \'1\'),', now());
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) VALUES ('Send Copy of Customer GV Send Emails To', 'SEND_EXTRA_GV_CUSTOMER_EMAILS_TO', '', 'Send copy of Customer GV Send emails to the following email addresses, in this format: Name 1 &lt;email@address1&gt;, Name 2 &lt;email@address2&gt;', '12', '18', now());
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) VALUES ('Send Copy of Admin GV Mail Emails To - Status', 'SEND_EXTRA_GV_ADMIN_EMAILS_TO_STATUS', '0', 'Send copy of Admin GV Mail Status<br />0= off 1= on', '12', '19', 'zen_cfg_select_option(array(\'0\', \'1\'),', now());
@@ -2344,7 +2509,6 @@ INSERT INTO configuration (configuration_title, configuration_key, configuration
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) VALUES ('Send Notice of Pending Reviews Emails To - Status', 'SEND_EXTRA_REVIEW_NOTIFICATION_EMAILS_TO_STATUS', '0', 'Send copy of Pending Reviews Status<br />0= off 1= on', '12', '25', 'zen_cfg_select_option(array(\'0\', \'1\'),', now());
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) VALUES ('Send Notice of Pending Reviews Emails To', 'SEND_EXTRA_REVIEW_NOTIFICATION_EMAILS_TO', '', 'Send copy of Pending Reviews emails to the following email addresses, in this format: Name 1 &lt;email@address1&gt;, Name 2 &lt;email@address2&gt;', '12', '26', now());
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) VALUES ('Set "Contact Us" Email Dropdown List', 'CONTACT_US_LIST', '', 'On the "Contact Us" Page, set the list of email addresses , in this format: Name 1 &lt;email@address1&gt;, Name 2 &lt;email@address2&gt;', '12', '40', 'zen_cfg_textarea(', now());
-INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) VALUES ('Allow Guest To Tell A Friend', 'ALLOW_GUEST_TO_TELL_A_FRIEND', 'false', 'Allow guests to tell a friend about a product. <br />If set to [false], then tell-a-friend will prompt for login if user is not already logged in.', '12', '50', 'zen_cfg_select_option(array(\'true\', \'false\'), ', now());
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) VALUES ('Contact Us - Show Store Name and Address', 'CONTACT_US_STORE_NAME_ADDRESS', '1', 'Include Store Name and Address<br />0= off 1= on', '12', '50', 'zen_cfg_select_option(array(\'0\', \'1\'), ', now());
 
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, last_modified, date_added, use_function, set_function) VALUES ('Send Low Stock Emails', 'SEND_LOWSTOCK_EMAIL', '0', 'When stock level is at or below low stock level send an email<br />0= off<br />1= on', '12', '60', now(), now(), NULL, 'zen_cfg_select_option(array(\'0\', \'1\'),');
@@ -2454,6 +2618,7 @@ INSERT INTO configuration (configuration_title, configuration_key, configuration
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, last_modified, date_added, use_function, set_function) VALUES ('Upload prefix', 'UPLOAD_PREFIX', 'upload_', 'Prefix used to differentiate between upload options and other options', 0, NULL, now(), now(), NULL, NULL);
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, last_modified, date_added, use_function, set_function) VALUES ('Text prefix', 'TEXT_PREFIX', 'txt_', 'Prefix used to differentiate between text option values and other option values', 0, NULL, now(), now(), NULL, NULL);
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, last_modified, date_added, use_function, set_function) VALUES ('Read Only option type', 'PRODUCTS_OPTIONS_TYPE_READONLY', '5', 'Numeric value of the file product option type', 6, NULL, now(), now(), NULL, NULL);
+INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) VALUES ('login mode https', 'SSLPWSTATUSCHECK', '', 'System setting. Do not edit.', 6, 99, now());
 
 
 
@@ -2553,7 +2718,7 @@ INSERT INTO configuration (configuration_title, configuration_key, configuration
 
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) VALUES ('Categories/Products Display Sort Order', 'CATEGORIES_PRODUCTS_SORT_ORDER', '0', 'Categories/Products Display Sort Order<br />0= Categories/Products Sort Order/Name<br />1= Categories/Products Name<br />2= Products Model<br />3= Products Qty+, Products Name<br />4= Products Qty-, Products Name<br />5= Products Price+, Products Name<br />6= Products Price-, Products Name', '19', '100', 'zen_cfg_select_option(array(\'0\', \'1\', \'2\', \'3\', \'4\', \'5\', \'6\'), ', now());
 
-INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) VALUES ('Option Names and Values Global Add, Copy and Delete Features Status', 'OPTION_NAMES_VALUES_GLOBAL_STATUS', '1', 'Option Names and Values Global Add, Copy and Delete Features Status<br />0= Hide Features<br />1= Show Features<br />2= Products Model', '19', '110', 'zen_cfg_select_option(array(\'0\', \'1\'), ', now());
+INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) VALUES ('Option Names and Values Global Add, Copy and Delete Features Status', 'OPTION_NAMES_VALUES_GLOBAL_STATUS', '1', 'Option Names and Values Global Add, Copy and Delete Features Status<br />0= Hide Features<br />1= Show Features<br />(Default=1)', '19', '110', 'zen_cfg_select_option(array(\'0\', \'1\'), ', now());
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) VALUES ('Categories-Tabs Menu ON/OFF', 'CATEGORIES_TABS_STATUS', '1', 'Categories-Tabs<br />This enables the display of your store\'s categories as a menu across the top of your header. There are many potential creative uses for this.<br />0= Hide Categories Tabs<br />1= Show Categories Tabs', '19', '112', 'zen_cfg_select_option(array(\'0\', \'1\'), ', now());
 INSERT INTO configuration (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) VALUES ('Site Map - include My Account Links?', 'SHOW_ACCOUNT_LINKS_ON_SITE_MAP', 'No', 'Should the links to My Account show up on the site-map?<br />Note: Spiders will try to index this page, and likely should not be sent to secure pages, since there is no benefit in indexing a login page.<br /><br />Default: false', 19, 115, 'zen_cfg_select_option(array(\'Yes\', \'No\'), ', now());
 
@@ -2716,245 +2881,6 @@ INSERT INTO configuration_group VALUES (24, 'Index Listing', 'Index Products Lis
 INSERT INTO configuration_group VALUES (25, 'Define Page Status', 'Define Main Pages and HTMLArea Options', '25', '1');
 INSERT INTO configuration_group VALUES (30, 'EZ-Pages Settings', 'EZ-Pages Settings', 30, '1');
 
-INSERT INTO countries VALUES (240,'Aaland Islands','AX','ALA','1');
-INSERT INTO countries VALUES (1,'Afghanistan','AF','AFG','1');
-INSERT INTO countries VALUES (2,'Albania','AL','ALB','1');
-INSERT INTO countries VALUES (3,'Algeria','DZ','DZA','1');
-INSERT INTO countries VALUES (4,'American Samoa','AS','ASM','1');
-INSERT INTO countries VALUES (5,'Andorra','AD','AND','1');
-INSERT INTO countries VALUES (6,'Angola','AO','AGO','1');
-INSERT INTO countries VALUES (7,'Anguilla','AI','AIA','1');
-INSERT INTO countries VALUES (8,'Antarctica','AQ','ATA','1');
-INSERT INTO countries VALUES (9,'Antigua and Barbuda','AG','ATG','1');
-INSERT INTO countries VALUES (10,'Argentina','AR','ARG','1');
-INSERT INTO countries VALUES (11,'Armenia','AM','ARM','1');
-INSERT INTO countries VALUES (12,'Aruba','AW','ABW','1');
-INSERT INTO countries VALUES (13,'Australia','AU','AUS','1');
-INSERT INTO countries VALUES (14,'Austria','AT','AUT','5');
-INSERT INTO countries VALUES (15,'Azerbaijan','AZ','AZE','1');
-INSERT INTO countries VALUES (16,'Bahamas','BS','BHS','1');
-INSERT INTO countries VALUES (17,'Bahrain','BH','BHR','1');
-INSERT INTO countries VALUES (18,'Bangladesh','BD','BGD','1');
-INSERT INTO countries VALUES (19,'Barbados','BB','BRB','1');
-INSERT INTO countries VALUES (20,'Belarus','BY','BLR','1');
-INSERT INTO countries VALUES (21,'Belgium','BE','BEL','1');
-INSERT INTO countries VALUES (22,'Belize','BZ','BLZ','1');
-INSERT INTO countries VALUES (23,'Benin','BJ','BEN','1');
-INSERT INTO countries VALUES (24,'Bermuda','BM','BMU','1');
-INSERT INTO countries VALUES (25,'Bhutan','BT','BTN','1');
-INSERT INTO countries VALUES (26,'Bolivia','BO','BOL','1');
-INSERT INTO countries VALUES (27,'Bosnia and Herzegowina','BA','BIH','1');
-INSERT INTO countries VALUES (28,'Botswana','BW','BWA','1');
-INSERT INTO countries VALUES (29,'Bouvet Island','BV','BVT','1');
-INSERT INTO countries VALUES (30,'Brazil','BR','BRA','1');
-INSERT INTO countries VALUES (31,'British Indian Ocean Territory','IO','IOT','1');
-INSERT INTO countries VALUES (32,'Brunei Darussalam','BN','BRN','1');
-INSERT INTO countries VALUES (33,'Bulgaria','BG','BGR','1');
-INSERT INTO countries VALUES (34,'Burkina Faso','BF','BFA','1');
-INSERT INTO countries VALUES (35,'Burundi','BI','BDI','1');
-INSERT INTO countries VALUES (36,'Cambodia','KH','KHM','1');
-INSERT INTO countries VALUES (37,'Cameroon','CM','CMR','1');
-INSERT INTO countries VALUES (38,'Canada','CA','CAN','2');
-INSERT INTO countries VALUES (39,'Cape Verde','CV','CPV','1');
-INSERT INTO countries VALUES (40,'Cayman Islands','KY','CYM','1');
-INSERT INTO countries VALUES (41,'Central African Republic','CF','CAF','1');
-INSERT INTO countries VALUES (42,'Chad','TD','TCD','1');
-INSERT INTO countries VALUES (43,'Chile','CL','CHL','1');
-INSERT INTO countries VALUES (44,'China','CN','CHN','1');
-INSERT INTO countries VALUES (45,'Christmas Island','CX','CXR','1');
-INSERT INTO countries VALUES (46,'Cocos (Keeling) Islands','CC','CCK','1');
-INSERT INTO countries VALUES (47,'Colombia','CO','COL','1');
-INSERT INTO countries VALUES (48,'Comoros','KM','COM','1');
-INSERT INTO countries VALUES (49,'Congo','CG','COG','1');
-INSERT INTO countries VALUES (50,'Cook Islands','CK','COK','1');
-INSERT INTO countries VALUES (51,'Costa Rica','CR','CRI','1');
-INSERT INTO countries VALUES (52,'Cote D\'Ivoire','CI','CIV','1');
-INSERT INTO countries VALUES (53,'Croatia','HR','HRV','1');
-INSERT INTO countries VALUES (54,'Cuba','CU','CUB','1');
-INSERT INTO countries VALUES (55,'Cyprus','CY','CYP','1');
-INSERT INTO countries VALUES (56,'Czech Republic','CZ','CZE','1');
-INSERT INTO countries VALUES (57,'Denmark','DK','DNK','1');
-INSERT INTO countries VALUES (58,'Djibouti','DJ','DJI','1');
-INSERT INTO countries VALUES (59,'Dominica','DM','DMA','1');
-INSERT INTO countries VALUES (60,'Dominican Republic','DO','DOM','1');
-INSERT INTO countries VALUES (61,'Timor-Leste','TL','TLS','1');
-INSERT INTO countries VALUES (62,'Ecuador','EC','ECU','1');
-INSERT INTO countries VALUES (63,'Egypt','EG','EGY','1');
-INSERT INTO countries VALUES (64,'El Salvador','SV','SLV','1');
-INSERT INTO countries VALUES (65,'Equatorial Guinea','GQ','GNQ','1');
-INSERT INTO countries VALUES (66,'Eritrea','ER','ERI','1');
-INSERT INTO countries VALUES (67,'Estonia','EE','EST','1');
-INSERT INTO countries VALUES (68,'Ethiopia','ET','ETH','1');
-INSERT INTO countries VALUES (69,'Falkland Islands (Malvinas)','FK','FLK','1');
-INSERT INTO countries VALUES (70,'Faroe Islands','FO','FRO','1');
-INSERT INTO countries VALUES (71,'Fiji','FJ','FJI','1');
-INSERT INTO countries VALUES (72,'Finland','FI','FIN','1');
-INSERT INTO countries VALUES (73,'France','FR','FRA','1');
-INSERT INTO countries VALUES (75,'French Guiana','GF','GUF','1');
-INSERT INTO countries VALUES (76,'French Polynesia','PF','PYF','1');
-INSERT INTO countries VALUES (77,'French Southern Territories','TF','ATF','1');
-INSERT INTO countries VALUES (78,'Gabon','GA','GAB','1');
-INSERT INTO countries VALUES (79,'Gambia','GM','GMB','1');
-INSERT INTO countries VALUES (80,'Georgia','GE','GEO','1');
-INSERT INTO countries VALUES (81,'Germany','DE','DEU','5');
-INSERT INTO countries VALUES (82,'Ghana','GH','GHA','1');
-INSERT INTO countries VALUES (83,'Gibraltar','GI','GIB','1');
-INSERT INTO countries VALUES (84,'Greece','GR','GRC','1');
-INSERT INTO countries VALUES (85,'Greenland','GL','GRL','1');
-INSERT INTO countries VALUES (86,'Grenada','GD','GRD','1');
-INSERT INTO countries VALUES (87,'Guadeloupe','GP','GLP','1');
-INSERT INTO countries VALUES (88,'Guam','GU','GUM','1');
-INSERT INTO countries VALUES (89,'Guatemala','GT','GTM','1');
-INSERT INTO countries VALUES (90,'Guinea','GN','GIN','1');
-INSERT INTO countries VALUES (91,'Guinea-bissau','GW','GNB','1');
-INSERT INTO countries VALUES (92,'Guyana','GY','GUY','1');
-INSERT INTO countries VALUES (93,'Haiti','HT','HTI','1');
-INSERT INTO countries VALUES (94,'Heard and Mc Donald Islands','HM','HMD','1');
-INSERT INTO countries VALUES (95,'Honduras','HN','HND','1');
-INSERT INTO countries VALUES (96,'Hong Kong','HK','HKG','1');
-INSERT INTO countries VALUES (97,'Hungary','HU','HUN','1');
-INSERT INTO countries VALUES (98,'Iceland','IS','ISL','1');
-INSERT INTO countries VALUES (99,'India','IN','IND','1');
-INSERT INTO countries VALUES (100,'Indonesia','ID','IDN','1');
-INSERT INTO countries VALUES (101,'Iran (Islamic Republic of)','IR','IRN','1');
-INSERT INTO countries VALUES (102,'Iraq','IQ','IRQ','1');
-INSERT INTO countries VALUES (103,'Ireland','IE','IRL','1');
-INSERT INTO countries VALUES (104,'Israel','IL','ISR','1');
-INSERT INTO countries VALUES (105,'Italy','IT','ITA','1');
-INSERT INTO countries VALUES (106,'Jamaica','JM','JAM','1');
-INSERT INTO countries VALUES (107,'Japan','JP','JPN','1');
-INSERT INTO countries VALUES (108,'Jordan','JO','JOR','1');
-INSERT INTO countries VALUES (109,'Kazakhstan','KZ','KAZ','1');
-INSERT INTO countries VALUES (110,'Kenya','KE','KEN','1');
-INSERT INTO countries VALUES (111,'Kiribati','KI','KIR','1');
-INSERT INTO countries VALUES (112,'Korea, Democratic People\'s Republic of','KP','PRK','1');
-INSERT INTO countries VALUES (113,'Korea, Republic of','KR','KOR','1');
-INSERT INTO countries VALUES (114,'Kuwait','KW','KWT','1');
-INSERT INTO countries VALUES (115,'Kyrgyzstan','KG','KGZ','1');
-INSERT INTO countries VALUES (116,'Lao People\'s Democratic Republic','LA','LAO','1');
-INSERT INTO countries VALUES (117,'Latvia','LV','LVA','1');
-INSERT INTO countries VALUES (118,'Lebanon','LB','LBN','1');
-INSERT INTO countries VALUES (119,'Lesotho','LS','LSO','1');
-INSERT INTO countries VALUES (120,'Liberia','LR','LBR','1');
-INSERT INTO countries VALUES (121,'Libyan Arab Jamahiriya','LY','LBY','1');
-INSERT INTO countries VALUES (122,'Liechtenstein','LI','LIE','1');
-INSERT INTO countries VALUES (123,'Lithuania','LT','LTU','1');
-INSERT INTO countries VALUES (124,'Luxembourg','LU','LUX','1');
-INSERT INTO countries VALUES (125,'Macao','MO','MAC','1');
-INSERT INTO countries VALUES (126,'Macedonia, The Former Yugoslav Republic of','MK','MKD','1');
-INSERT INTO countries VALUES (127,'Madagascar','MG','MDG','1');
-INSERT INTO countries VALUES (128,'Malawi','MW','MWI','1');
-INSERT INTO countries VALUES (129,'Malaysia','MY','MYS','1');
-INSERT INTO countries VALUES (130,'Maldives','MV','MDV','1');
-INSERT INTO countries VALUES (131,'Mali','ML','MLI','1');
-INSERT INTO countries VALUES (132,'Malta','MT','MLT','1');
-INSERT INTO countries VALUES (133,'Marshall Islands','MH','MHL','1');
-INSERT INTO countries VALUES (134,'Martinique','MQ','MTQ','1');
-INSERT INTO countries VALUES (135,'Mauritania','MR','MRT','1');
-INSERT INTO countries VALUES (136,'Mauritius','MU','MUS','1');
-INSERT INTO countries VALUES (137,'Mayotte','YT','MYT','1');
-INSERT INTO countries VALUES (138,'Mexico','MX','MEX','1');
-INSERT INTO countries VALUES (139,'Micronesia, Federated States of','FM','FSM','1');
-INSERT INTO countries VALUES (140,'Moldova','MD','MDA','1');
-INSERT INTO countries VALUES (141,'Monaco','MC','MCO','1');
-INSERT INTO countries VALUES (142,'Mongolia','MN','MNG','1');
-INSERT INTO countries VALUES (143,'Montserrat','MS','MSR','1');
-INSERT INTO countries VALUES (144,'Morocco','MA','MAR','1');
-INSERT INTO countries VALUES (145,'Mozambique','MZ','MOZ','1');
-INSERT INTO countries VALUES (146,'Myanmar','MM','MMR','1');
-INSERT INTO countries VALUES (147,'Namibia','NA','NAM','1');
-INSERT INTO countries VALUES (148,'Nauru','NR','NRU','1');
-INSERT INTO countries VALUES (149,'Nepal','NP','NPL','1');
-INSERT INTO countries VALUES (150,'Netherlands','NL','NLD','1');
-INSERT INTO countries VALUES (151,'Netherlands Antilles','AN','ANT','1');
-INSERT INTO countries VALUES (152,'New Caledonia','NC','NCL','1');
-INSERT INTO countries VALUES (153,'New Zealand','NZ','NZL','1');
-INSERT INTO countries VALUES (154,'Nicaragua','NI','NIC','1');
-INSERT INTO countries VALUES (155,'Niger','NE','NER','1');
-INSERT INTO countries VALUES (156,'Nigeria','NG','NGA','1');
-INSERT INTO countries VALUES (157,'Niue','NU','NIU','1');
-INSERT INTO countries VALUES (158,'Norfolk Island','NF','NFK','1');
-INSERT INTO countries VALUES (159,'Northern Mariana Islands','MP','MNP','1');
-INSERT INTO countries VALUES (160,'Norway','NO','NOR','1');
-INSERT INTO countries VALUES (161,'Oman','OM','OMN','1');
-INSERT INTO countries VALUES (162,'Pakistan','PK','PAK','1');
-INSERT INTO countries VALUES (163,'Palau','PW','PLW','1');
-INSERT INTO countries VALUES (164,'Panama','PA','PAN','1');
-INSERT INTO countries VALUES (165,'Papua New Guinea','PG','PNG','1');
-INSERT INTO countries VALUES (166,'Paraguay','PY','PRY','1');
-INSERT INTO countries VALUES (167,'Peru','PE','PER','1');
-INSERT INTO countries VALUES (168,'Philippines','PH','PHL','1');
-INSERT INTO countries VALUES (169,'Pitcairn','PN','PCN','1');
-INSERT INTO countries VALUES (170,'Poland','PL','POL','1');
-INSERT INTO countries VALUES (171,'Portugal','PT','PRT','1');
-INSERT INTO countries VALUES (172,'Puerto Rico','PR','PRI','1');
-INSERT INTO countries VALUES (173,'Qatar','QA','QAT','1');
-INSERT INTO countries VALUES (174,'Reunion','RE','REU','1');
-INSERT INTO countries VALUES (175,'Romania','RO','ROU','1');
-INSERT INTO countries VALUES (176,'Russian Federation','RU','RUS','1');
-INSERT INTO countries VALUES (177,'Rwanda','RW','RWA','1');
-INSERT INTO countries VALUES (178,'Saint Kitts and Nevis','KN','KNA','1');
-INSERT INTO countries VALUES (179,'Saint Lucia','LC','LCA','1');
-INSERT INTO countries VALUES (180,'Saint Vincent and the Grenadines','VC','VCT','1');
-INSERT INTO countries VALUES (181,'Samoa','WS','WSM','1');
-INSERT INTO countries VALUES (182,'San Marino','SM','SMR','1');
-INSERT INTO countries VALUES (183,'Sao Tome and Principe','ST','STP','1');
-INSERT INTO countries VALUES (184,'Saudi Arabia','SA','SAU','1');
-INSERT INTO countries VALUES (185,'Senegal','SN','SEN','1');
-INSERT INTO countries VALUES (186,'Seychelles','SC','SYC','1');
-INSERT INTO countries VALUES (187,'Sierra Leone','SL','SLE','1');
-INSERT INTO countries VALUES (188,'Singapore','SG','SGP', '4');
-INSERT INTO countries VALUES (189,'Slovakia (Slovak Republic)','SK','SVK','1');
-INSERT INTO countries VALUES (190,'Slovenia','SI','SVN','1');
-INSERT INTO countries VALUES (191,'Solomon Islands','SB','SLB','1');
-INSERT INTO countries VALUES (192,'Somalia','SO','SOM','1');
-INSERT INTO countries VALUES (193,'South Africa','ZA','ZAF','1');
-INSERT INTO countries VALUES (194,'South Georgia and the South Sandwich Islands','GS','SGS','1');
-INSERT INTO countries VALUES (195,'Spain','ES','ESP','3');
-INSERT INTO countries VALUES (196,'Sri Lanka','LK','LKA','1');
-INSERT INTO countries VALUES (197,'St. Helena','SH','SHN','1');
-INSERT INTO countries VALUES (198,'St. Pierre and Miquelon','PM','SPM','1');
-INSERT INTO countries VALUES (199,'Sudan','SD','SDN','1');
-INSERT INTO countries VALUES (200,'Suriname','SR','SUR','1');
-INSERT INTO countries VALUES (201,'Svalbard and Jan Mayen Islands','SJ','SJM','1');
-INSERT INTO countries VALUES (202,'Swaziland','SZ','SWZ','1');
-INSERT INTO countries VALUES (203,'Sweden','SE','SWE','1');
-INSERT INTO countries VALUES (204,'Switzerland','CH','CHE','1');
-INSERT INTO countries VALUES (205,'Syrian Arab Republic','SY','SYR','1');
-INSERT INTO countries VALUES (206,'Taiwan','TW','TWN','1');
-INSERT INTO countries VALUES (207,'Tajikistan','TJ','TJK','1');
-INSERT INTO countries VALUES (208,'Tanzania, United Republic of','TZ','TZA','1');
-INSERT INTO countries VALUES (209,'Thailand','TH','THA','1');
-INSERT INTO countries VALUES (210,'Togo','TG','TGO','1');
-INSERT INTO countries VALUES (211,'Tokelau','TK','TKL','1');
-INSERT INTO countries VALUES (212,'Tonga','TO','TON','1');
-INSERT INTO countries VALUES (213,'Trinidad and Tobago','TT','TTO','1');
-INSERT INTO countries VALUES (214,'Tunisia','TN','TUN','1');
-INSERT INTO countries VALUES (215,'Turkey','TR','TUR','1');
-INSERT INTO countries VALUES (216,'Turkmenistan','TM','TKM','1');
-INSERT INTO countries VALUES (217,'Turks and Caicos Islands','TC','TCA','1');
-INSERT INTO countries VALUES (218,'Tuvalu','TV','TUV','1');
-INSERT INTO countries VALUES (219,'Uganda','UG','UGA','1');
-INSERT INTO countries VALUES (220,'Ukraine','UA','UKR','1');
-INSERT INTO countries VALUES (221,'United Arab Emirates','AE','ARE','1');
-INSERT INTO countries VALUES (222,'United Kingdom','GB','GBR','6');
-INSERT INTO countries VALUES (223,'United States','US','USA', '2');
-INSERT INTO countries VALUES (224,'United States Minor Outlying Islands','UM','UMI','1');
-INSERT INTO countries VALUES (225,'Uruguay','UY','URY','1');
-INSERT INTO countries VALUES (226,'Uzbekistan','UZ','UZB','1');
-INSERT INTO countries VALUES (227,'Vanuatu','VU','VUT','1');
-INSERT INTO countries VALUES (228,'Vatican City State (Holy See)','VA','VAT','1');
-INSERT INTO countries VALUES (229,'Venezuela','VE','VEN','1');
-INSERT INTO countries VALUES (230,'Viet Nam','VN','VNM','1');
-INSERT INTO countries VALUES (231,'Virgin Islands (British)','VG','VGB','1');
-INSERT INTO countries VALUES (232,'Virgin Islands (U.S.)','VI','VIR','1');
-INSERT INTO countries VALUES (233,'Wallis and Futuna Islands','WF','WLF','1');
-INSERT INTO countries VALUES (234,'Western Sahara','EH','ESH','1');
-INSERT INTO countries VALUES (235,'Yemen','YE','YEM','1');
-INSERT INTO countries VALUES (236,'Serbia','RS','SRB','1');
-INSERT INTO countries VALUES (238,'Zambia','ZM','ZMB','1');
-INSERT INTO countries VALUES (239,'Zimbabwe','ZW','ZWE','1');
-
 INSERT INTO currencies VALUES (1,'US Dollar','USD','$','','.',',','2','1.0000', now());
 INSERT INTO currencies VALUES (2,'Euro','EUR','&euro;','','.',',','2','0.7730', now());
 INSERT INTO currencies VALUES (3,'GB Pound','GBP','&pound;','','.',',','2','0.6726', now());
@@ -2969,12 +2895,12 @@ INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, l
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('default_template_settings', 'banner_box2.php', 1, 1, 15, 1, 15);
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('default_template_settings', 'best_sellers.php', 1, 1, 30, 70, 1);
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('default_template_settings', 'categories.php', 1, 0, 10, 10, 1);
-INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('default_template_settings', 'currencies.php', 1, 1, 80, 60, 1);
+INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('default_template_settings', 'currencies.php', 0, 1, 80, 60, 0);
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('default_template_settings', 'document_categories.php', 1, 0, 0, 0, 0);
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('default_template_settings', 'ezpages.php', 1, 1, -1, 2, 1);
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('default_template_settings', 'featured.php', 1, 0, 45, 0, 0);
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('default_template_settings', 'information.php', 1, 0, 50, 40, 1);
-INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('default_template_settings', 'languages.php', 1, 1, 70, 50, 1);
+INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('default_template_settings', 'languages.php', 0, 1, 70, 50, 0);
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('default_template_settings', 'manufacturers.php', 1, 0, 30, 20, 1);
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('default_template_settings', 'manufacturer_info.php', 1, 1, 35, 95, 1);
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('default_template_settings', 'more_information.php', 1, 0, 200, 200, 1);
@@ -2987,7 +2913,6 @@ INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, l
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('default_template_settings', 'search_header.php', 0, 0, 0, 0, 1);
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('default_template_settings', 'shopping_cart.php', 1, 1, 20, 30, 1);
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('default_template_settings', 'specials.php', 1, 1, 45, 0, 0);
-INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('default_template_settings', 'tell_a_friend.php', 1, 1, 65, 0, 0);
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('default_template_settings', 'whats_new.php', 1, 0, 20, 0, 0);
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('default_template_settings', 'whos_online.php', 1, 1, 200, 200, 1);
 
@@ -2996,11 +2921,11 @@ INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, l
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('template_default', 'banner_box2.php', 1, 1, 15, 1, 15);
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('template_default', 'best_sellers.php', 1, 1, 30, 70, 1);
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('template_default', 'categories.php', 1, 0, 10, 10, 1);
-INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('template_default', 'currencies.php', 1, 1, 80, 60, 1);
+INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('template_default', 'currencies.php', 0, 1, 80, 60, 0);
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('template_default', 'ezpages.php', 1, 1, -1, 2, 1);
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('template_default', 'featured.php', 1, 0, 45, 0, 0);
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('template_default', 'information.php', 1, 0, 50, 40, 1);
-INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('template_default', 'languages.php', 1, 1, 70, 50, 1);
+INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('template_default', 'languages.php', 0, 1, 70, 50, 0);
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('template_default', 'manufacturers.php', 1, 0, 30, 20, 1);
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('template_default', 'manufacturer_info.php', 1, 1, 35, 95, 1);
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('template_default', 'more_information.php', 1, 0, 200, 200, 1);
@@ -3012,7 +2937,6 @@ INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, l
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('template_default', 'search_header.php', 0, 0, 0, 0, 1);
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('template_default', 'shopping_cart.php', 1, 1, 20, 30, 1);
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('template_default', 'specials.php', 1, 1, 45, 0, 0);
-INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('template_default', 'tell_a_friend.php', 1, 1, 65, 0, 0);
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('template_default', 'whats_new.php', 1, 0, 20, 0, 0);
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('template_default', 'whos_online.php', 1, 1, 200, 200, 1);
 
@@ -3021,12 +2945,12 @@ INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, l
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('classic', 'banner_box_all.php', 1, 1, 5, 0, 0);
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('classic', 'best_sellers.php', 1, 1, 30, 70, 1);
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('classic', 'categories.php', 1, 0, 10, 10, 1);
-INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('classic', 'currencies.php', 1, 1, 80, 60, 1);
+INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('classic', 'currencies.php', 0, 1, 80, 60, 0);
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('classic', 'document_categories.php', 1, 0, 0, 0, 0);
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('classic', 'ezpages.php', 1, 1, -1, 2, 1);
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('classic', 'featured.php', 1, 0, 45, 0, 0);
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('classic', 'information.php', 1, 0, 50, 40, 1);
-INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('classic', 'languages.php', 1, 1, 70, 50, 1);
+INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('classic', 'languages.php', 0, 1, 70, 50, 0);
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('classic', 'manufacturers.php', 1, 0, 30, 20, 1);
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('classic', 'manufacturer_info.php', 1, 1, 35, 95, 1);
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('classic', 'more_information.php', 1, 0, 200, 200, 1);
@@ -3039,7 +2963,6 @@ INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, l
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('classic', 'search_header.php', 0, 0, 0, 0, 1);
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('classic', 'shopping_cart.php', 1, 1, 20, 30, 1);
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('classic', 'specials.php', 1, 1, 45, 0, 0);
-INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('classic', 'tell_a_friend.php', 1, 1, 65, 0, 0);
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('classic', 'whats_new.php', 1, 0, 20, 0, 0);
 INSERT INTO layout_boxes (layout_template, layout_box_name, layout_box_status, layout_box_location, layout_box_sort_order, layout_box_sort_order_single, layout_box_status_single) VALUES ('classic', 'whos_online.php', 1, 1, 200, 200, 1);
 
@@ -3069,210 +2992,6 @@ INSERT INTO geo_zones (geo_zone_id,geo_zone_name,geo_zone_description,date_added
 INSERT INTO zones_to_geo_zones (association_id,zone_country_id,zone_id,geo_zone_id,date_added) VALUES (1,223,18,1,now());
 INSERT INTO tax_class (tax_class_id, tax_class_title, tax_class_description, date_added) VALUES (1, 'Taxable Goods', 'The following types of products are included: non-food, services, etc', now());
 
-# USA
-INSERT INTO zones VALUES (1,223,'AL','Alabama');
-INSERT INTO zones VALUES (2,223,'AK','Alaska');
-INSERT INTO zones VALUES (3,223,'AS','American Samoa');
-INSERT INTO zones VALUES (4,223,'AZ','Arizona');
-INSERT INTO zones VALUES (5,223,'AR','Arkansas');
-INSERT INTO zones VALUES (6,223,'AF','Armed Forces Africa');
-INSERT INTO zones VALUES (7,223,'AA','Armed Forces Americas');
-INSERT INTO zones VALUES (8,223,'AC','Armed Forces Canada');
-INSERT INTO zones VALUES (9,223,'AE','Armed Forces Europe');
-INSERT INTO zones VALUES (10,223,'AM','Armed Forces Middle East');
-INSERT INTO zones VALUES (11,223,'AP','Armed Forces Pacific');
-INSERT INTO zones VALUES (12,223,'CA','California');
-INSERT INTO zones VALUES (13,223,'CO','Colorado');
-INSERT INTO zones VALUES (14,223,'CT','Connecticut');
-INSERT INTO zones VALUES (15,223,'DE','Delaware');
-INSERT INTO zones VALUES (16,223,'DC','District of Columbia');
-INSERT INTO zones VALUES (17,223,'FM','Federated States Of Micronesia');
-INSERT INTO zones VALUES (18,223,'FL','Florida');
-INSERT INTO zones VALUES (19,223,'GA','Georgia');
-INSERT INTO zones VALUES (20,223,'GU','Guam');
-INSERT INTO zones VALUES (21,223,'HI','Hawaii');
-INSERT INTO zones VALUES (22,223,'ID','Idaho');
-INSERT INTO zones VALUES (23,223,'IL','Illinois');
-INSERT INTO zones VALUES (24,223,'IN','Indiana');
-INSERT INTO zones VALUES (25,223,'IA','Iowa');
-INSERT INTO zones VALUES (26,223,'KS','Kansas');
-INSERT INTO zones VALUES (27,223,'KY','Kentucky');
-INSERT INTO zones VALUES (28,223,'LA','Louisiana');
-INSERT INTO zones VALUES (29,223,'ME','Maine');
-INSERT INTO zones VALUES (30,223,'MH','Marshall Islands');
-INSERT INTO zones VALUES (31,223,'MD','Maryland');
-INSERT INTO zones VALUES (32,223,'MA','Massachusetts');
-INSERT INTO zones VALUES (33,223,'MI','Michigan');
-INSERT INTO zones VALUES (34,223,'MN','Minnesota');
-INSERT INTO zones VALUES (35,223,'MS','Mississippi');
-INSERT INTO zones VALUES (36,223,'MO','Missouri');
-INSERT INTO zones VALUES (37,223,'MT','Montana');
-INSERT INTO zones VALUES (38,223,'NE','Nebraska');
-INSERT INTO zones VALUES (39,223,'NV','Nevada');
-INSERT INTO zones VALUES (40,223,'NH','New Hampshire');
-INSERT INTO zones VALUES (41,223,'NJ','New Jersey');
-INSERT INTO zones VALUES (42,223,'NM','New Mexico');
-INSERT INTO zones VALUES (43,223,'NY','New York');
-INSERT INTO zones VALUES (44,223,'NC','North Carolina');
-INSERT INTO zones VALUES (45,223,'ND','North Dakota');
-INSERT INTO zones VALUES (46,223,'MP','Northern Mariana Islands');
-INSERT INTO zones VALUES (47,223,'OH','Ohio');
-INSERT INTO zones VALUES (48,223,'OK','Oklahoma');
-INSERT INTO zones VALUES (49,223,'OR','Oregon');
-INSERT INTO zones VALUES (50,163,'PW','Palau');
-INSERT INTO zones VALUES (51,223,'PA','Pennsylvania');
-INSERT INTO zones VALUES (52,223,'PR','Puerto Rico');
-INSERT INTO zones VALUES (53,223,'RI','Rhode Island');
-INSERT INTO zones VALUES (54,223,'SC','South Carolina');
-INSERT INTO zones VALUES (55,223,'SD','South Dakota');
-INSERT INTO zones VALUES (56,223,'TN','Tennessee');
-INSERT INTO zones VALUES (57,223,'TX','Texas');
-INSERT INTO zones VALUES (58,223,'UT','Utah');
-INSERT INTO zones VALUES (59,223,'VT','Vermont');
-INSERT INTO zones VALUES (60,223,'VI','Virgin Islands');
-INSERT INTO zones VALUES (61,223,'VA','Virginia');
-INSERT INTO zones VALUES (62,223,'WA','Washington');
-INSERT INTO zones VALUES (63,223,'WV','West Virginia');
-INSERT INTO zones VALUES (64,223,'WI','Wisconsin');
-INSERT INTO zones VALUES (65,223,'WY','Wyoming');
-
-# Canada
-INSERT INTO zones VALUES (66,38,'AB','Alberta');
-INSERT INTO zones VALUES (67,38,'BC','British Columbia');
-INSERT INTO zones VALUES (68,38,'MB','Manitoba');
-INSERT INTO zones VALUES (69,38,'NL','Newfoundland');
-INSERT INTO zones VALUES (70,38,'NB','New Brunswick');
-INSERT INTO zones VALUES (71,38,'NS','Nova Scotia');
-INSERT INTO zones VALUES (72,38,'NT','Northwest Territories');
-INSERT INTO zones VALUES (73,38,'NU','Nunavut');
-INSERT INTO zones VALUES (74,38,'ON','Ontario');
-INSERT INTO zones VALUES (75,38,'PE','Prince Edward Island');
-INSERT INTO zones VALUES (76,38,'QC','Quebec');
-INSERT INTO zones VALUES (77,38,'SK','Saskatchewan');
-INSERT INTO zones VALUES (78,38,'YT','Yukon Territory');
-
-# Germany
-INSERT INTO zones VALUES (79,81,'NDS','Niedersachsen');
-INSERT INTO zones VALUES (80,81,'BAW','Baden Würtemberg');
-INSERT INTO zones VALUES (81,81,'BAY','Bayern');
-INSERT INTO zones VALUES (82,81,'BER','Berlin');
-INSERT INTO zones VALUES (83,81,'BRG','Brandenburg');
-INSERT INTO zones VALUES (84,81,'BRE','Bremen');
-INSERT INTO zones VALUES (85,81,'HAM','Hamburg');
-INSERT INTO zones VALUES (86,81,'HES','Hessen');
-INSERT INTO zones VALUES (87,81,'MEC','Mecklenburg-Vorpommern');
-INSERT INTO zones VALUES (88,81,'NRW','Nordrhein-Westfalen');
-INSERT INTO zones VALUES (89,81,'RHE','Rheinland-Pfalz');
-INSERT INTO zones VALUES (90,81,'SAR','Saarland');
-INSERT INTO zones VALUES (91,81,'SAS','Sachsen');
-INSERT INTO zones VALUES (92,81,'SAC','Sachsen-Anhalt');
-INSERT INTO zones VALUES (93,81,'SCN','Schleswig-Holstein');
-INSERT INTO zones VALUES (94,81,'THE','Thringen');
-
-# Austria
-INSERT INTO zones VALUES (95,14,'WI','Wien');
-INSERT INTO zones VALUES (96,14,'NO','Niedersterreich');
-INSERT INTO zones VALUES (97,14,'OO','Obersterreich');
-INSERT INTO zones VALUES (98,14,'SB','Salzburg');
-INSERT INTO zones VALUES (99,14,'KN','Kärnten');
-INSERT INTO zones VALUES (100,14,'ST','Steiermark');
-INSERT INTO zones VALUES (101,14,'TI','Tirol');
-INSERT INTO zones VALUES (102,14,'BL','Burgenland');
-INSERT INTO zones VALUES (103,14,'VB','Voralberg');
-
-# Swizterland
-INSERT INTO zones VALUES (104,204,'AG','Aargau');
-INSERT INTO zones VALUES (105,204,'AI','Appenzell Innerrhoden');
-INSERT INTO zones VALUES (106,204,'AR','Appenzell Ausserrhoden');
-INSERT INTO zones VALUES (107,204,'BE','Bern');
-INSERT INTO zones VALUES (108,204,'BL','Basel-Landschaft');
-INSERT INTO zones VALUES (109,204,'BS','Basel-Stadt');
-INSERT INTO zones VALUES (110,204,'FR','Freiburg');
-INSERT INTO zones VALUES (111,204,'GE','Genf');
-INSERT INTO zones VALUES (112,204,'GL','Glarus');
-INSERT INTO zones VALUES (113,204,'JU','Graubnden');
-INSERT INTO zones VALUES (114,204,'JU','Jura');
-INSERT INTO zones VALUES (115,204,'LU','Luzern');
-INSERT INTO zones VALUES (116,204,'NE','Neuenburg');
-INSERT INTO zones VALUES (117,204,'NW','Nidwalden');
-INSERT INTO zones VALUES (118,204,'OW','Obwalden');
-INSERT INTO zones VALUES (119,204,'SG','St. Gallen');
-INSERT INTO zones VALUES (120,204,'SH','Schaffhausen');
-INSERT INTO zones VALUES (121,204,'SO','Solothurn');
-INSERT INTO zones VALUES (122,204,'SZ','Schwyz');
-INSERT INTO zones VALUES (123,204,'TG','Thurgau');
-INSERT INTO zones VALUES (124,204,'TI','Tessin');
-INSERT INTO zones VALUES (125,204,'UR','Uri');
-INSERT INTO zones VALUES (126,204,'VD','Waadt');
-INSERT INTO zones VALUES (127,204,'VS','Wallis');
-INSERT INTO zones VALUES (128,204,'ZG','Zug');
-INSERT INTO zones VALUES (129,204,'ZH','Zrich');
-
-# Spain
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'A Corua','A Corua');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Alava','Alava');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Albacete','Albacete');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Alicante','Alicante');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Almeria','Almeria');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Asturias','Asturias');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Avila','Avila');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Badajoz','Badajoz');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Baleares','Baleares');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Barcelona','Barcelona');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Burgos','Burgos');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Caceres','Caceres');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Cadiz','Cadiz');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Cantabria','Cantabria');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Castellon','Castellon');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Ceuta','Ceuta');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Ciudad Real','Ciudad Real');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Cordoba','Cordoba');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Cuenca','Cuenca');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Girona','Girona');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Granada','Granada');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Guadalajara','Guadalajara');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Guipuzcoa','Guipuzcoa');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Huelva','Huelva');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Huesca','Huesca');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Jaen','Jaen');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'La Rioja','La Rioja');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Las Palmas','Las Palmas');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Leon','Leon');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Lleida','Lleida');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Lugo','Lugo');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Madrid','Madrid');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Malaga','Malaga');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Melilla','Melilla');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Murcia','Murcia');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Navarra','Navarra');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Ourense','Ourense');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Palencia','Palencia');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Pontevedra','Pontevedra');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Salamanca','Salamanca');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Santa Cruz de Tenerife','Santa Cruz de Tenerife');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Segovia','Segovia');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Sevilla','Sevilla');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Soria','Soria');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Tarragona','Tarragona');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Teruel','Teruel');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Toledo','Toledo');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Valencia','Valencia');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Valladolid','Valladolid');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Vizcaya','Vizcaya');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Zamora','Zamora');
-INSERT INTO zones (zone_country_id, zone_code, zone_name) VALUES (195,'Zaragoza','Zaragoza');
-
-#australian zones
-INSERT INTO zones VALUES (NULL, 13, 'ACT', 'Australian Capital Territory');
-INSERT INTO zones VALUES (NULL, 13, 'NSW', 'New South Wales');
-INSERT INTO zones VALUES (NULL, 13, 'NT', 'Northern Territory');
-INSERT INTO zones VALUES (NULL, 13, 'QLD', 'Queensland');
-INSERT INTO zones VALUES (NULL, 13, 'SA', 'South Australia');
-INSERT INTO zones VALUES (NULL, 13, 'TAS', 'Tasmania');
-INSERT INTO zones VALUES (NULL, 13, 'VIC', 'Victoria');
-INSERT INTO zones VALUES (NULL, 13, 'WA', 'Western Australia');
-
-
 INSERT INTO product_type_layout (configuration_title, configuration_key, configuration_value, configuration_description, product_type_id, sort_order, set_function, date_added) VALUES ('Show Model Number', 'SHOW_PRODUCT_INFO_MODEL', '1', 'Display Model Number on Product Info 0= off 1= on', '1', '1', 'zen_cfg_select_drop_down(array(array(\'id\'=>\'1\', \'text\'=>\'True\'), array(\'id\'=>\'0\', \'text\'=>\'False\')), ', now());
 INSERT INTO product_type_layout (configuration_title, configuration_key, configuration_value, configuration_description, product_type_id, sort_order, set_function, date_added) VALUES ('Show Weight', 'SHOW_PRODUCT_INFO_WEIGHT', '1', 'Display Weight on Product Info 0= off 1= on', '1', '2', 'zen_cfg_select_drop_down(array(array(\'id\'=>\'1\', \'text\'=>\'True\'), array(\'id\'=>\'0\', \'text\'=>\'False\')), ', now());
 INSERT INTO product_type_layout (configuration_title, configuration_key, configuration_value, configuration_description, product_type_id, sort_order, set_function, date_added) VALUES ('Show Attribute Weight', 'SHOW_PRODUCT_INFO_WEIGHT_ATTRIBUTES', '1', 'Display Attribute Weight on Product Info 0= off 1= on', '1', '3', 'zen_cfg_select_drop_down(array(array(\'id\'=>\'1\', \'text\'=>\'True\'), array(\'id\'=>\'0\', \'text\'=>\'False\')), ', now());
@@ -3288,7 +3007,6 @@ INSERT INTO product_type_layout (configuration_title, configuration_key, configu
 
 INSERT INTO product_type_layout (configuration_title, configuration_key, configuration_value, configuration_description, product_type_id, sort_order, set_function, date_added) VALUES ('Show Starting At text on Price', 'SHOW_PRODUCT_INFO_STARTING_AT', '1', 'Display Starting At text on products with attributes Product Info 0= off 1= on', '1', '12', 'zen_cfg_select_drop_down(array(array(\'id\'=>\'1\', \'text\'=>\'True\'), array(\'id\'=>\'0\', \'text\'=>\'False\')), ', now());
 
-INSERT INTO product_type_layout (configuration_title, configuration_key, configuration_value, configuration_description, product_type_id, sort_order, set_function, date_added) VALUES ('Show Product Tell a Friend button', 'SHOW_PRODUCT_INFO_TELL_A_FRIEND', '1', 'Display the Tell a Friend button on Product Info<br /><br />Note: Turning this setting off does not affect the Tell a Friend box in the columns and turning off the Tell a Friend box does not affect the button<br />0= off 1= on', '1', '15', 'zen_cfg_select_drop_down(array(array(\'id\'=>\'1\', \'text\'=>\'True\'), array(\'id\'=>\'0\', \'text\'=>\'False\')), ', now());
 INSERT INTO product_type_layout (configuration_title, configuration_key, configuration_value, configuration_description, product_type_id, sort_order, set_function, date_added) VALUES ('Product Free Shipping Image Status - Catalog', 'SHOW_PRODUCT_INFO_ALWAYS_FREE_SHIPPING_IMAGE_SWITCH', '0', 'Show the Free Shipping image/text in the catalog?', '1', '16', 'zen_cfg_select_drop_down(array(array(\'id\'=>\'1\', \'text\'=>\'Yes\'), array(\'id\'=>\'0\', \'text\'=>\'No\')), ', now());
 #admin defaults
 INSERT INTO product_type_layout (configuration_title, configuration_key, configuration_value, configuration_description, product_type_id, sort_order, use_function, set_function, date_added) VALUES ('Product Price Tax Class Default - When adding new products?', 'DEFAULT_PRODUCT_TAX_CLASS_ID', '0', 'What should the Product Price Tax Class Default ID be when adding new products?', '1', '100', '', '', now());
@@ -3313,7 +3031,6 @@ INSERT INTO product_type_layout (configuration_title, configuration_key, configu
 INSERT INTO product_type_layout (configuration_title, configuration_key, configuration_value, configuration_description, product_type_id, sort_order, set_function, date_added) VALUES ('Show Starting At text on Price', 'SHOW_PRODUCT_MUSIC_INFO_STARTING_AT', '1', 'Display Starting At text on products with attributes Product Info 0= off 1= on', '2', '12', 'zen_cfg_select_drop_down(array(array(\'id\'=>\'1\', \'text\'=>\'True\'), array(\'id\'=>\'0\', \'text\'=>\'False\')), ', now());
 INSERT INTO product_type_layout (configuration_title, configuration_key, configuration_value, configuration_description, product_type_id, sort_order, set_function, date_added) VALUES ('Show Product Additional Images', 'SHOW_PRODUCT_MUSIC_INFO_ADDITIONAL_IMAGES', '1', 'Display Additional Images on Product Info 0= off 1= on', '2', '13', 'zen_cfg_select_drop_down(array(array(\'id\'=>\'1\', \'text\'=>\'True\'), array(\'id\'=>\'0\', \'text\'=>\'False\')), ', now());
 
-INSERT INTO product_type_layout (configuration_title, configuration_key, configuration_value, configuration_description, product_type_id, sort_order, set_function, date_added) VALUES ('Show Product Tell a Friend button', 'SHOW_PRODUCT_MUSIC_INFO_TELL_A_FRIEND', '1', 'Display the Tell a Friend button on Product Info<br /><br />Note: Turning this setting off does not affect the Tell a Friend box in the columns and turning off the Tell a Friend box does not affect the button<br />0= off 1= on', '2', '15', 'zen_cfg_select_drop_down(array(array(\'id\'=>\'1\', \'text\'=>\'True\'), array(\'id\'=>\'0\', \'text\'=>\'False\')), ', now());
 INSERT INTO product_type_layout (configuration_title, configuration_key, configuration_value, configuration_description, product_type_id, sort_order, set_function, date_added) VALUES ('Product Free Shipping Image Status - Catalog', 'SHOW_PRODUCT_MUSIC_INFO_ALWAYS_FREE_SHIPPING_IMAGE_SWITCH', '0', 'Show the Free Shipping image/text in the catalog?', '2', '16', 'zen_cfg_select_drop_down(array(array(\'id\'=>\'1\', \'text\'=>\'Yes\'), array(\'id\'=>\'0\', \'text\'=>\'No\')), ', now());
 #admin defaults
 INSERT INTO product_type_layout (configuration_title, configuration_key, configuration_value, configuration_description, product_type_id, sort_order, use_function, set_function, date_added) VALUES ('Product Price Tax Class Default - When adding new products?', 'DEFAULT_PRODUCT_MUSIC_TAX_CLASS_ID', '0', 'What should the Product Price Tax Class Default ID be when adding new products?', '2', '100', '', '', now());
@@ -3325,7 +3042,6 @@ INSERT INTO product_type_layout (configuration_title, configuration_key, configu
 INSERT INTO product_type_layout (configuration_title, configuration_key, configuration_value, configuration_description, product_type_id, sort_order, set_function, date_added) VALUES ('Show Product Reviews Button', 'SHOW_DOCUMENT_GENERAL_INFO_REVIEWS', '1', 'Display Product Reviews Button on Product Info 0= off 1= on', '3', '8', 'zen_cfg_select_drop_down(array(array(\'id\'=>\'1\', \'text\'=>\'True\'), array(\'id\'=>\'0\', \'text\'=>\'False\')), ', now());
 INSERT INTO product_type_layout (configuration_title, configuration_key, configuration_value, configuration_description, product_type_id, sort_order, set_function, date_added) VALUES ('Show Date Available', 'SHOW_DOCUMENT_GENERAL_INFO_DATE_AVAILABLE', '1', 'Display Date Available on Product Info 0= off 1= on', '3', '9', 'zen_cfg_select_drop_down(array(array(\'id\'=>\'1\', \'text\'=>\'True\'), array(\'id\'=>\'0\', \'text\'=>\'False\')), ', now());
 INSERT INTO product_type_layout (configuration_title, configuration_key, configuration_value, configuration_description, product_type_id, sort_order, set_function, date_added) VALUES ('Show Date Added', 'SHOW_DOCUMENT_GENERAL_INFO_DATE_ADDED', '1', 'Display Date Added on Product Info 0= off 1= on', '3', '10', 'zen_cfg_select_drop_down(array(array(\'id\'=>\'1\', \'text\'=>\'True\'), array(\'id\'=>\'0\', \'text\'=>\'False\')), ', now());
-INSERT INTO product_type_layout (configuration_title, configuration_key, configuration_value, configuration_description, product_type_id, sort_order, set_function, date_added) VALUES ('Show Product Tell a Friend button', 'SHOW_DOCUMENT_GENERAL_INFO_TELL_A_FRIEND', '1', 'Display the Tell a Friend button on Product Info<br /><br />Note: Turning this setting off does not affect the Tell a Friend box in the columns and turning off the Tell a Friend box does not affect the button<br />0= off 1= on', '3', '15', 'zen_cfg_select_drop_down(array(array(\'id\'=>\'1\', \'text\'=>\'True\'), array(\'id\'=>\'0\', \'text\'=>\'False\')), ', now());
 INSERT INTO product_type_layout (configuration_title, configuration_key, configuration_value, configuration_description, product_type_id, sort_order, set_function, date_added) VALUES ('Show Product URL', 'SHOW_DOCUMENT_GENERAL_INFO_URL', '1', 'Display URL on Product Info 0= off 1= on', '3', '11', 'zen_cfg_select_drop_down(array(array(\'id\'=>\'1\', \'text\'=>\'True\'), array(\'id\'=>\'0\', \'text\'=>\'False\')), ', now());
 INSERT INTO product_type_layout (configuration_title, configuration_key, configuration_value, configuration_description, product_type_id, sort_order, set_function, date_added) VALUES ('Show Product Additional Images', 'SHOW_DOCUMENT_GENERAL_INFO_ADDITIONAL_IMAGES', '1', 'Display Additional Images on Product Info 0= off 1= on', '3', '13', 'zen_cfg_select_drop_down(array(array(\'id\'=>\'1\', \'text\'=>\'True\'), array(\'id\'=>\'0\', \'text\'=>\'False\')), ', now());
 
@@ -3348,7 +3064,6 @@ INSERT INTO product_type_layout (configuration_title, configuration_key, configu
 
 INSERT INTO product_type_layout (configuration_title, configuration_key, configuration_value, configuration_description, product_type_id, sort_order, set_function, date_added) VALUES ('Show Starting At text on Price', 'SHOW_DOCUMENT_PRODUCT_INFO_STARTING_AT', '1', 'Display Starting At text on products with attributes Product Info 0= off 1= on', '4', '12', 'zen_cfg_select_drop_down(array(array(\'id\'=>\'1\', \'text\'=>\'True\'), array(\'id\'=>\'0\', \'text\'=>\'False\')), ', now());
 
-INSERT INTO product_type_layout (configuration_title, configuration_key, configuration_value, configuration_description, product_type_id, sort_order, set_function, date_added) VALUES ('Show Product Tell a Friend button', 'SHOW_DOCUMENT_PRODUCT_INFO_TELL_A_FRIEND', '1', 'Display the Tell a Friend button on Product Info<br /><br />Note: Turning this setting off does not affect the Tell a Friend box in the columns and turning off the Tell a Friend box does not affect the button<br />0= off 1= on', '4', '15', 'zen_cfg_select_drop_down(array(array(\'id\'=>\'1\', \'text\'=>\'True\'), array(\'id\'=>\'0\', \'text\'=>\'False\')), ', now());
 INSERT INTO product_type_layout (configuration_title, configuration_key, configuration_value, configuration_description, product_type_id, sort_order, set_function, date_added) VALUES ('Product Free Shipping Image Status - Catalog', 'SHOW_DOCUMENT_PRODUCT_INFO_ALWAYS_FREE_SHIPPING_IMAGE_SWITCH', '0', 'Show the Free Shipping image/text in the catalog?', '4', '16', 'zen_cfg_select_drop_down(array(array(\'id\'=>\'1\', \'text\'=>\'Yes\'), array(\'id\'=>\'0\', \'text\'=>\'No\')), ', now());
 #admin defaults
 INSERT INTO product_type_layout (configuration_title, configuration_key, configuration_value, configuration_description, product_type_id, sort_order, use_function, set_function, date_added) VALUES ('Product Price Tax Class Default - When adding new products?', 'DEFAULT_DOCUMENT_PRODUCT_TAX_CLASS_ID', '0', 'What should the Product Price Tax Class Default ID be when adding new products?', '4', '100', '', '', now());
@@ -3371,7 +3086,6 @@ INSERT INTO product_type_layout (configuration_title, configuration_key, configu
 
 INSERT INTO product_type_layout (configuration_title, configuration_key, configuration_value, configuration_description, product_type_id, sort_order, set_function, date_added) VALUES ('Show Starting At text on Price', 'SHOW_PRODUCT_FREE_SHIPPING_INFO_STARTING_AT', '1', 'Display Starting At text on products with attributes Product Info 0= off 1= on', '5', '12', 'zen_cfg_select_drop_down(array(array(\'id\'=>\'1\', \'text\'=>\'True\'), array(\'id\'=>\'0\', \'text\'=>\'False\')), ', now());
 
-INSERT INTO product_type_layout (configuration_title, configuration_key, configuration_value, configuration_description, product_type_id, sort_order, set_function, date_added) VALUES ('Show Product Tell a Friend button', 'SHOW_PRODUCT_FREE_SHIPPING_INFO_TELL_A_FRIEND', '1', 'Display the Tell a Friend button on Product Info<br /><br />Note: Turning this setting off does not affect the Tell a Friend box in the columns and turning off the Tell a Friend box does not affect the button<br />0= off 1= on', '5', '15', 'zen_cfg_select_drop_down(array(array(\'id\'=>\'1\', \'text\'=>\'True\'), array(\'id\'=>\'0\', \'text\'=>\'False\')), ', now());
 INSERT INTO product_type_layout (configuration_title, configuration_key, configuration_value, configuration_description, product_type_id, sort_order, set_function, date_added) VALUES ('Product Free Shipping Image Status - Catalog', 'SHOW_PRODUCT_FREE_SHIPPING_INFO_ALWAYS_FREE_SHIPPING_IMAGE_SWITCH', '1', 'Show the Free Shipping image/text in the catalog?', '5', '16', 'zen_cfg_select_drop_down(array(array(\'id\'=>\'1\', \'text\'=>\'Yes\'), array(\'id\'=>\'0\', \'text\'=>\'No\')), ', now());
 #admin defaults
 INSERT INTO product_type_layout (configuration_title, configuration_key, configuration_value, configuration_description, product_type_id, sort_order, use_function, set_function, date_added) VALUES ('Product Price Tax Class Default - When adding new products?', 'DEFAULT_PRODUCT_FREE_SHIPPING_TAX_CLASS_ID', '0', 'What should the Product Price Tax Class Default ID be when adding new products?', '5', '100', '', '', now());
@@ -3481,9 +3195,10 @@ INSERT INTO get_terms_to_filter VALUES ('record_company_id', 'TABLE_RECORD_COMPA
 # Dumping data for table project_version
 #
 
-INSERT INTO project_version (project_version_id, project_version_key, project_version_major, project_version_minor, project_version_patch1, project_version_patch1_source, project_version_patch2, project_version_patch2_source, project_version_comment, project_version_date_applied) VALUES (1, 'Zen-Cart Main', '1', '3.9h', '', '', '', '', 'Fresh Installation', now());
-INSERT INTO project_version (project_version_id, project_version_key, project_version_major, project_version_minor, project_version_patch1, project_version_patch1_source, project_version_patch2, project_version_patch2_source, project_version_comment, project_version_date_applied) VALUES (2, 'Zen-Cart Database', '1', '3.9h', '', '', '', '', 'Fresh Installation', now());
-INSERT INTO project_version_history (project_version_id, project_version_key, project_version_major, project_version_minor, project_version_patch, project_version_comment, project_version_date_applied) VALUES (1, 'Zen-Cart Main', '1', '3.9h', '', 'Fresh Installation', now());
-INSERT INTO project_version_history (project_version_id, project_version_key, project_version_major, project_version_minor, project_version_patch, project_version_comment, project_version_date_applied) VALUES (2, 'Zen-Cart Database', '1', '3.9h', '', 'Fresh Installation', now());
+INSERT INTO project_version (project_version_id, project_version_key, project_version_major, project_version_minor, project_version_patch1, project_version_patch1_source, project_version_patch2, project_version_patch2_source, project_version_comment, project_version_date_applied) VALUES (1, 'Zen-Cart Main', '1', '5.0', '', '', '', '', 'Fresh Installation', now());
+INSERT INTO project_version (project_version_id, project_version_key, project_version_major, project_version_minor, project_version_patch1, project_version_patch1_source, project_version_patch2, project_version_patch2_source, project_version_comment, project_version_date_applied) VALUES (2, 'Zen-Cart Database', '1', '5.0', '', '', '', '', 'Fresh Installation', now());
+INSERT INTO project_version_history (project_version_id, project_version_key, project_version_major, project_version_minor, project_version_patch, project_version_comment, project_version_date_applied) VALUES (1, 'Zen-Cart Main', '1', '5.0', '', 'Fresh Installation', now());
+INSERT INTO project_version_history (project_version_id, project_version_key, project_version_major, project_version_minor, project_version_patch, project_version_comment, project_version_date_applied) VALUES (2, 'Zen-Cart Database', '1', '5.0', '', 'Fresh Installation', now());
 
 ##### End of SQL setup for Zen Cart.
+

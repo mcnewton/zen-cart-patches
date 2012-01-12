@@ -4,10 +4,10 @@
  * see {@link  http://www.zen-cart.com/wiki/index.php/Developers_API_Tutorials#InitSystem wikitutorials} for more details.
  *
  * @package initSystem
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: init_cart_handler.php 17047 2010-07-29 06:00:38Z drbyte $
+ * @version $Id: init_cart_handler.php 18695 2011-05-04 05:24:19Z drbyte $
  */
 if (!defined('IS_ADMIN_FLAG')) {
   die('Illegal Access');
@@ -31,8 +31,10 @@ if (isset($_GET['action'])) {
       } else {
         $parameters = array('action', 'products_id');
       }
-    } else {
+    } elseif ($_GET['main_page'] == FILENAME_PRODUCT_INFO) {
       $parameters = array('action', 'pid', 'main_page');
+    } else {
+      $parameters = array('action', 'pid', 'main_page', 'products_id');
     }
   }
   /**

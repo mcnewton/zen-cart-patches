@@ -1,20 +1,20 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2009 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: coupon_admin.php 14139 2009-08-10 13:46:02Z wilt $
+ * @version $Id: coupon_admin.php 19330 2011-08-07 06:32:56Z drbyte $
  */
-
   require('includes/application_top.php');
   require(DIR_WS_CLASSES . 'currencies.php');
   $currencies = new currencies();
-
   if ($_GET['selected_box']) {
     $_GET['action']='';
     $_GET['old_action']='';
   }
+
+  if (isset($_GET['cid'])) $_GET['cid'] = (int)$_GET['cid'];
 
   if (($_GET['action'] == 'send_email_to_user') && ($_POST['customers_email_address']) && (!$_POST['back_x'])) {
     $audience_select = get_audience_sql_query($_POST['customers_email_address'], 'email');
@@ -31,7 +31,7 @@
     $coupon_name = $db->Execute("select coupon_name, coupon_description
                                  from " . TABLE_COUPONS_DESCRIPTION . "
                                  where coupon_id = '" . $_GET['cid'] . "'
-                                 and language_id = '" . $_SESSION['languages_id'] . "'");
+                                 and language_id = '" . (int)$_SESSION['languages_id'] . "'");
 
     // demo active test
     if (zen_admin_demo()) {
@@ -120,7 +120,8 @@
       $coupon_copy_to = trim($_POST['coupon_copy_to']);
 
       // check if new coupon code exists
-      $sql = "SELECT * from " . TABLE_COUPONS . " where coupon_code='" . $coupon_copy_to . "'";
+      $sql = "SELECT * from " . TABLE_COUPONS . " where coupon_code = :coupon_copy:";
+      $sql = $db->bindVars($sql, ':coupon_copy:', $coupon_copy_to, 'string');
       $check_new_coupon = $db->Execute($sql);
       if ($check_new_coupon->RecordCount() > 0) {
         $messageStack->add_session(ERROR_DISCOUNT_COUPON_DUPLICATE . $coupon_copy_to, 'caution');
@@ -211,10 +212,11 @@
         $coupon_code = create_coupon_code();
       }
       if ($_POST['coupon_code']) $coupon_code = $_POST['coupon_code'];
-      $query1 = $db->Execute("select coupon_code
+      $sql = "select coupon_code
                               from " . TABLE_COUPONS . "
-                              where coupon_code = '" . zen_db_prepare_input($coupon_code) . "'");
-
+                              where coupon_code = :couponCode:";
+      $sql = $db->bindVars($sql, ':couponCode:', $coupon_code, 'string');
+      $query1 = $db->Execute($sql);
       if ($query1->RecordCount()>0 && $_POST['coupon_code'] && $_GET['oldaction'] != 'voucheredit')  {
         $update_errors = 1;
         $messageStack->add(ERROR_COUPON_EXISTS, 'error');
@@ -229,10 +231,12 @@
       if ( ($_POST['back_x']) || ($_POST['back_y']) ) {
         $_GET['action'] = 'new';
       } else {
-        $coupon_type = "F";
-        if (substr($_POST['coupon_amount'], -1) == '%') $coupon_type='P';
+        $coupon_type = 'F'; // amount off
+        if ($_POST['coupon_free_ship']) $coupon_type = 'S'; // free shipping
+        if (substr($_POST['coupon_amount'], -1) == '%') $coupon_type = 'P'; // percentage off
+        if ($_POST['coupon_amount'] > 0 && $_POST['coupon_free_ship']) $coupon_type = 'O';  // amount off and free shipping
+        if (substr($_POST['coupon_amount'], -1) == '%' && $_POST['coupon_free_ship']) $coupon_type = 'E'; // percentage off and free shipping
         $_POST['coupon_amount'] = preg_replace('/[^0-9.]/', '', $_POST['coupon_amount']);
-        if ($_POST['coupon_free_ship']) $coupon_type = 'S';
         $sql_data_array = array('coupon_code' => zen_db_prepare_input($_POST['coupon_code']),
                                 'coupon_amount' => zen_db_prepare_input($_POST['coupon_amount']),
                                 'coupon_type' => zen_db_prepare_input($coupon_type),
@@ -260,7 +264,7 @@
             $sql_data_desc_array = array('coupon_name' => zen_db_prepare_input($_POST['coupon_name'][$language_id]),
                                          'coupon_description' => zen_db_prepare_input($_POST['coupon_desc'][$language_id])
                                          );
-            zen_db_perform(TABLE_COUPONS_DESCRIPTION, $sql_data_desc_array, 'update', "coupon_id = '" . $_GET['cid'] . "' and language_id = '" . $languages[$i]['id'] . "'");
+            zen_db_perform(TABLE_COUPONS_DESCRIPTION, $sql_data_desc_array, 'update', "coupon_id = '" . $_GET['cid'] . "' and language_id = '" . (int)$languages[$i]['id'] . "'");
           }
         } else {
           zen_db_perform(TABLE_COUPONS, $sql_data_array);
@@ -270,8 +274,8 @@
 
           for ($i = 0, $n = sizeof($languages); $i < $n; $i++) {
             $language_id = $languages[$i]['id'];
-            $sql_data_marray[$i]['coupon_id'] = $insert_id;
-            $sql_data_marray[$i]['language_id'] = $language_id;
+            $sql_data_marray[$i]['coupon_id'] = (int)$insert_id;
+            $sql_data_marray[$i]['language_id'] = (int)$language_id;
             zen_db_perform(TABLE_COUPONS_DESCRIPTION, $sql_data_marray[$i]);
           }
         }
@@ -303,7 +307,7 @@
       var kill = document.getElementById('hoverJS');
       kill.disabled = true;
     }
-<?php if ($_GET['action'] == 'new') { ?>
+<?php if ($_GET['action'] == 'new' || $_GET['action'] == 'voucheredit') { ?>
     if (typeof _editor_url == "string") HTMLArea.replaceAll();
 <?php } else { ?>
     if (typeof _editor_url == "string") HTMLArea.replace('message_html');
@@ -412,10 +416,6 @@ function check_form(form_name) {
     $cc_split = new splitPageResults($_GET['reports_page'], MAX_DISPLAY_SEARCH_RESULTS_DISCOUNT_COUPONS_REPORTS, $cc_query_raw, $cc_query_numrows);
     $cc_list = $db->Execute($cc_query_raw);
     while (!$cc_list->EOF) {
-      $rows++;
-      if (strlen($rows) < 2) {
-        $rows = '0' . $rows;
-      }
       if (((!$_GET['uid']) || (@$_GET['uid'] == $cc_list->fields['unique_id'])) && (!$cInfo)) {
         $cInfo = new objectInfo($cc_list->fields);
       }
@@ -458,10 +458,10 @@ $customer = $db->Execute("select customers_firstname, customers_lastname
       $coupon_desc = $db->Execute("select coupon_name
                                    from " . TABLE_COUPONS_DESCRIPTION . "
                                    where coupon_id = '" . $_GET['cid'] . "'
-                                   and language_id = '" . $_SESSION['languages_id'] . "'");
+                                   and language_id = '" . (int)$_SESSION['languages_id'] . "'");
       $count_customers = $db->Execute("select * from " . TABLE_COUPON_REDEEM_TRACK . "
                                        where coupon_id = '" . $_GET['cid'] . "'
-                                       and customer_id = '" . $cInfo->customer_id . "'");
+                                       and customer_id = '" . (int)$cInfo->customer_id . "'");
 
       $heading[] = array('text' => '<b>[' . $_GET['cid'] . ']' . COUPON_NAME . ' ' . $coupon_desc->fields['coupon_name'] . '</b>');
       $contents[] = array('text' => '<b>' . TEXT_REDEMPTIONS . '</b>');
@@ -486,7 +486,7 @@ $customer = $db->Execute("select customers_firstname, customers_lastname
     $coupon_name = $db->Execute("select coupon_name
                                  from " . TABLE_COUPONS_DESCRIPTION . "
                                  where coupon_id = '" . $_GET['cid'] . "'
-                                 and language_id = '" . $_SESSION['languages_id'] . "'");
+                                 and language_id = '" . (int)$_SESSION['languages_id'] . "'");
 
     $audience_select = get_audience_sql_query($_POST['customers_email_address']);
     $mail_sent_to = $audience_select['query_name'];
@@ -570,7 +570,7 @@ $customer = $db->Execute("select customers_firstname, customers_lastname
     $coupon_name = $db->Execute("select coupon_name
                                  from " . TABLE_COUPONS_DESCRIPTION . "
                                  where coupon_id = '" . $_GET['cid'] . "'
-                                 and language_id = '" . $_SESSION['languages_id'] . "'");
+                                 and language_id = '" . (int)$_SESSION['languages_id'] . "'");
 ?>
       <td width="100%" valign="top"><table border="0" width="100%" cellspacing="0" cellpadding="2">
       <tr>
@@ -630,27 +630,15 @@ $customer = $db->Execute("select customers_firstname, customers_lastname
               <tr>
                 <td colspan="2"><?php echo zen_draw_separator('pixel_trans.gif', '1', '10'); ?></td>
               </tr>
+<?php   if (EMAIL_USE_HTML == 'true') { ?>
               <tr>
                 <td valign="top" class="main"><?php echo TEXT_RICH_TEXT_MESSAGE; ?></td>
-                <td>
-<?php   if (EMAIL_USE_HTML == 'true') {
-              if ($_SESSION['html_editor_preference_status']=="FCKEDITOR") {
-                $oFCKeditor = new FCKeditor('message_html') ;
-                $oFCKeditor->Value = ($_POST['message_html']=='') ? TEXT_COUPON_ANNOUNCE : stripslashes($_POST['message_html']) ;
-                $oFCKeditor->Width  = '97%' ;
-                $oFCKeditor->Height = '250' ;
-//                $oFCKeditor->Config['ToolbarLocation'] = 'Out:xToolbar' ;
-//                $oFCKeditor->Create() ;
-                $output = $oFCKeditor->CreateHtml() ; echo $output;
-        } else { // using HTMLAREA or just raw "source"
-          echo zen_draw_textarea_field('message_html', 'soft', '100%', '25', ($_POST['message_html']=='') ? TEXT_COUPON_ANNOUNCE : stripslashes($_POST['message_html']), 'id="message_html"');
-        }
-} ?>
-                </td>
+                <td><?php echo zen_draw_textarea_field('message_html', 'soft', '100%', '25', htmlspecialchars(($_POST['message_html']=='') ? TEXT_COUPON_ANNOUNCE : stripslashes($_POST['message_html']), ENT_COMPAT, CHARSET, TRUE), 'id="message_html"'); ?></td>
               </tr>
+<?php } ?>
               <tr>
                 <td valign="top" class="main"><?php echo TEXT_MESSAGE; ?>&nbsp;&nbsp;</td>
-                <td><?php echo zen_draw_textarea_field('message', 'soft', '60', '15', strip_tags(($_POST['message_html']=='') ? TEXT_COUPON_ANNOUNCE : stripslashes($_POST['message_html']))); ?></td>
+                <td><?php echo zen_draw_textarea_field('message', 'soft', '60', '15', htmlspecialchars(strip_tags(($_POST['message_html']=='') ? TEXT_COUPON_ANNOUNCE : stripslashes($_POST['message_html']), ENT_COMPAT, CHARSET, TRUE))); ?></td>
               </tr>
               <tr>
                 <td colspan="2"><?php echo zen_draw_separator('pixel_trans.gif', '1', '10'); ?></td>
@@ -806,7 +794,7 @@ $customer = $db->Execute("select customers_firstname, customers_lastname
       $coupon = $db->Execute("select coupon_name,coupon_description
                               from " . TABLE_COUPONS_DESCRIPTION . "
                               where coupon_id = '" .  $_GET['cid'] . "'
-                              and language_id = '" . $language_id . "'");
+                              and language_id = '" . (int)$language_id . "'");
 
       $_POST['coupon_name'][$language_id] = $coupon->fields['coupon_name'];
       $_POST['coupon_desc'][$language_id] = $coupon->fields['coupon_description'];
@@ -819,10 +807,11 @@ $customer = $db->Execute("select customers_firstname, customers_lastname
                             where coupon_id = '" . $_GET['cid'] . "'");
 
     $_POST['coupon_amount'] = $coupon->fields['coupon_amount'];
-    if ($coupon->fields['coupon_type']=='P') {
+    if ($coupon->fields['coupon_type'] == 'P' || $coupon->fields['coupon_type'] == 'E') {
       $_POST['coupon_amount'] .= '%';
     }
-    if ($coupon->fields['coupon_type']=='S') {
+    // free shipping on free shipping only 'S' or percentage off and free shipping 'E' or amount off and free shipping 'O'
+    if ($coupon->fields['coupon_type'] == 'S' || $coupon->fields['coupon_type'] == 'O' || $coupon->fields['coupon_type'] == 'E') {
       $_POST['coupon_free_ship'] = true;
     } else {
       $_POST['coupon_free_ship'] = false;
@@ -861,7 +850,7 @@ $customer = $db->Execute("select customers_firstname, customers_lastname
 ?>
       <tr>
         <td align="left" class="main"><?php if ($i==0) echo COUPON_NAME; ?></td>
-        <td align="left"><?php echo zen_draw_input_field('coupon_name[' . $languages[$i]['id'] . ']', stripslashes($_POST['coupon_name'][$language_id])) . '&nbsp;' . zen_image(DIR_WS_CATALOG_LANGUAGES . $languages[$i]['directory'] . '/images/' . $languages[$i]['image'], $languages[$i]['name']); ?></td>
+        <td align="left"><?php echo zen_draw_input_field('coupon_name[' . $languages[$i]['id'] . ']', htmlspecialchars(stripslashes($_POST['coupon_name'][$language_id]), ENT_COMPAT, CHARSET, TRUE)) . '&nbsp;' . zen_image(DIR_WS_CATALOG_LANGUAGES . $languages[$i]['directory'] . '/images/' . $languages[$i]['image'], $languages[$i]['name']); ?></td>
         <td align="left" class="main" width="40%"><?php if ($i==0) echo COUPON_NAME_HELP; ?></td>
       </tr>
 <?php
@@ -875,18 +864,8 @@ $customer = $db->Execute("select customers_firstname, customers_lastname
 
       <tr>
         <td align="left" valign="top" class="main"><?php if ($i==0) echo COUPON_DESC; ?></td>
-        <td align="left" valign="top"><?php
-            if ($_SESSION['html_editor_preference_status']=="FCKEDITOR") {
-                $oFCKeditor = new FCKeditor('coupon_desc[' . $languages[$i]['id'] . ']') ;
-                $oFCKeditor->Value = (stripslashes($_POST['coupon_desc'][$language_id]) != '') ? stripslashes($_POST['coupon_desc'][$language_id]) : '';
-                $oFCKeditor->Width  = '97%' ;
-                $oFCKeditor->Height = '200' ;
-//                $oFCKeditor->Config['ToolbarLocation'] = 'Out:xToolbar' ;
-                $output = $oFCKeditor->CreateHtml() ; echo $output;
-            } else { // using HTMLAREA or just raw "source"
-              echo zen_draw_textarea_field('coupon_desc[' . $languages[$i]['id'] . ']','physical','24','8', stripslashes($_POST['coupon_desc'][$language_id]));
-            }
-            echo '&nbsp;' . zen_image(DIR_WS_CATALOG_LANGUAGES . $languages[$i]['directory'] . '/images/' . $languages[$i]['image'], $languages[$i]['name']); ?></td>
+        <td align="left" valign="top"><?php echo zen_draw_textarea_field('coupon_desc[' . $languages[$i]['id'] . ']','physical','24','8', htmlspecialchars(stripslashes($_POST['coupon_desc'][$language_id]), ENT_COMPAT, CHARSET, TRUE)); ?>
+            <?php echo '&nbsp;' . zen_image(DIR_WS_CATALOG_LANGUAGES . $languages[$i]['directory'] . '/images/' . $languages[$i]['image'], $languages[$i]['name']); ?></td>
         <td align="left" valign="top" class="main"><?php if ($i==0) echo COUPON_DESC_HELP; ?></td>
       </tr>
 <?php
@@ -909,7 +888,7 @@ $customer = $db->Execute("select customers_firstname, customers_lastname
       </tr>
       <tr>
         <td align="left" class="main"><?php echo COUPON_CODE; ?></td>
-        <td align="left"><?php echo zen_draw_input_field('coupon_code', $_POST['coupon_code']); ?></td>
+        <td align="left"><?php echo zen_draw_input_field('coupon_code', htmlspecialchars($_POST['coupon_code'], ENT_COMPAT, CHARSET, TRUE)); ?></td>
         <td align="left" class="main"><?php echo COUPON_CODE_HELP; ?></td>
       </tr>
       <tr>
@@ -974,13 +953,13 @@ $customer = $db->Execute("select customers_firstname, customers_lastname
     $status_array[] = array('id' => 'N', 'text' => TEXT_COUPON_INACTIVE);
     $status_array[] = array('id' => '*', 'text' => TEXT_COUPON_ALL);
 
-    if ($_GET['status']) {
+    if (isset($_GET['status'])) {
       $status = zen_db_prepare_input($_GET['status']);
     } else {
       $status = 'Y';
     }
-
     echo zen_hide_session_id();
+    $status = $status[0];
     echo HEADING_TITLE_STATUS . ' ' . zen_draw_pull_down_menu('status', $status_array, $status, 'onChange="this.form.submit();"') .
     zen_draw_hidden_field('page', $_GET['page']);
 ?>
@@ -1012,19 +991,33 @@ $customer = $db->Execute("select customers_firstname, customers_lastname
                 <td class="dataTableHeadingContent" align="right"><?php echo TABLE_HEADING_ACTION; ?>&nbsp;</td>
               </tr>
 <?php
-    if ($_GET['page'] > 1) $rows = $_GET['page'] * 20 - 20;
     if ($status != '*') {
       $cc_query_raw = "select coupon_id, coupon_code, coupon_amount, coupon_type, coupon_start_date,coupon_expire_date,uses_per_user,uses_per_coupon,restrict_to_products, restrict_to_categories, date_created,date_modified, coupon_active, coupon_zone_restriction from " . TABLE_COUPONS ." where coupon_active='" . zen_db_input($status) . "' and coupon_type != 'G'";
     } else {
       $cc_query_raw = "select coupon_id, coupon_code, coupon_amount, coupon_type, coupon_start_date,coupon_expire_date,uses_per_user,uses_per_coupon,restrict_to_products, restrict_to_categories, date_created,date_modified, coupon_active, coupon_zone_restriction from " . TABLE_COUPONS . " where coupon_type != 'G'";
     }
-    $cc_split = new splitPageResults($_GET['page'], MAX_DISPLAY_SEARCH_RESULTS_DISCOUNT_COUPONS, $cc_query_raw, $cc_query_numrows);
+    $maxDisplaySearchResults = (defined('MAX_DISPLAY_SEARCH_RESULTS_DISCOUNT_COUPONS') && (int)MAX_DISPLAY_SEARCH_RESULTS_DISCOUNT_COUPONS > 0) ? (int)MAX_DISPLAY_SEARCH_RESULTS_DISCOUNT_COUPONS : 20;
+    // reset page when page is unknown
+if (($_GET['page'] == '' or $_GET['page'] == '1') and $_GET['cid'] != '') {
+  $check_page = $db->Execute($cc_query_raw);
+  $check_count=1;
+  if ($check_page->RecordCount() > $maxDisplaySearchResults) {
+    while (!$check_page->EOF) {
+      if ($check_page->fields['coupon_id'] == $_GET['cid']) {
+        break;
+      }
+      $check_count++;
+      $check_page->MoveNext();
+    }
+    $_GET['page'] = round((($check_count/$maxDisplaySearchResults)+(fmod_round($check_count,$maxDisplaySearchResults) !=0 ? .5 : 0)),0);
+  } else {
+    $_GET['page'] = 1;
+  }
+}
+
+    $cc_split = new splitPageResults($_GET['page'], $maxDisplaySearchResults, $cc_query_raw, $cc_query_numrows);
     $cc_list = $db->Execute($cc_query_raw);
     while (!$cc_list->EOF) {
-      $rows++;
-      if (strlen($rows) < 2) {
-        $rows = '0' . $rows;
-      }
       if (((!$_GET['cid']) || (@$_GET['cid'] == $cc_list->fields['coupon_id'])) && (!$cInfo)) {
         $cInfo = new objectInfo($cc_list->fields);
       }
@@ -1035,18 +1028,31 @@ $customer = $db->Execute("select customers_firstname, customers_lastname
       }
       $coupon_desc = $db->Execute("select coupon_name
                                    from " . TABLE_COUPONS_DESCRIPTION . "
-                                   where coupon_id = '" . $cc_list->fields['coupon_id'] . "'
-                                   and language_id = '" . $_SESSION['languages_id'] . "'");
+                                   where coupon_id = '" . (int)$cc_list->fields['coupon_id'] . "'
+                                   and language_id = '" . (int)$_SESSION['languages_id'] . "'");
 ?>
                 <td class="dataTableContent"><?php echo $coupon_desc->fields['coupon_name']; ?></td>
                 <td class="dataTableContent" align="center">
 <?php
-      if ($cc_list->fields['coupon_type'] == 'P') {
-        echo $cc_list->fields['coupon_amount'] . '%';
-      } elseif ($cc_list->fields['coupon_type'] == 'S') {
-        echo TEXT_FREE_SHIPPING;
-      } else {
-        echo $currencies->format($cc_list->fields['coupon_amount']);
+      switch ($cc_list->fields['coupon_type']) {
+        case ('S'): // free shipping
+          echo TEXT_FREE_SHIPPING;
+          break;
+        case ('P'): // percentage off
+          echo $cc_list->fields['coupon_amount'] . '%';
+          break;
+        case ('F'): // amount off
+          echo $currencies->format($cc_list->fields['coupon_amount']);
+          break;
+        case ('E'): // percentage off and free shipping
+          echo $cc_list->fields['coupon_amount'] . '%' . '<br />' . TEXT_FREE_SHIPPING;
+          break;
+        case ('O'): // amount off and free shipping
+          echo $currencies->format($cc_list->fields['coupon_amount']) . '<br />' . TEXT_FREE_SHIPPING;
+          break;
+        default:
+          echo '***';
+          break;
       }
 ?>
             &nbsp;</td>
@@ -1063,8 +1069,8 @@ $customer = $db->Execute("select customers_firstname, customers_lastname
           <tr>
             <td colspan="7"><table border="0" width="100%" cellspacing="0" cellpadding="2">
               <tr>
-                <td class="smallText">&nbsp;<?php echo $cc_split->display_count($cc_query_numrows, MAX_DISPLAY_SEARCH_RESULTS_DISCOUNT_COUPONS, $_GET['page'], TEXT_DISPLAY_NUMBER_OF_COUPONS); ?>&nbsp;</td>
-                <td align="right" class="smallText">&nbsp;<?php echo $cc_split->display_links($cc_query_numrows, MAX_DISPLAY_SEARCH_RESULTS_DISCOUNT_COUPONS, MAX_DISPLAY_PAGE_LINKS, $_GET['page'], (isset($_GET['status']) ? '&status=' . $_GET['status'] : '')); ?>&nbsp;</td>
+                <td class="smallText">&nbsp;<?php echo $cc_split->display_count($cc_query_numrows, $maxDisplaySearchResults, $_GET['page'], TEXT_DISPLAY_NUMBER_OF_COUPONS); ?>&nbsp;</td>
+                <td align="right" class="smallText">&nbsp;<?php echo $cc_split->display_links($cc_query_numrows, $maxDisplaySearchResults, MAX_DISPLAY_PAGE_LINKS, $_GET['page'], (isset($_GET['status']) ? '&status=' . $_GET['status'] : '')); ?>&nbsp;</td>
               </tr>
 
               <tr>
@@ -1097,10 +1103,13 @@ $customer = $db->Execute("select customers_firstname, customers_lastname
     default:
       $heading[] = array('text'=>'['.$cInfo->coupon_id.']  '.$cInfo->coupon_code);
       $amount = $cInfo->coupon_amount;
-      if ($cInfo->coupon_type == 'P') {
+      if ($cInfo->coupon_type == 'P' || $cInfo->coupon_type == 'E') {
         $amount .= '%';
       } else {
         $amount = $currencies->format($amount);
+      }
+      if ($cInfo->coupon_type == 'S'|| $cInfo->coupon_type == 'E' || $cInfo->coupon_type == 'O' ) {
+        $amount .= ' ' . TEXT_FREE_SHIPPING;
       }
       if ($_GET['action'] == 'voucherdelete' or $_GET['action'] == 'vouchercopy') {
         if ($_GET['action'] == 'voucherdelete') {
@@ -1119,16 +1128,6 @@ $customer = $db->Execute("select customers_firstname, customers_lastname
           $contents[] = array('text'=>
                   '<a href="'.zen_href_link(FILENAME_COUPON_ADMIN,'cid='.$cInfo->coupon_id . (isset($_GET['status']) ? '&status=' . $_GET['status'] : '') . (isset($_GET['page']) ? '&page=' . $_GET['page'] : ''),'NONSSL').'">'.zen_image_button('button_cancel.gif','Cancel').'</a>'
                   );
-/*
-          $contents[] = array('text'=>
-                  '<a href="'.zen_href_link(FILENAME_COUPON_ADMIN,'action=confirmcopy&cid='.$_GET['cid'] . (isset($_GET['status']) ? '&status=' . $_GET['status'] : '') . (isset($_GET['page']) ? '&page=' . $_GET['page'] : '') . '&coupon_copy_to=' . $_GET['coupon_copy_to'] . '-' . $_POST['coupon_copy_to'] . '-' . $coupon_copy_to,'NONSSL').'">'.zen_image_button('button_confirm.gif','Confirm Copy ' . TEXT_DISCOUNT_COUPON).'</a>' .
-
-
-                  '<a href="'.zen_href_link(FILENAME_COUPON_ADMIN,'cid='.$cInfo->coupon_id . (isset($_GET['status']) ? '&status=' . $_GET['status'] : '') . (isset($_GET['page']) ? '&page=' . $_GET['page'] : ''),'NONSSL').'">'.zen_image_button('button_cancel.gif','Cancel').'</a>'
-                  );
-*/
-
-
         }
       } else {
         $prod_details = TEXT_NONE;
@@ -1142,7 +1141,7 @@ $category_query = $db->Execute("select * from " . TABLE_COUPON_RESTRICT . " wher
         $coupon_name = $db->Execute("select coupon_name
                                      from " . TABLE_COUPONS_DESCRIPTION . "
                                      where coupon_id = '" . $cInfo->coupon_id . "'
-                                     and language_id = '" . $_SESSION['languages_id'] . "'");
+                                     and language_id = '" . (int)$_SESSION['languages_id'] . "'");
         $uses_coupon = $cInfo->uses_per_coupon;
         $uses_user = $cInfo->uses_per_user;
         if ($uses_coupon == 0 || $uses_coupon == '') $uses_coupon = TEXT_UNLIMITED;

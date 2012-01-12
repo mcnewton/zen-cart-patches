@@ -3,10 +3,10 @@
  * general functions used by the installer
  * @package Installer
  * @access private
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: general.php 17432 2010-09-01 05:21:34Z drbyte $
+ * @version $Id: general.php 19328 2011-08-06 22:53:47Z drbyte $
  */
 
   if (!defined('TABLE_UPGRADE_EXCEPTIONS')) define('TABLE_UPGRADE_EXCEPTIONS','upgrade_exceptions');
@@ -77,7 +77,7 @@ function setSelected($input, $selected) {
 }
 function executeSql($sql_file, $database, $table_prefix = '', $isupgrade=false) {
   $debug=false;
-  if (!defined('DB_PREFIX')) define('DB_PREFIX',$table_prefix);
+  if (!defined('DB_PREFIX')) define('DB_PREFIX', $table_prefix);
 //	  echo 'start SQL execute';
   global $db;
 
@@ -92,7 +92,7 @@ function executeSql($sql_file, $database, $table_prefix = '', $isupgrade=false) 
   // prepare for upgrader processing
   if ($isupgrade) zen_create_upgrader_table(); // only creates table if doesn't already exist
 
-  if (!get_cfg_var('safe_mode')) {
+  if (version_compare(PHP_VERSION, 5.4, '>=') || !get_cfg_var('safe_mode')) {
     @set_time_limit(1200);
   }
 
@@ -147,7 +147,7 @@ function executeSql($sql_file, $database, $table_prefix = '', $isupgrade=false) 
               break;
             } else {
               $line = (strtoupper($param[2].' '.$param[3].' '.$param[4]) == 'IF NOT EXISTS') ? 'CREATE TABLE IF NOT EXISTS ' . $table_prefix . substr($line, 27) : 'CREATE TABLE ' . $table_prefix . substr($line, 13);
-              $collateSuffix = ' COLLATE ' . DB_CHARSET . '_general_ci';
+              $collateSuffix = (strtoupper($param[3]) == 'AS' || (isset($param[6]) && strtoupper($param[6]) == 'AS')) ? '' : ' COLLATE ' . DB_CHARSET . '_general_ci';
             }
             break;
           case (substr($line_upper, 0, 13) == 'REPLACE INTO '):
@@ -201,7 +201,7 @@ function executeSql($sql_file, $database, $table_prefix = '', $isupgrade=false) 
               $line = 'ALTER IGNORE TABLE ' . $table_prefix . substr($line, 19);
             }
             break;
-          case (substr($line_upper, 0, 12) == 'ALTER TABLE '):
+            case (substr($line_upper, 0, 12) == 'ALTER TABLE '):
             //if (ZC_UPG_DEBUG3==true) echo 'ALTER -- Table check ('.$param[2].')' .'<br>';
             // check to see if ALTER command may be safely executed
             if ($result=zen_check_alter_command($param)) {
@@ -494,37 +494,46 @@ function executeSql($sql_file, $database, $table_prefix = '', $isupgrade=false) 
     }
   }
 
-  function zen_read_config_value($value) {
+  function zen_read_config_value($value, $onlyMainFile = TRUE, $concatenate = FALSE) {
     $files_array = array();
-    $string='';
+    $retVal = $string='';
+    if (!$onlyMainFile) $files_array[] = '../includes/local/configure.php';
     $files_array[] = '../includes/configure.php';
 
-    if ($za_dir = @dir('../includes/' . 'extra_configures')) {
-      while ($zv_file = $za_dir->read()) {
-        if (preg_match('/\.php$/', $zv_file) > 0) {
-          //echo $zv_file.'<br>';
-          $files_array[] = $zv_file;
-        }
-      }
-    }
+//    if (!$onlyMainFile && $za_dir = @dir('../includes/' . 'extra_configures')) {
+//      while ($zv_file = $za_dir->read()) {
+//        if (preg_match('/\.php$/', $zv_file) > 0) {
+//          //echo $zv_file.'<br>';
+//          $files_array[] = $zv_file;
+//        }
+//      }
+//      $za_dir->close(); unset($za_dir);
+//    }
+
     foreach ($files_array as $filename) {
-     if (!file_exists($filename)) continue;
-     //echo $filename . '!<br>';
-     $lines = file($filename);
-     foreach($lines as $line) { // read the configure.php file for specific variables
-       if (substr(trim($line),0,2) == '//') continue;
-       $def_string=array();
-       $def_string=explode("'",$line);
-       //define('CONSTANT','value');
-       //[1]=TABLE_CONSTANT
-       //[2]=,
-       //[3]=value
-       //[4]=);
-       //[5]=
-       if (isset($def_string[1]) && strtoupper($def_string[1]) == $value ) $string .= $def_string[3];
-     }//end foreach $line
-   }//end foreach $filename
-  return $string;
+      if (!file_exists($filename)) continue;
+      //echo $filename . '!<br>';
+      $lines = file($filename);
+      foreach($lines as $line) { // read the configure.php file for specific variables
+        if (substr(trim($line),0,2) == '//') continue;
+        $def_string=array();
+        $def_string=explode("'",$line);
+        //define('CONSTANT','value');
+        //[1]=TABLE_CONSTANT
+        //[2]=,
+        //[3]=value
+        //[4]=);
+        //[5]=
+        if (isset($def_string[1]) && strtoupper($def_string[1]) == $value ) {
+          $string = $def_string[3];
+          continue;
+        }
+      } //end foreach $line
+      if ($retVal == '' || ($concatenate == TRUE && $string != '')) {
+        $retVal .= $string;
+      }
+    } //end foreach $filename
+   return $retVal;
   }
 
   function zen_table_exists($tablename, $pre_install=false) {
@@ -548,9 +557,9 @@ function executeSql($sql_file, $database, $table_prefix = '', $isupgrade=false) 
     return true;
     // end bypass
     global $zdb_server, $zdb_user, $zdb_name;
-    if (!zen_not_null($zdb_server)) $zdb_server = zen_read_config_value('DB_SERVER');
-    if (!zen_not_null($zdb_user)) $zdb_user     = zen_read_config_value('DB_SERVER_USERNAME');
-    if (!zen_not_null($zdb_name)) $zdb_name     = zen_read_config_value('DB_DATABASE');
+    if (!zen_not_null($zdb_server)) $zdb_server = zen_read_config_value('DB_SERVER', FALSE);
+    if (!zen_not_null($zdb_user)) $zdb_user     = zen_read_config_value('DB_SERVER_USERNAME', FALSE);
+    if (!zen_not_null($zdb_name)) $zdb_name     = zen_read_config_value('DB_DATABASE', FALSE);
     if (isset($_GET['nogrants']) || isset($_POST['nogrants']) ) return true; // bypass if flag set
     //Display permissions, or check for suitable permissions to carry out a particular task
       //possible outputs:

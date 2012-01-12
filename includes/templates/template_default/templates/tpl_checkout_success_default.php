@@ -9,7 +9,7 @@
  * @copyright Copyright 2003-2010 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: tpl_checkout_success_default.php 16313 2010-05-22 08:15:39Z wilt $
+ * @version $Id: tpl_checkout_success_default.php 16435 2010-05-28 09:34:32Z drbyte $
  */
 ?>
 <div class="centerColumn" id="checkoutSuccess">

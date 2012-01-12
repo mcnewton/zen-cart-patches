@@ -2,10 +2,10 @@
 /**
  * @package Installer
  * @access private
- * @copyright Copyright 2003-2007 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: header_php.php 7415 2007-11-11 06:19:40Z drbyte $
+ * @version $Id: header_php.php 18818 2011-05-31 20:19:34Z drbyte $
  */
 
 $write_config_files_only = ((isset($_POST['submit']) && $_POST['submit']==ONLY_UPDATE_CONFIG_FILES) || (isset($_POST['configfile']) && zen_not_null($_POST['configfile'])) || (isset($_GET['configfile']) && zen_not_null($_GET['configfile'])) || ZC_UPG_DEBUG3 != false) ? true : false;
@@ -36,5 +36,5 @@ if ($result == true) {
 } else {
   $flag_check_config_keys = true;
 }
+
 // otherwise, proceed with displaying file contents for manual setup -- (copy/paste from template output)
-?>

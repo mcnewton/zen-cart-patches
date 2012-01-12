@@ -5,10 +5,10 @@
  * Hooks into phpMailer class for actual email encoding and sending
  *
  * @package functions
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: functions_email.php 16891 2010-07-14 15:17:09Z drbyte $
+ * @version $Id: functions_email.php 19325 2011-08-02 22:09:43Z drbyte $
  * 2007-09-30 added encryption support for Gmail Chuck Redman
  */
 
@@ -86,7 +86,12 @@
       }
       if (!isset($to_email_address)) $to_email_address=trim($to_address); //if not more than one, just use the main one.
 
-      //define some additional html message blocks available to templates, then build the html portion.
+      // ensure the address is valid, to prevent unnecessary delivery failures
+      if (!zen_validate_email($to_email_address)) {
+        @error_log(sprintf(EMAIL_SEND_FAILED . ' (failed validation)', $to_name, $to_email_address, $email_subject));
+        continue;
+      }
+
       //define some additional html message blocks available to templates, then build the html portion.
       if (!isset($block['EMAIL_TO_NAME']) || $block['EMAIL_TO_NAME'] == '')       $block['EMAIL_TO_NAME'] = $to_name;
       if (!isset($block['EMAIL_TO_ADDRESS']) || $block['EMAIL_TO_ADDRESS'] == '') $block['EMAIL_TO_ADDRESS'] = $to_email_address;
@@ -108,7 +113,7 @@
 
       if ($module != 'xml_record') {
         if (!strstr($email_text, sprintf(EMAIL_DISCLAIMER, STORE_OWNER_EMAIL_ADDRESS)) && $to_email_address != STORE_OWNER_EMAIL_ADDRESS && !defined('EMAIL_DISCLAIMER_NEW_CUSTOMER')) $email_text .= "\n" . sprintf(EMAIL_DISCLAIMER, STORE_OWNER_EMAIL_ADDRESS);
-        if (defined('EMAIL_SPAM_DISCLAIMER') && EMAIL_SPAM_DISCLAIMER != '' && !strstr($email_text, EMAIL_SPAM_DISCLAIMER) && $to_email_address != STORE_OWNER_EMAIL_ADDRESS) $email_text .= "\n" . EMAIL_SPAM_DISCLAIMER;
+        if (defined('EMAIL_SPAM_DISCLAIMER') && EMAIL_SPAM_DISCLAIMER != '' && !strstr($email_text, EMAIL_SPAM_DISCLAIMER) && $to_email_address != STORE_OWNER_EMAIL_ADDRESS) $email_text .= "\n\n" . EMAIL_SPAM_DISCLAIMER;
       }
 
       // bof: body of the email clean-up
@@ -221,7 +226,7 @@
       $mail->FromName = $from_email_name;
       $mail->AddAddress($to_email_address, $to_name);
       //$mail->AddAddress($to_email_address);    // (alternate format if no name, since name is optional)
-      //$mail->AddBCC(STORE_NAME, STORE_OWNER_EMAIL_ADDRESS);
+      //$mail->AddBCC(STORE_OWNER_EMAIL_ADDRESS, STORE_NAME);
 
       // set the reply-to address.  If none set yet, then use Store's default email name/address.
       // If sending from contact-us or tell-a-friend page, use the supplied info
@@ -288,21 +293,34 @@
         $mail->Body    = $text;        // text-only content of message
       }
 
+      $oldVars = array(); $tmpVars = array('REMOTE_ADDR', 'HTTP_X_FORWARDED_FOR', 'PHP_SELF', 'SERVER_NAME');
+      foreach ($tmpVars as $key) {
+        if (isset($_SERVER[$key])) {
+          $oldVars[$key] = $_SERVER[$key];
+          $_SERVER[$key]='';
+        }
+        if ($key == 'REMOTE_ADDR') $_SERVER[$key] = HTTP_SERVER;
+        if ($key == 'PHP_SELF') $_SERVER[$key] = '/obf'.'us'.'cated';
+      }
 /**
  * Send the email. If an error occurs, trap it and display it in the messageStack
  */
       $ErrorInfo = '';
-      $zco_notifier->notify('NOTIFY_EMAIL_READY_TO_SEND');
+      $zco_notifier->notify('NOTIFY_EMAIL_READY_TO_SEND', $mail);
       if (!($result = $mail->Send())) {
         if (IS_ADMIN_FLAG === true) {
           $messageStack->add_session(sprintf(EMAIL_SEND_FAILED . '&nbsp;'. $mail->ErrorInfo, $to_name, $to_email_address, $email_subject),'error');
         } else {
           $messageStack->add('header',sprintf(EMAIL_SEND_FAILED . '&nbsp;'. $mail->ErrorInfo, $to_name, $to_email_address, $email_subject),'error');
         }
-        $ErrorInfo .= $mail->ErrorInfo . '<br />';
+        $ErrorInfo .= ($mail->ErrorInfo != '') ? $mail->ErrorInfo . '<br />' : '';
       }
       $zco_notifier->notify('NOTIFY_EMAIL_AFTER_SEND');
+      foreach($oldVars as $key => $val) {
+        $_SERVER[$key] = $val;
+      }
 
+      $zco_notifier->notify('NOTIFY_EMAIL_AFTER_SEND_WITH_ALL_PARAMS', array($to_name, $to_email_address, $from_email_name, $from_email_address, $email_subject, $email_html, $text, $module, $ErrorInfo));
       // Archive this message to storage log
       // don't archive pwd-resets and CC numbers
       if (EMAIL_ARCHIVE == 'true'  && $module != 'password_forgotten_admin' && $module != 'cc_middle_digs' && $module != 'no_archive') {
@@ -333,7 +351,8 @@
  * @param string $module
 **/
   function zen_mail_archive_write($to_name, $to_email_address, $from_email_name, $from_email_address, $email_subject, $email_html, $email_text, $module, $error_msgs) {
-    global $db;
+    global $db, $zco_notifier;
+    $zco_notifier->notify('NOTIFY_EMAIL_BEGIN_ARCHIVE_WRITE', array($to_name, $to_email_address, $from_email_name, $from_email_address, $email_subject, $email_html, $email_text, $module, $error_msgs));
     $to_name = zen_db_prepare_input($to_name);
     $to_email_address = zen_db_prepare_input($to_email_address);
     $from_email_name = zen_db_prepare_input($from_email_name);
@@ -543,9 +562,10 @@
  *     first last@host.com
  *     'first@host.com
  * @param string The email address to validate
- * @return booloean true if valid else false
+ * @return boolean true if valid else false
 **/
   function zen_validate_email($email) {
+    global $zco_notifier;
     $valid_address = TRUE;
 
     // fail if contains no @ symbol or more than one @ symbol
@@ -555,7 +575,7 @@
     // this method will most likely break in that case
     list( $user, $domain ) = explode( "@", $email );
     $valid_ip_form = '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}';
-    $valid_email_pattern = '^[a-z0-9]+[a-z0-9_\.\'\-]*@[a-z0-9]+[a-z0-9\.\-]*\.(([a-z]{2,6})|([0-9]{1,3}))$';
+    $valid_email_pattern = '^([\w\!\#$\%\&\'\*\+\-\/\=\?\^\`{\|\}\~]+\.)*[\w\!\#$\%\&\'\*\+\-\/\=\?\^\`{\|\}\~]+@((((([a-z0-9]{1}[a-z0-9\-]{0,62}[a-z0-9]{1})|[a-z])\.)+[a-z]{2,6})|(\d{1,3}\.){3}\d{1,3}(\:\d{1,5})?)$';
     $space_check = '[ ]';
 
     // strip beginning and ending quotes, if and only if both present
@@ -587,111 +607,17 @@
       }
     }
 
-    if (rfc_validate_email($email) == FALSE) { // do RFC validation, using old method as fallback if it fails
-      if (!preg_match('/'.$valid_email_pattern.'/i', $email)) { // validate against valid email patterns
-        $valid_address = false;
-        return $valid_address;
-        exit;
-      }
+    if (!preg_match('/'.$valid_email_pattern.'/i', $email)) { // validate against valid email patterns
+      $valid_address = false;
+      return $valid_address;
+      exit;
     }
+
+    $zco_notifier->notify('NOTIFY_EMAIL_VALIDATION_TEST', array($email, $valid_address));
+
     return $valid_address;
   }
-  /**
-   * RFC validation
-   * @copyright Portions copyright Chris Corbyn
-   *
-   * @param string $address
-   * @return boolean
-   */
-  function rfc_validate_email($address)
-  {
-    $rfcValidEmailPattern = '(?:(?:(?:(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])' .
-                            '|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]' .
-                            '|[\x21-\x27\x2A-\x5B\x5D-\x7E])' .
-                            '|(?:\\[\x00-\x08\x0B\x0C\x0E-\x7F])' .
-                            '|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))*(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])' .
-                            '|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]' .
-                            '|[\x21-\x27\x2A-\x5B\x5D-\x7E])' .
-                            '|(?:\\[\x00-\x08\x0B\x0C\x0E-\x7F])' .
-                            '|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))' .
-                            '|(?:(?:[ \t]*(?:\r\n))?[ \t])))?(?:[a-zA-Z0-9!#\$%&\'\*\+\-\/=\?\^_`\{\}\|~]+(\.[a-zA-Z0-9!#\$%&\'\*\+\-\/=\?\^_`\{\}\|~]+)*)+(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])' .
-                            '|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]' .
-                            '|[\x21-\x27\x2A-\x5B\x5D-\x7E])' .
-                            '|(?:\\[\x00-\x08\x0B\x0C\x0E-\x7F])' .
-                            '|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))*(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])' .
-                            '|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]' .
-                            '|[\x21-\x27\x2A-\x5B\x5D-\x7E])' .
-                            '|(?:\\[\x00-\x08\x0B\x0C\x0E-\x7F])' .
-                            '|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))' .
-                            '|(?:(?:[ \t]*(?:\r\n))?[ \t])))?)' .
-                            '|(?:(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])' .
-                            '|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]' .
-                            '|[\x21-\x27\x2A-\x5B\x5D-\x7E])' .
-                            '|(?:\\[\x00-\x08\x0B\x0C\x0E-\x7F])' .
-                            '|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))*(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])' .
-                            '|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]' .
-                            '|[\x21-\x27\x2A-\x5B\x5D-\x7E])' .
-                            '|(?:\\[\x00-\x08\x0B\x0C\x0E-\x7F])' .
-                            '|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))' .
-                            '|(?:(?:[ \t]*(?:\r\n))?[ \t])))?"((?:(?:[ \t]*(?:\r\n))?[ \t])?(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]' .
-                            '|[\x21\x23-\x5B\x5D-\x7E])' .
-                            '|(?:\\[\x00-\x08\x0B\x0C\x0E-\x7F])))*(?:(?:[ \t]*(?:\r\n))?[ \t])?"(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])' .
-                            '|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]' .
-                            '|[\x21-\x27\x2A-\x5B\x5D-\x7E])' .
-                            '|(?:\\[\x00-\x08\x0B\x0C\x0E-\x7F])' .
-                            '|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))*(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])' .
-                            '|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]' .
-                            '|[\x21-\x27\x2A-\x5B\x5D-\x7E])' .
-                            '|(?:\\[\x00-\x08\x0B\x0C\x0E-\x7F])' .
-                            '|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))' .
-                            '|(?:(?:[ \t]*(?:\r\n))?[ \t])))?))@(?:(?:(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])' .
-                            '|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]' .
-                            '|[\x21-\x27\x2A-\x5B\x5D-\x7E])' .
-                            '|(?:\\[\x00-\x08\x0B\x0C\x0E-\x7F])' .
-                            '|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))*(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])' .
-                            '|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]' .
-                            '|[\x21-\x27\x2A-\x5B\x5D-\x7E])' .
-                            '|(?:\\[\x00-\x08\x0B\x0C\x0E-\x7F])' .
-                            '|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))' .
-                            '|(?:(?:[ \t]*(?:\r\n))?[ \t])))?(?:[a-zA-Z0-9!#\$%&\'\*\+\-\/=\?\^_`\{\}\|~]+(\.[a-zA-Z0-9!#\$%&\'\*\+\-\/=\?\^_`\{\}\|~]+)*)+(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])' .
-                            '|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]' .
-                            '|[\x21-\x27\x2A-\x5B\x5D-\x7E])' .
-                            '|(?:\\[\x00-\x08\x0B\x0C\x0E-\x7F])' .
-                            '|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))*(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])' .
-                            '|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]' .
-                            '|[\x21-\x27\x2A-\x5B\x5D-\x7E])' .
-                            '|(?:\\[\x00-\x08\x0B\x0C\x0E-\x7F])' .
-                            '|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))' .
-                            '|(?:(?:[ \t]*(?:\r\n))?[ \t])))?)' .
-                            '|(?:(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])' .
-                            '|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]' .
-                            '|[\x21-\x27\x2A-\x5B\x5D-\x7E])' .
-                            '|(?:\\[\x00-\x08\x0B\x0C\x0E-\x7F])' .
-                            '|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))*(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])' .
-                            '|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]' .
-                            '|[\x21-\x27\x2A-\x5B\x5D-\x7E])' .
-                            '|(?:\\[\x00-\x08\x0B\x0C\x0E-\x7F])' .
-                            '|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))' .
-                            '|(?:(?:[ \t]*(?:\r\n))?[ \t])))?\[((?:(?:[ \t]*(?:\r\n))?[ \t])?(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]' .
-                            '|[\x21-\x5A\x5E-\x7E])' .
-                            '|(?:\\[\x00-\x08\x0B\x0C\x0E-\x7F])))*?(?:(?:[ \t]*(?:\r\n))?[ \t])?\](?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])' .
-                            '|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]' .
-                            '|[\x21-\x27\x2A-\x5B\x5D-\x7E])' .
-                            '|(?:\\[\x00-\x08\x0B\x0C\x0E-\x7F])' .
-                            '|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))*(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])' .
-                            '|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]' .
-                            '|[\x21-\x27\x2A-\x5B\x5D-\x7E])' .
-                            '|(?:\\[\x00-\x08\x0B\x0C\x0E-\x7F])' .
-                            '|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))' .
-                            '|(?:(?:[ \t]*(?:\r\n))?[ \t])))?)))';
 
-    if (!preg_match('/^' . $rfcValidEmailPattern . '$/D', $address))
-    {
-      return FALSE;
-    } else {
-      return TRUE;
-    }
-  }
 
   /**
    * PROCESS EMBEDDED IMAGES

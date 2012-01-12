@@ -22,10 +22,14 @@ font-weight:bold;
 margin:0;
 padding:0 10px;
 position:relative;
+cursor:pointer;
+cursor:hand;
 }
 ul.nde-menu-system li a{
 color:#ffffff;
 font-weight:bold;
+cursor:pointer;
+cursor:hand;
 }
 ul.nde-menu-system li a:hover{
 background-color:transparent;

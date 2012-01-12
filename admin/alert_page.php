@@ -1,9 +1,9 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: alert_page.php 17421 2010-08-31 00:23:52Z drbyte $
+ * @version $Id: alert_page.php 19365 2011-08-28 19:53:48Z wilt $
  */
 require ('includes/application_top.php');
 $adminDirectoryExists = $installDirectoryExists = FALSE;
@@ -15,6 +15,10 @@ $check_path = dirname($_SERVER['SCRIPT_FILENAME']) . '/../zc_install';
 if (is_dir($check_path))
 {
   $installDirectoryExists = TRUE;
+}
+if (!$adminDirectoryExists && !$installDirectoryExists)
+{
+  zen_redirect(zen_href_link(FILENAME_DEFAULT));
 }
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">

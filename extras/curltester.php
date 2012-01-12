@@ -1,9 +1,9 @@
 <?php
 /*
  * @package utilities
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: curltester.php 15778 2010-04-02 02:21:17Z drbyte $
+ * @version $Id: curltester.php 18695 2011-05-04 05:24:19Z drbyte $
  *
  * This utility is simply intended to test whether the host server has the ability to use CURL to connect to external servers in order to send communications, such as for PayPal transactions
  */
@@ -47,6 +47,7 @@
   curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE); /* compatibility for SSL communications on some Windows servers (IIS 5.0+) */
   curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
   curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+  curl_setopt ($ch, CURLOPT_SSLVERSION, 3);
   curl_setopt($ch, CURLOPT_USERAGENT, 'Zen Cart(tm) - CURL TEST');
 
 /**

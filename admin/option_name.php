@@ -1,10 +1,10 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: option_name.php 17832 2010-10-06 20:12:04Z drbyte $
+ * @version $Id: option_name.php 18695 2011-05-04 05:24:19Z drbyte $
  */
 ?>
 <?php
@@ -113,7 +113,7 @@ if ($_GET['action'] == "update_sort_order") {
             <td class="dataTableHeadingContent">' . TEXT_SORT_ORDER . '</td>
           </tr>
           <tr>';
-    $row = $db->Execute("SELECT * FROM " . TABLE_PRODUCTS_OPTIONS . " WHERE language_id = '" . $_GET['lng_id'] . "' ORDER BY products_options_sort_order, products_options_id");
+    $row = $db->Execute("SELECT * FROM " . TABLE_PRODUCTS_OPTIONS . " WHERE language_id = '" . (int)$_GET['lng_id'] . "' ORDER BY products_options_sort_order, products_options_id");
     while (!$row->EOF) {
       switch (true) {
         case ($row->fields['products_options_type']==PRODUCTS_OPTIONS_TYPE_RADIO):

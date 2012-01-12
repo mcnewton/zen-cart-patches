@@ -1,28 +1,28 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2007 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: mail.php 7197 2007-10-06 20:35:52Z drbyte $
+ * @version $Id: mail.php 19330 2011-08-07 06:32:56Z drbyte $
  */
 
   require('includes/application_top.php');
-  
+
   //DEBUG:  // these defines will become configuration switches in ADMIN in a future version.
   //DEBUG:  // right now, attachments aren't working right unless only sending HTML messages with NO text-only version supplied.
   if (!defined('EMAIL_ATTACHMENTS_ENABLED'))        define('EMAIL_ATTACHMENTS_ENABLED',false);
   if (!defined('EMAIL_ATTACHMENT_UPLOADS_ENABLED')) define('EMAIL_ATTACHMENT_UPLOADS_ENABLED',false);
-  
-  
+
+
   $action = (isset($_GET['action']) ? $_GET['action'] : '');
-  
+
   if ($action == 'set_editor') {
     // Reset will be done by init_html_editor.php. Now we simply redirect to refresh page properly.
     $action='';
     zen_redirect(zen_href_link(FILENAME_MAIL));
   }
-  
+
   if ( ($action == 'send_email_to_user') && isset($_POST['customers_email_address']) && !isset($_POST['back_x']) ) {
     $audience_select = get_audience_sql_query(zen_db_input($_POST['customers_email_address']), 'email');
     $mail = $db->Execute($audience_select['query_string']);
@@ -30,14 +30,14 @@
     if ($_POST['email_to']) {
       $mail_sent_to = zen_db_prepare_input($_POST['email_to']);
     }
-  
+
     // error message if no email address
     if (empty($mail_sent_to)) {
       $messageStack->add_session(ERROR_NO_CUSTOMER_SELECTED, 'error');
       $_GET['action']='';
       zen_redirect(zen_href_link(FILENAME_MAIL));
     }
-  
+
     $from = zen_db_prepare_input($_POST['from']);
     $subject = zen_db_prepare_input($_POST['subject']);
     $message = zen_db_prepare_input($_POST['message']);
@@ -45,14 +45,14 @@
     $attachment_file = $_POST['attachment_file'];
     $attachment_fname = basename($_POST['attachment_file']);
     $attachment_filetype = $_POST['attachment_filetype'];
-  
+
     // demo active test
     if (zen_admin_demo()) {
       $_GET['action']= '';
       $messageStack->add_session(ERROR_ADMIN_DEMO, 'caution');
       zen_redirect(zen_href_link(FILENAME_MAIL, 'mail_sent_to=' . urlencode($mail_sent_to)));
     }
-  
+
     //send message using the zen email function
     //echo'EOF-attachments_list='.$attachment_file.'->'.$attachment_filetype;
     $recip_count=0;
@@ -70,7 +70,7 @@
     }
     zen_redirect(zen_href_link(FILENAME_MAIL, 'mail_sent_to=' . urlencode($mail_sent_to) . '&recip_count='. $recip_count ));
   }
-  
+
   if ( EMAIL_ATTACHMENTS_ENABLED && $action == 'preview') {
     // PROCESS UPLOAD ATTACHMENTS
     if (isset($_FILES['upload_file']) && zen_not_null($_FILES['upload_file']) && ($_POST['upload_file'] != 'none')) {
@@ -83,7 +83,7 @@
         }
       }
     }
-  
+
     //DEBUG:
     //$messageStack->add('EOF-attachments_list='.$attachment_file.'->'.$attachment_filetype, 'caution');
   } //end attachments upload
@@ -97,7 +97,7 @@
     if ( !$_POST['subject'] ) {
       $messageStack->add(ERROR_NO_SUBJECT, 'error');
     }
-  
+
     if ( !$_POST['message'] && !$_POST['message_html'] ) {
       $messageStack->add(ENTRY_NOTHING_TO_SEND, 'error');
     }
@@ -318,14 +318,14 @@ function check_form(form_name) {
             </tr>
             <tr>
               <td class="main"><?php echo TEXT_FROM; ?></td>
-              <td><?php echo zen_draw_input_field('from', EMAIL_FROM, 'size="50"'); ?></td>
+              <td><?php echo zen_draw_input_field('from', htmlspecialchars(EMAIL_FROM, ENT_COMPAT, CHARSET, TRUE), 'size="50"'); ?></td>
             </tr>
             <tr>
               <td colspan="2"><?php echo zen_draw_separator('pixel_trans.gif', '1', '10'); ?></td>
             </tr>
             <tr>
               <td class="main"><?php echo TEXT_SUBJECT; ?></td>
-              <td><?php echo zen_draw_input_field('subject', $_POST['subject'], 'size="50"'); ?></td>
+              <td><?php echo zen_draw_input_field('subject', htmlspecialchars($_POST['subject'], ENT_COMPAT, CHARSET, TRUE), 'size="50"'); ?></td>
             </tr>
             <tr>
               <td colspan="2"><?php echo zen_draw_separator('pixel_trans.gif', '1', '10'); ?></td>
@@ -334,17 +334,8 @@ function check_form(form_name) {
               <td valign="top" class="main"><?php echo TEXT_MESSAGE_HTML; //HTML version?></td>
               <td class="main" width="750">
 <?php if (EMAIL_USE_HTML != 'true') echo TEXT_WARNING_HTML_DISABLED; ?>
-<?php  if (EMAIL_USE_HTML == 'true') {
-    if ($_SESSION['html_editor_preference_status']=="FCKEDITOR") {
-      $oFCKeditor = new FCKeditor('message_html') ;
-      $oFCKeditor->Value = stripslashes($_POST['message_html']) ;
-      $oFCKeditor->Width  = '97%' ;
-      $oFCKeditor->Height = '350' ;
-//    $oFCKeditor->Create() ;
-      $output = $oFCKeditor->CreateHtml() ; echo $output;
-    } else { // using HTMLAREA or just raw "source"
-      echo zen_draw_textarea_field('message_html', 'soft', '100%', '25', stripslashes($_POST['message_html']), 'id="message_html"');
-    }
+<?php if (EMAIL_USE_HTML == 'true') {
+  echo zen_draw_textarea_field('message_html', 'soft', '100%', '25', htmlspecialchars(stripslashes($_POST['message_html']), ENT_COMPAT, CHARSET, TRUE), 'id="message_html"');
 } ?>
               </td>
             </tr>
@@ -353,9 +344,9 @@ function check_form(form_name) {
             </tr>
             <tr>
               <td valign="top" class="main"><?php echo TEXT_MESSAGE; ?></td>
-              <td><?php echo zen_draw_textarea_field('message', 'soft', '100%', '15', $_POST['message']); ?></td>
+              <td><?php echo zen_draw_textarea_field('message', 'soft', '100%', '15', htmlspecialchars($_POST['message'], ENT_COMPAT, CHARSET, TRUE)); ?></td>
             </tr>
-            
+
 <?php if (defined('EMAIL_ATTACHMENTS_ENABLED') && EMAIL_ATTACHMENTS_ENABLED === true && defined('DIR_WS_ADMIN_ATTACHMENTS') && is_dir(DIR_WS_ADMIN_ATTACHMENTS) && is_writable(DIR_WS_ADMIN_ATTACHMENTS) ) { ?>
             <tr>
               <td colspan="2"><?php echo zen_draw_separator('pixel_trans.gif', '1', '10'); ?></td>

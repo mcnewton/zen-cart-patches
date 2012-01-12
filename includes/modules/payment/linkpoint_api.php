@@ -3,11 +3,11 @@
  * FirstData/Linkpoint/Yourpay API Payment Module
  *
  * @package paymentMethod
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @copyright Portions Copyright 2003 Jason LeBaron
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: linkpoint_api.php 18013 2010-10-22 03:38:29Z drbyte $
+ * @version $Id: linkpoint_api.php 19512 2011-09-14 19:05:15Z drbyte $
  */
   if (!defined('TABLE_LINKPOINT_API')) define('TABLE_LINKPOINT_API', DB_PREFIX . 'linkpoint_api');
   @define('MODULE_PAYMENT_LINKPOINT_API_CODE_DEBUG' ,'off'); // debug for programmer use only
@@ -63,7 +63,9 @@ class linkpoint_api {
 
   function update_status() {
     global $order, $db;
-
+    // if store is not running in SSL, cannot offer credit card module, for PCI reasons
+    if (!defined('ENABLE_SSL') || ENABLE_SSL != 'true') $this->enabled = FALSE;
+    // check other reasons for the module to be deactivated:
     if ( $this->enabled && $this->zone > 0 ) {
       $check_flag = false;
       $sql = "SELECT zone_id
@@ -297,7 +299,7 @@ class linkpoint_api {
       if ($order_totals[$i]['code'] == '') continue;
       if (in_array($order_totals[$i]['code'], array('ot_total','ot_subtotal','ot_tax','ot_shipping'))) {
         if ($order_totals[$i]['code'] == 'ot_subtotal') $myorder["subtotal"]    = round($order_totals[$i]['value'],2);
-        if ($order_totals[$i]['code'] == 'ot_tax')      $myorder["tax"]         = round($order_totals[$i]['value'],2);
+        if ($order_totals[$i]['code'] == 'ot_tax')      $myorder["tax"]        += round($order_totals[$i]['value'],2);
         if ($order_totals[$i]['code'] == 'ot_shipping') $myorder["shipping"]    = round($order_totals[$i]['value'],2);
         if ($order_totals[$i]['code'] == 'ot_total')    $myorder["chargetotal"] = round($order_totals[$i]['value'],2);
       } else {
@@ -323,12 +325,12 @@ class linkpoint_api {
 
         $myorder["items"][$num_line_items]['description'] = substr(htmlentities($order->products[$i]['name'], ENT_QUOTES, 'UTF-8'), 0, 128);
         $myorder["items"][$num_line_items]['quantity']    = $order->products[$i]['qty'];
-        $myorder["items"][$num_line_items]['price']       = number_format($order->products[$i]['final_price'], 2, '.', '');
+        $myorder["items"][$num_line_items]['price']       = number_format(zen_add_tax($order->products[$i]['final_price'], $order->products[$i]['tax']), 2, '.', '');
         // check and adjust for fractional quantities, which cannot be submitted as line-item details
         $q = $order->products[$i]['qty']; $q1 = strval($q); $q2 = (int)$q; $q3 = strval($q2);
         if ($q1 != $q3 || $myorder["items"][$num_line_items]['quantity'] * $myorder["items"][$num_line_items]['price'] != number_format($order->products[$i]['qty'] * $order->products[$i]['final_price'], 2, '.', '')) {
           $myorder["items"][$num_line_items]['quantity']    = 1;
-          $myorder["items"][$num_line_items]['price']       = number_format($order->products[$i]['qty'] * $order->products[$i]['final_price'], 2, '.', '');
+          $myorder["items"][$num_line_items]['price']       = number_format(zen_round(zen_add_tax($order->products[$i]['final_price'], $order->products[$i]['tax']), $decimals) * $order->products[$i]['qty'], 2, '.', '');
           $myorder["items"][$num_line_items]['description'] = '(' . $order->products[$i]['qty'] . ' x )' . substr($myorder["items"][$num_line_items]['description'], 115);
         }
 
@@ -350,7 +352,7 @@ class linkpoint_api {
           $myorder["items"][$num_line_items]['id']          = 'OTC';
           $myorder["items"][$num_line_items]['description'] = 'One Time Charges';
           $myorder["items"][$num_line_items]['quantity']    = 1;
-          $myorder["items"][$num_line_items]['price']       = number_format($order->products[$i]['onetime_charges'], 2, '.', '');
+          $myorder["items"][$num_line_items]['price']       = number_format(zen_add_tax($order->products[$i]['onetime_charges'], $order->products[$i]['tax']), 2, '.', '');
         }
       }
 /*
@@ -378,7 +380,7 @@ class linkpoint_api {
       }
     }
 
-    // Subtotal Sanity Check
+    // Subtotal Sanity Check in case there are addon modules affecting calculations
     $sum1 = strval($myorder['subtotal'] + $myorder['shipping'] + $myorder['tax']);
     if ($sum1 > $myorder['chargetotal']) {
       foreach(array('subtotal', 'tax', 'shipping', 'items') as $i) {
@@ -404,7 +406,7 @@ class linkpoint_api {
       if (isset($myorder[$i]) && $myorder[$i] == 0) unset($myorder[$i]);
     }
 
-    $myorder["ip"]  = zen_get_ip_address();
+    $myorder["ip"]  = current(explode(':', str_replace(',', ':', zen_get_ip_address())));
     $myorder["ponumber"]    = "";
 
     // CARD INFO
@@ -484,6 +486,9 @@ class linkpoint_api {
     $cc_number = substr($myorder["cardnumber"], 0, 4) . str_repeat('X', abs(strlen($myorder["cardnumber"]) - 8)) . substr($myorder["cardnumber"], -4);
     foreach($myorder as $key=>$value) {
       if ($key != 'cardnumber') {
+        if ($key == 'cvmvalue') {
+          $value = '****';
+        }
         if ($key == 'cardexpmonth') {
           $cc_month = $value;
         }
@@ -503,7 +508,7 @@ class linkpoint_api {
 
     $order->info['cc_type'] = $_POST['cc_type'];
     $order->info['cc_owner'] = $_POST['cc_owner'];
-    $order->info['cc_cvv'] = '***'; // $_POST['cc_cvv'];
+    $order->info['cc_cvv'] = '***';
     $order->info['cc_expires'] = '';// $_POST['cc_expires'];
 
 
@@ -771,7 +776,7 @@ class linkpoint_api {
   function _log($msg, $suffix = '') {
     static $key;
     if (!isset($key) || $key == '') $key = time() . '_' . zen_create_random_value(4);
-    $file = $this->_logDir . '/' . 'Linkpoint_Debug_' . $suffix . $key . '.log';
+    $file = $this->_logDir . '/' . 'Linkpoint_Debug_' . $suffix . '_' . $key . '.log';
     if ($fp = @fopen($file, 'a')) {
       @fwrite($fp, $msg);
       @fclose($fp);

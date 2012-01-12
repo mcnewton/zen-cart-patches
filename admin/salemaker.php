@@ -1,10 +1,10 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2009 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: salemaker.php 14073 2009-08-05 11:20:01Z wilt $
+ * @version $Id: salemaker.php 19330 2011-08-07 06:32:56Z drbyte $
  */
 //
 define('AUTOCHECK', 'False');
@@ -27,16 +27,16 @@ define('AUTOCHECK', 'False');
   if (zen_not_null($action)) {
     switch ($action) {
       case 'setflag':
-        $salemaker_data_array = array('sale_status' => zen_db_prepare_input($_GET['flag']),
-                                    'sale_date_last_modified' => 'now()',
-                                    'sale_date_status_change' => 'now()');
-
-        zen_db_perform(TABLE_SALEMAKER_SALES, $salemaker_data_array, 'update', "sale_id = '" . zen_db_prepare_input($_GET['sID']) . "'");
-
-        // update prices for products in sale
-        zen_update_salemaker_product_prices($_GET['sID']);
-
-        zen_redirect(zen_href_link(FILENAME_SALEMAKER, '', 'NONSSL'));
+        if (isset($_POST['flag']) && ($_POST['flag'] == 1 || $_POST['flag'] == 0))
+        {
+          $salemaker_data_array = array('sale_status' => zen_db_prepare_input($_POST['flag']),
+                                      'sale_date_last_modified' => 'now()',
+                                      'sale_date_status_change' => 'now()');
+          zen_db_perform(TABLE_SALEMAKER_SALES, $salemaker_data_array, 'update', "sale_id = '" . zen_db_prepare_input($_GET['sID']) . "'");
+          // update prices for products in sale
+          zen_update_salemaker_product_prices($_GET['sID']);
+          zen_redirect(zen_href_link(FILENAME_SALEMAKER, 'page=' . $_GET['page'] . '&sID=' . $_GET['sID'], 'NONSSL'));
+        }
         break;
       case 'insert':
       case 'update':
@@ -130,7 +130,7 @@ define('AUTOCHECK', 'False');
         zen_redirect(zen_href_link(FILENAME_SALEMAKER, 'page=' . $_GET['page'] . '&sID=' . $db->Insert_ID()));
         break;
       case 'deleteconfirm':
-        $sale_id = zen_db_prepare_input($_GET['sID']);
+        $sale_id = zen_db_prepare_input($_POST['sID']);
 
         // set sale off to update prices before removing
         $db->Execute("update " . TABLE_SALEMAKER_SALES . " set sale_status=0 where sale_id='" . $sale_id . "'");
@@ -310,7 +310,7 @@ var EndDate = new ctlSpiffyCalendarBox("EndDate", "sale_form", "end", "btnDate2"
         <td><table border="0" cellspacing="0" cellpadding="2">
           <tr>
             <td class="main"><?php echo TEXT_SALEMAKER_NAME; ?>&nbsp;</td>
-            <td class="main"><?php echo zen_draw_input_field('name', $sInfo->sale_name, 'size="37"'); ?></td>
+            <td class="main"><?php echo zen_draw_input_field('name', htmlspecialchars($sInfo->sale_name, ENT_COMPAT, CHARSET, TRUE), 'size="37"'); ?></td>
           </tr>
           <tr>
             <td class="main"><?php echo TEXT_SALEMAKER_DEDUCTION; ?>&nbsp;</td>
@@ -470,9 +470,17 @@ document.write('<?php echo '<a href="javascript:popupWindow(\\\'' . zen_href_lin
                 <td  class="dataTableContent" align="center">
 <?php
       if ($salemaker_sales->fields['sale_status'] == '1') {
-        echo '<a href="' . zen_href_link(FILENAME_SALEMAKER, 'action=setflag&flag=0&sID=' . $salemaker_sales->fields['sale_id'], 'NONSSL') . '">' . zen_image(DIR_WS_IMAGES . 'icon_green_on.gif', IMAGE_ICON_STATUS_ON) . '</a>';
+        echo zen_draw_form('setflag_products', FILENAME_SALEMAKER, 'action=setflag&sID=' . $salemaker_sales->fields['sale_id'] . (isset($_GET['page']) ? '&page=' . $_GET['page'] : '') . (isset($_GET['search']) ? '&search=' . $_GET['search'] : ''));?>
+        <input type="image" src="<?php echo DIR_WS_IMAGES ?>icon_green_on.gif" title="<?php echo IMAGE_ICON_STATUS_ON; ?>" />
+        <input type="hidden" name="flag" value="0" />
+        </form>
+<?php
       } else {
-        echo '<a href="' . zen_href_link(FILENAME_SALEMAKER, 'action=setflag&flag=1&sID=' . $salemaker_sales->fields['sale_id'], 'NONSSL') . '">' . zen_image(DIR_WS_IMAGES . 'icon_red_on.gif', IMAGE_ICON_STATUS_OFF) . '</a>';
+        echo zen_draw_form('setflag_products', FILENAME_SALEMAKER, 'action=setflag&sID=' . $salemaker_sales->fields['sale_id'] . (isset($_GET['page']) ? '&page=' . $_GET['page'] : '') . (isset($_GET['search']) ? '&search=' . $_GET['search'] : ''));?>
+        <input type="image" src="<?php echo DIR_WS_IMAGES ?>icon_red_on.gif" title="<?php echo IMAGE_ICON_STATUS_OFF; ?>" />
+        <input type="hidden" name="flag" value="1" />
+        </form>
+<?php
       }
 ?>
                 </td>
@@ -510,13 +518,13 @@ document.write('<?php echo '<a href="javascript:popupWindow(\\\'' . zen_href_lin
 
       $contents = array('form' => zen_draw_form('sales', FILENAME_SALEMAKER, 'page=' . $_GET['page'] . '&sID=' . $sInfo->sale_id . '&action=copyconfirm'));
       $contents[] = array('text' => sprintf(TEXT_INFO_COPY_INTRO, $sInfo->sale_name));
-      $contents[] = array('text' => '<br>&nbsp;' . zen_draw_input_field('newname', $sInfo->sale_name . '_', 'size="31"'));
+      $contents[] = array('text' => '<br>&nbsp;' . zen_draw_input_field('newname', htmlspecialchars($sInfo->sale_name . '_', ENT_COMPAT, CHARSET, TRUE), 'size="31"'));
       $contents[] = array('align' => 'center', 'text' => '<br>' . zen_image_submit('button_copy.gif', IMAGE_COPY) . '&nbsp;<a href="' . zen_href_link(FILENAME_SALEMAKER, 'page=' . $_GET['page'] . '&sID=' . $sInfo->sale_id) . '">' . zen_image_button('button_cancel.gif', IMAGE_CANCEL) . '</a>');
       break;
     case 'delete':
       $heading[] = array('text' => '<b>' . TEXT_INFO_HEADING_DELETE_SALE . '</b>');
 
-      $contents = array('form' => zen_draw_form('sales', FILENAME_SALEMAKER, 'page=' . $_GET['page'] . '&sID=' . $sInfo->sale_id . '&action=deleteconfirm'));
+      $contents = array('form' => zen_draw_form('sales', FILENAME_SALEMAKER, 'page=' . $_GET['page'] . '&action=deleteconfirm') . zen_draw_hidden_field('sID', $sInfo->sale_id));
       $contents[] = array('text' => TEXT_INFO_DELETE_INTRO);
       $contents[] = array('text' => '<br><b>' . $sInfo->sale_name . '</b>');
       $contents[] = array('align' => 'center', 'text' => '<br>' . zen_image_submit('button_delete.gif', IMAGE_DELETE) . '&nbsp;<a href="' . zen_href_link(FILENAME_SALEMAKER, 'page=' . $_GET['page'] . '&sID=' . $sInfo->sale_id) . '">' . zen_image_button('button_cancel.gif', IMAGE_CANCEL) . '</a>');

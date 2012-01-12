@@ -1,24 +1,11 @@
 <?php
-//
-// +----------------------------------------------------------------------+
-// |zen-cart Open Source E-commerce                                       |
-// +----------------------------------------------------------------------+
-// | Copyright (c) 2003 The zen-cart developers                           |
-// |                                                                      |
-// | http://www.zen-cart.com/index.php                                    |
-// |                                                                      |
-// | Portions Copyright (c) 2003 osCommerce                               |
-// +----------------------------------------------------------------------+
-// | This source file is subject to version 2.0 of the GPL license,       |
-// | that is bundled with this package in the file LICENSE, and is        |
-// | available through the world-wide-web at the following url:           |
-// | http://www.zen-cart.com/license/2_0.txt.                             |
-// | If you did not receive a copy of the zen-cart license and are unable |
-// | to obtain it through the world-wide-web, please send a note to       |
-// | license@zen-cart.com so we can mail you a copy immediately.          |
-// +----------------------------------------------------------------------+
-//  $Id: products_to_categories.php 2909 2006-01-29 21:29:35Z ajeh $
-//
+/**
+ * @package admin
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
+ * @copyright Portions Copyright 2003 osCommerce
+ * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
+ * @version $Id: products_to_categories.php 18698 2011-05-04 14:50:06Z wilt $
+ */
 
 define('HEADING_TITLE','Products to Multiple Categories Link Manager ...');
 define('HEADING_TITLE2','Categories / Products');
@@ -67,6 +54,7 @@ define('WARNING_NO_CATEGORIES_ID', 'Warning: no categories were selected ... no 
 define('SUCCESS_COPY_LINKED', 'Successful update of Products as Linked ... ');
 define('SUCCESS_COPY_ALL_PRODUCTS_TO_CATEGORY_FROM_LINKED', 'Valid Category to link Products From: ');
 define('SUCCESS_COPY_ALL_PRODUCTS_TO_CATEGORY_TO_LINKED', 'Valid Category to link Products To: ');
+define('WARNING_COPY_ALL_PRODUCTS_TO_CATEGORY_TO_LINKED_MISSING', 'WARNING: Copy completed to Invalid Category to Link: ');
 
 define('WARNING_COPY_FROM_IN_TO_LINKED', '<strong>WARNING: No changes made products are already linked ... </strong>');
 
@@ -105,5 +93,3 @@ define('BUTTON_RESET_CATEGORY_MASTER', 'Reset Master Categories ID');
 
 define('WARNING_RESET_ALL_PRODUCTS_TO_CATEGORY_FROM_MASTER', 'WARNING: Invalid Category selected ...');
 define('SUCCESS_RESET_ALL_PRODUCTS_TO_CATEGORY_FROM_MASTER', 'Successful update of all Products to new Master Categories ID for Category: ');
-
-?>

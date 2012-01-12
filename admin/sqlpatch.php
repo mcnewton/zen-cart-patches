@@ -1,17 +1,17 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2009 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: sqlpatch.php 15097 2009-12-16 03:21:30Z drbyte $
+ * @version $Id: sqlpatch.php 19537 2011-09-20 17:14:44Z drbyte $
  */
 
   require('includes/application_top.php');
 
   define('HEADING_TITLE','SQL Query Executor');
   define('HEADING_WARNING','BE SURE TO DO A FULL DATABASE BACKUP BEFORE RUNNING SCRIPTS HERE');
-  define('HEADING_WARNING2','If you are installing 3rd-party contributions, note that you do so at your own risk.<br />Zen Cart&trade; makes no warranty as to the safety of scripts supplied by 3rd-party contributors. Test before using on your live database!');
+  define('HEADING_WARNING2','If you are installing 3rd-party contributions, note that you do so at your own risk.<br />Zen Cart&reg; makes no warranty as to the safety of scripts supplied by 3rd-party contributors. Test before using on your live database!');
   define('HEADING_WARNING_INSTALLSCRIPTS', 'NOTE: Zen Cart database-upgrade scripts should NOT be run from this page.<br />Please upload the new <strong>zc_install</strong> folder and run the upgrade from there instead for better reliability.');
   define('TEXT_QUERY_RESULTS','Query Results:');
   define('TEXT_ENTER_QUERY_STRING','Enter the query <br />to be executed:&nbsp;&nbsp;<br /><br />Be sure to<br />end with ;');
@@ -84,10 +84,10 @@ $linebreak = '
 // NOTE: this line break is intentional!!!!
 
  function executeSql($lines, $database, $table_prefix = '') {
-   if (!get_cfg_var('safe_mode')) {
+   if (version_compare(PHP_VERSION, 5.4, '>=') || !get_cfg_var('safe_mode')) {
      @set_time_limit(1200);
    }
-   global $db, $debug;
+   global $db, $debug, $messageStack;
    $sql_file='SQLPATCH';
    $newline = '';
    $saveline = '';
@@ -300,7 +300,7 @@ if ($_GET['debug']=='ON') echo $line . '<br />';
 
         if ($complete_line) {
           if ($debug==true) echo ((!$ignore_line) ? '<br />About to execute.': 'Ignoring statement. This command WILL NOT be executed.').'<br />Debug info:<br>$ line='.$line.'<br>$ complete_line='.$complete_line.'<br>$ keep_together='.$keep_together.'<br>SQL='.$newline.'<br><br>';
-          if (get_magic_quotes_runtime() > 0  && $keepslashes != true ) $newline=stripslashes($newline);
+          if (version_compare(PHP_VERSION, 5.4, '<') && @get_magic_quotes_runtime() > 0  && $keepslashes != true ) $newline=stripslashes($newline);
           if (trim(str_replace(';','',$newline)) != '' && !$ignore_line) $output=$db->Execute($newline);
           $results++;
           $string .= $newline.'<br />';
@@ -605,7 +605,7 @@ if ($_GET['debug']=='ON') echo $line . '<br />';
      //[4]=blah blah
     $title = $values[1];
     $key  =  $values[3];
-    $sql = "select configuration_title from " . DB_PREFIX . "configuration where configuration_key='".$key."'";
+    $sql = "select configuration_title from " . DB_PREFIX . "configuration where configuration_key='".zen_db_input($key)."'";
     $result = $db->Execute($sql);
     if ($result->RecordCount() >0 ) return sprintf(REASON_CONFIG_KEY_ALREADY_EXISTS,$key);
   }
@@ -616,7 +616,7 @@ if ($_GET['debug']=='ON') echo $line . '<br />';
     $values=explode("'",$line);
     $title = $values[1];
     $key  =  $values[3];
-    $sql = "select configuration_title from " . DB_PREFIX . "product_type_layout where configuration_key='".$key."'";
+    $sql = "select configuration_title from " . DB_PREFIX . "product_type_layout where configuration_key='".zen_db_input($key)."'";
     $result = $db->Execute($sql);
     if ($result->RecordCount() >0 ) return sprintf(REASON_PRODUCT_TYPE_LAYOUT_KEY_ALREADY_EXISTS,$key);
   }
@@ -624,7 +624,7 @@ if ($_GET['debug']=='ON') echo $line . '<br />';
   function zen_write_to_upgrade_exceptions_table($line, $reason, $sql_file) {
     global $db;
     zen_create_exceptions_table();
-    $sql="INSERT INTO " . DB_PREFIX . TABLE_UPGRADE_EXCEPTIONS . " VALUES (0,'". $sql_file."','".$reason."', now(), '".addslashes($line)."')";
+    $sql="INSERT INTO " . DB_PREFIX . TABLE_UPGRADE_EXCEPTIONS . " VALUES (0,'". $sql_file."','".$reason."', now(), '".zen_db_input($line)."')";
      if (ZC_UPG_DEBUG3==true) echo '<br />sql='.$sql.'<br />';
     $result = $db->Execute($sql);
     return $result;
@@ -646,7 +646,7 @@ if ($_GET['debug']=='ON') echo $line . '<br />';
             reason varchar(200) default NULL,
             errordate datetime default '0001-01-01 00:00:00',
             sqlstatement text, PRIMARY KEY  (upgrade_exception_id)
-          ) TYPE=MyISAM   ");
+          )");
     return $result;
     }
   }
@@ -662,7 +662,7 @@ if ($_GET['debug']=='ON') echo $line . '<br />';
       case 'execute':
        if (isset($_POST['query_string']) && $_POST['query_string'] !='' ) {
          $query_string = $_POST['query_string'];
-         if (@get_magic_quotes_gpc() > 0) $query_string = stripslashes($query_string);
+         if (version_compare(PHP_VERSION, 5.4, '<') && @get_magic_quotes_gpc() > 0) $query_string = stripslashes($query_string);
          if ($debug==true) echo $query_string . '<br />';
          $query_string = explode($linebreak, ($query_string));
          $query_results = executeSql($query_string, DB_DATABASE, DB_PREFIX);
@@ -690,9 +690,12 @@ if ($_GET['debug']=='ON') echo $line . '<br />';
        }
        break;
       case 'uploadquery':
-            $upload_query = file($_FILES['sql_file']['tmp_name']);
-            $query_string  = $upload_query;
-            if (@get_magic_quotes_runtime() > 0) $query_string  = zen_db_prepare_input($upload_query);
+            $query_string  = '';
+            if (isset($_FILES['sql_file']) && isset($_FILES['sql_file']['tmp_name']) && $_FILES['sql_file']['tmp_name'] != '') {
+              $upload_query = file($_FILES['sql_file']['tmp_name']);
+              $query_string  = $upload_query;
+            }
+            if (version_compare(PHP_VERSION, 5.4, '<') && @get_magic_quotes_runtime() > 0) $query_string  = zen_db_prepare_input($upload_query);
             if ($query_string !='') {
               $query_results = executeSql($query_string, DB_DATABASE, DB_PREFIX);
               if ($query_results['queries'] > 0 && $query_results['queries'] != $query_results['ignored']) {
@@ -835,13 +838,13 @@ if ($_GET['debug']=='ON') echo $line . '<br />';
 <html  <?php echo HTML_PARAMS; ?>>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=<?php echo CHARSET; ?>" />
-<title>HELP - <?php echo HEADING_TITLE; ?> - Zen Cart&trade;</title>
+<title>HELP - <?php echo HEADING_TITLE; ?> - Zen Cart&reg;</title>
 </head>
 <body id="popup"></body>
 <div id="popup_header">
 <h1>
 <?php
-  echo 'Zen Cart&trade; ' . HEADING_TITLE;
+  echo 'Zen Cart&reg; ' . HEADING_TITLE;
   echo '<br /><br />';
 ?>
 </h1>

@@ -1,10 +1,10 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2006 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: newsletters.php 6026 2007-03-21 09:07:00Z drbyte $
+ * @version $Id: newsletters.php 19330 2011-08-07 06:32:56Z drbyte $
  */
 
   require('includes/application_top.php');
@@ -60,7 +60,7 @@
         }
         break;
       case 'deleteconfirm':
-        $newsletter_id = zen_db_prepare_input($_GET['nID']);
+        $newsletter_id = zen_db_prepare_input($_POST['nID']);
 
         $db->Execute("delete from " . TABLE_NEWSLETTERS . "
                       where newsletters_id = '" . (int)$newsletter_id . "'");
@@ -175,7 +175,7 @@ check_select('audience_selected','',"<?php echo ERROR_PLEASE_SELECT_AUDIENCE; ?>
       if (!in_array($action, array('send','confirm','confirm_send', ''))) {
 // toggle switch for editor
         echo TEXT_EDITOR_INFO . zen_draw_form('set_editor_form', FILENAME_NEWSLETTERS, '', 'get') . '&nbsp;&nbsp;' . zen_draw_pull_down_menu('reset_editor', $editors_pulldown, $current_editor_key, 'onChange="this.form.submit();"') .
-        zen_hide_session_id() . 
+        zen_hide_session_id() .
         zen_draw_hidden_field('action', 'set_editor') .
         '</form>';
       }
@@ -242,29 +242,18 @@ check_select('audience_selected','',"<?php echo ERROR_PLEASE_SELECT_AUDIENCE; ?>
           </tr>
           <tr>
             <td class="main"><?php echo TEXT_NEWSLETTER_TITLE; ?></td>
-            <td class="main"><?php echo zen_draw_input_field('title', $nInfo->title, 'size="50"', true); ?></td>
+            <td class="main"><?php echo zen_draw_input_field('title', htmlspecialchars($nInfo->title, ENT_COMPAT, CHARSET, TRUE), 'size="50"', true); ?></td>
           </tr>
           <tr>
             <td colspan="2"><?php echo zen_draw_separator('pixel_trans.gif', '1', '10'); ?></td>
           </tr>
           <tr>
             <td class="main" valign="top"><?php echo TEXT_NEWSLETTER_CONTENT_HTML; ?></td>
-            <td class="main">
-        <?php if ($_SESSION['html_editor_preference_status']=="FCKEDITOR") {
-                $oFCKeditor = new FCKeditor('message_html') ;
-                $oFCKeditor->Value = $nInfo->content_html ;
-                $oFCKeditor->Width  = '97%' ;
-                $oFCKeditor->Height = '350' ;
-//                $oFCKeditor->Create() ;
-                $output = $oFCKeditor->CreateHtml() ; echo $output;
-          } else { // using HTMLAREA or just raw "source"
-              echo zen_draw_textarea_field('message_html', 'soft', '100%', '30', $nInfo->content_html,'id="message_html" class="editorHook"');
-          } ?>
-          </td>
+            <td class="main"><?php echo zen_draw_textarea_field('message_html', 'soft', '100%', '30', htmlspecialchars($nInfo->content_html, ENT_COMPAT, CHARSET, TRUE),'id="message_html" class="editorHook"'); ?></td>
           </tr>
           <tr>
             <td class="main" valign="top"><?php echo TEXT_NEWSLETTER_CONTENT; ?></td>
-            <td class="main"><?php echo zen_draw_textarea_field('content', 'soft', '100%', '20', $nInfo->content, 'class="noEditor"'); ?></td>
+            <td class="main"><?php echo zen_draw_textarea_field('content', 'soft', '100%', '20', htmlspecialchars($nInfo->content, ENT_COMPAT, CHARSET, TRUE), 'class="noEditor"'); ?></td>
           </tr>
         </table></td>
       </tr>
@@ -441,7 +430,7 @@ check_select('audience_selected','',"<?php echo ERROR_PLEASE_SELECT_AUDIENCE; ?>
     case 'delete':
       $heading[] = array('text' => '<b>' . $nInfo->title . '</b>');
 
-      $contents = array('form' => zen_draw_form('newsletters', FILENAME_NEWSLETTERS, 'page=' . $_GET['page'] . '&nID=' . $nInfo->newsletters_id . '&action=deleteconfirm'));
+      $contents = array('form' => zen_draw_form('newsletters', FILENAME_NEWSLETTERS, 'page=' . $_GET['page'] . '&action=deleteconfirm') . zen_draw_hidden_field('nID', $nInfo->newsletters_id));
       $contents[] = array('text' => TEXT_INFO_DELETE_INTRO);
       $contents[] = array('text' => '<br /><b>' . $nInfo->title . '</b>');
       $contents[] = array('align' => 'center', 'text' => '<br />' . zen_image_submit('button_delete.gif', IMAGE_DELETE) . ' <a href="' . zen_href_link(FILENAME_NEWSLETTERS, 'page=' . $_GET['page'] . '&nID=' . $_GET['nID']) . '">' . zen_image_button('button_cancel.gif', IMAGE_CANCEL) . '</a>');

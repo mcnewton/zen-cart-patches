@@ -3,10 +3,10 @@
  * product-specials functions
  *
  * @package functions
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: specials.php 15974 2010-04-17 00:29:17Z ajeh $
+ * @version $Id: specials.php 18695 2011-05-04 05:24:19Z drbyte $
  */
 
 ////
@@ -14,7 +14,7 @@
   function zen_set_specials_status($specials_id, $status) {
     global $db;
     $sql = "update " . TABLE_SPECIALS . "
-            set status = '" . $status . "', date_status_change = now()
+            set status = '" . (int)$status . "', date_status_change = now()
             where specials_id = '" . (int)$specials_id . "'";
 
     return $db->Execute($sql);

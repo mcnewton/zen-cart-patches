@@ -3,10 +3,10 @@
  * authorize.net echeck payment method class
  *
  * @package paymentMethod
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: authorizenet_echeck.php 17557 2010-09-14 13:42:49Z drbyte $
+ * @version $Id: authorizenet_echeck.php 18728 2011-05-16 19:37:59Z drbyte $
  */
 /**
  * Authorize.net echeck Payment Module
@@ -111,6 +111,9 @@ class authorizenet_echeck extends base {
    */
   function update_status() {
     global $order, $db;
+    // if store is not running in SSL, cannot offer credit card module, for PCI reasons
+    if (!defined('ENABLE_SSL') || ENABLE_SSL != 'true') $this->enabled = FALSE;
+    // check other reasons for the module to be deactivated:
     if ( ($this->enabled == true) && ((int)MODULE_PAYMENT_AUTHORIZENET_ECHECK_ZONE > 0) ) {
       $check_flag = false;
       $check = $db->Execute("select zone_id from " . TABLE_ZONES_TO_GEO_ZONES . " where geo_zone_id = '" . MODULE_PAYMENT_AUTHORIZENET_ECHECK_ZONE . "' and zone_country_id = '" . $order->billing['country']['id'] . "' order by zone_id");
@@ -616,9 +619,8 @@ class authorizenet_echeck extends base {
     global $db;
     if ($order_time == '') $order_time = date("F j, Y, g:i a");
     // convert output to 1-based array for easier understanding:
-    $resp_output = array_reverse($response);
-    $resp_output[] = 'Response from gateway';
-    $resp_output = array_reverse($resp_output);
+    $resp_output = $response;
+    array_unshift($resp_output, 'Response from gateway' . (isset($response['ErrorDetails']) ? ': ' . $response['ErrorDetails'] : ''));
 
     // DEBUG LOGGING
       $errorMessage = date('M-d-Y h:i:s') .
@@ -628,8 +630,7 @@ class authorizenet_echeck extends base {
                       'Sending to Authorizenet: ' . print_r($this->reportable_submit_data, true) . "\n\n" .
                       'Results Received back from Authorizenet: ' . print_r($resp_output, true) . "\n\n" .
                       'CURL communication info: ' . print_r($this->commInfo, true) . "\n";
-      if (CURL_PROXY_REQUIRED == 'True')
-        $errorMessage .= 'Using CURL Proxy: [' . CURL_PROXY_SERVER_DETAILS . ']  with Proxy Tunnel: ' .($this->proxy_tunnel_flag ? 'On' : 'Off') . "\n";
+      if (CURL_PROXY_REQUIRED == 'True') $errorMessage .= 'Using CURL Proxy: [' . CURL_PROXY_SERVER_DETAILS . ']  with Proxy Tunnel: ' .($this->proxy_tunnel_flag ? 'On' : 'Off') . "\n";
       $errorMessage .= "\nRAW data received: \n" . $this->authorize . "\n\n";
 
       if (strstr(MODULE_PAYMENT_AUTHORIZENET_ECHECK_DEBUGGING, 'Log') || strstr(MODULE_PAYMENT_AUTHORIZENET_ECHECK_DEBUGGING, 'All') || (defined('AUTHORIZENET_DEVELOPER_MODE') && in_array(AUTHORIZENET_DEVELOPER_MODE, array('on', 'certify')))) {

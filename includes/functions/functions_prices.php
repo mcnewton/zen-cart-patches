@@ -3,10 +3,10 @@
  * functions_prices
  *
  * @package functions
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: functions_prices.php 15932 2010-04-13 12:28:11Z drbyte $
+ * @version $Id: functions_prices.php 18697 2011-05-04 14:35:20Z wilt $
  */
 
 ////
@@ -355,23 +355,6 @@
     $the_products_quantity_order_max = $db->Execute("select products_id, products_quantity_order_max from " . TABLE_PRODUCTS . " where products_id = '" . (int)$product_id . "'");
     return $the_products_quantity_order_max->fields['products_quantity_order_max'];
   }
-
-////
-// Find quantity discount quantity mixed and not mixed
-  function zen_get_products_quantity_discount_mixed($product_id, $qty) {
-    global $db;
-    global $cart;
-
-    $product_discounts = $db->Execute("select products_price, products_quantity_mixed, product_is_free from " . TABLE_PRODUCTS . " where products_id = '" . (int)$product_id . "'");
-
-    if ($product_discounts->fields['products_quantity_mixed']) {
-      if ($new_qty = $_SESSION['cart']->count_contents_qty($product_id)) {
-        $qty = $new_qty;
-      }
-    }
-    return $qty;
-  }
-
 
 ////
 // Return a product's quantity box status

@@ -3,10 +3,10 @@
  * Contact Us Page
  *
  * @package page
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: header_php.php 17608 2010-09-24 14:51:46Z drbyte $
+ * @version $Id: header_php.php 18697 2011-05-04 14:35:20Z wilt $
  */
 require(DIR_WS_MODULES . zen_get_module_directory('require_languages.php'));
 

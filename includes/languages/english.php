@@ -1,10 +1,10 @@
 <?php
 /**
  * @package languageDefines
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: english.php 15514 2010-02-18 07:27:05Z drbyte $
+ * @version $Id: english.php 19690 2011-10-04 16:41:45Z drbyte $
  */
 
 // FOLLOWING WERE moved to meta_tags.php
@@ -16,10 +16,7 @@
   define('FOOTER_TEXT_BODY', 'Copyright &copy; ' . date('Y') . ' <a href="' . zen_href_link(FILENAME_DEFAULT) . '" target="_blank">' . STORE_NAME . '</a>. Powered by <a href="http://www.zen-cart.com" target="_blank">Zen Cart</a>');
 
 // look in your $PATH_LOCALE/locale directory for available locales..
-// on RedHat try 'en_US'
-// on FreeBSD try 'en_US.ISO_8859-1'
-// on Windows try 'en', or 'English'
-  @setlocale(LC_TIME, 'en_US.ISO_8859-1');
+  @setlocale(LC_TIME, 'en_US');
   define('DATE_FORMAT_SHORT', '%m/%d/%Y');  // this is used for strftime()
   define('DATE_FORMAT_LONG', '%A %d %B, %Y'); // this is used for strftime()
   define('DATE_FORMAT', 'm/d/Y'); // this is used for date()
@@ -46,7 +43,7 @@
   define('HTML_PARAMS','dir="ltr" lang="en"');
 
 // charset for web pages and emails
-  define('CHARSET', 'iso-8859-1');
+  define('CHARSET', 'utf-8');
 
 // footer text in includes/footer.php
   define('FOOTER_TEXT_REQUESTS_SINCE', 'requests since');
@@ -149,17 +146,6 @@
   define('BOX_INFORMATION_PAGE_2', 'Page 2');
   define('BOX_INFORMATION_PAGE_3', 'Page 3');
   define('BOX_INFORMATION_PAGE_4', 'Page 4');
-
-// tell a friend box text in sideboxes/tell_a_friend.php
-  define('BOX_HEADING_TELL_A_FRIEND', 'Tell A Friend');
-  define('BOX_TELL_A_FRIEND_TEXT', 'Tell someone you know about this product.');
-
-// wishlist box text in includes/boxes/wishlist.php
-  define('BOX_HEADING_CUSTOMER_WISHLIST', 'My Wishlist');
-  define('BOX_WISHLIST_EMPTY', 'You have no items on your Wishlist');
-  define('IMAGE_BUTTON_ADD_WISHLIST', 'Add to Wishlist');
-  define('TEXT_WISHLIST_COUNT', 'Currently %s items are on your Wishlist.');
-  define('TEXT_DISPLAY_NUMBER_OF_WISHLIST', 'Displaying <strong>%d</strong> to <strong>%d</strong> (of <strong>%d</strong> items on your wishlist)');
 
 //New billing address text
   define('SET_AS_PRIMARY' , 'Set as Primary Address');
@@ -308,11 +294,9 @@
 
   define('TEXT_REQUIRED', '<span class="errorText">Required</span>');
 
-  define('WARNING_INSTALL_DIRECTORY_EXISTS', 'Warning: Installation directory exists at: %s. Please remove this directory for security reasons.');
+  define('WARNING_INSTALL_DIRECTORY_EXISTS', 'SECURITY WARNING: Installation directory exists at: %s. Please remove this directory for security reasons.');
   define('WARNING_CONFIG_FILE_WRITEABLE', 'Warning: I am able to write to the configuration file: %s. This is a potential security risk - please set the right user permissions on this file (read-only, CHMOD 644 or 444 are typical). You may need to use your webhost control panel/file-manager to change the permissions effectively. Contact your webhost for assistance. <a href="http://tutorials.zen-cart.com/index.php?article=90" target="_blank">See this FAQ</a>');
   define('ERROR_FILE_NOT_REMOVEABLE', 'Error: Could not remove the file specified. You may have to use FTP to remove the file, due to a server-permissions configuration limitation.');
-  define('WARNING_SESSION_DIRECTORY_NON_EXISTENT', 'Warning: The sessions directory does not exist: ' . zen_session_save_path() . '. Sessions will not work until this directory is created.');
-  define('WARNING_SESSION_DIRECTORY_NOT_WRITEABLE', 'Warning: I am not able to write to the sessions directory: ' . zen_session_save_path() . '. Sessions will not work until the right user permissions are set.');
   define('WARNING_SESSION_AUTO_START', 'Warning: session.auto_start is enabled - please disable this PHP feature in php.ini and restart the web server.');
   define('WARNING_DOWNLOAD_DIRECTORY_NON_EXISTENT', 'Warning: The downloadable products directory does not exist: ' . DIR_FS_DOWNLOAD . '. Downloadable products will not work until this directory is valid.');
   define('WARNING_SQL_CACHE_DIRECTORY_NON_EXISTENT', 'Warning: The SQL cache directory does not exist: ' . DIR_FS_SQL_CACHE . '. SQL caching will not work until this directory is created.');
@@ -467,9 +451,9 @@
   define('TEXT_PRODUCTS_MIX_OFF_SHOPPING_CART','<br />*You can not mix the options on this item to meet the minimum quantity requirement.*<br />');
   define('TEXT_PRODUCTS_MIX_ON_SHOPPING_CART','*Mixed Option Values is ON<br />');
 
-  define('ERROR_MAXIMUM_QTY','The quantity added to your cart has been adjusted because of a restriction on maximum you are allowed. See this item: ');
+  define('ERROR_MAXIMUM_QTY','The quantity added to your cart has been adjusted because of a restriction on maximum you are allowed. See this item:<br />');
   define('ERROR_CORRECTIONS_HEADING','Please correct the following: <br />');
-  define('ERROR_QUANTITY_ADJUSTED', 'The quantity added to your cart has been adjusted. The item you wanted is not available in fractional quantities. The quantity of item: ');
+  define('ERROR_QUANTITY_ADJUSTED', 'The quantity added to your cart has been adjusted. The item you wanted is not available in fractional quantities. The quantity of item:<br />');
   define('ERROR_QUANTITY_CHANGED_FROM', ', has been changed from: ');
   define('ERROR_QUANTITY_CHANGED_TO', ' to ');
 
@@ -479,8 +463,10 @@
   define('TEXT_FILESIZE_MEGS', ' MB');
 
 // shopping cart errors
-  define('ERROR_PRODUCT','The item: ');
+  define('ERROR_PRODUCT','<br />The item: ');
   define('ERROR_PRODUCT_STATUS_SHOPPING_CART','<br />We are sorry but this product has been removed from our inventory at this time.<br />This item has been removed from your shopping cart.');
+  define('ERROR_PRODUCT_ATTRIBUTES','<br />The item: ');
+  define('ERROR_PRODUCT_STATUS_SHOPPING_CART_ATTRIBUTES','<br />We are sorry but selected options have changed for this product and have been removed from our inventory at this time.<br />This item has been removed from your shopping cart.');
   define('ERROR_PRODUCT_QUANTITY_MIN',',  ... Minimum Quantity errors - ');
   define('ERROR_PRODUCT_QUANTITY_UNITS',' ... Quantity Units errors - ');
   define('ERROR_PRODUCT_OPTION_SELECTION','<br /> ... Invalid Option Values Selected ');

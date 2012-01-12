@@ -1,10 +1,10 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2009 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: html_graphs.php 14139 2009-08-10 13:46:02Z wilt $
+ * @version $Id: html_graphs.php 18695 2011-05-04 05:24:19Z drbyte $
  */
 
 ////
@@ -368,8 +368,8 @@
     $banner_stats = $db->Execute("select dayofmonth(banners_history_date) as name,
 	                                     banners_shown as value, banners_clicked as dvalue
 										 from " . TABLE_BANNERS_HISTORY . "
-										 where banners_id = '" . $banner_id . "'
-										 and to_days(now()) - to_days(banners_history_date) < " . $days . "
+										 where banners_id = '" . (int)$banner_id . "'
+										 and to_days(now()) - to_days(banners_history_date) < " . zen_db_input($days) . "
 										 order by banners_history_date");
 
     while (!$banner_stats->EOF) {
@@ -420,7 +420,7 @@
     $banner_stats = $db->Execute("select year(banners_history_date) as year,
 	                                     sum(banners_shown) as value, sum(banners_clicked) as dvalue
 										 from " . TABLE_BANNERS_HISTORY . "
-										 where banners_id = '" . $banner_id . "'
+										 where banners_id = '" . (int)$banner_id . "'
 										 group by year(banners_history_date)");
 
     while (!$banner_stats->EOF) {
@@ -480,8 +480,8 @@
     $banner_stats = $db->Execute("select month(banners_history_date) as banner_month, sum(banners_shown) as value,
 	                              sum(banners_clicked) as dvalue
 								  from " . TABLE_BANNERS_HISTORY . "
-								  where banners_id = '" . $banner_id . "'
-								  and year(banners_history_date) = '" . $year . "'
+								  where banners_id = '" . (int)$banner_id . "'
+								  and year(banners_history_date) = '" . zen_db_input($year) . "'
 								  group by month(banners_history_date)");
 
     while (!$banner_stats->EOF) {
@@ -544,9 +544,9 @@
     $banner_stats = $db->Execute("select dayofmonth(banners_history_date) as banner_day,
 	                                     banners_shown as value, banners_clicked as dvalue
 										 from " . TABLE_BANNERS_HISTORY . "
-										 where banners_id = '" . $banner_id . "'
-										 and month(banners_history_date) = '" . $month . "'
-										 and year(banners_history_date) = '" . $year . "'");
+										 where banners_id = '" . (int)$banner_id . "'
+										 and month(banners_history_date) = '" . zen_db_input($month) . "'
+										 and year(banners_history_date) = '" . zen_db_input($year) . "'");
 
     while (!$banner_stats->EOF) {
       $names[($banner_stats->fields['banner_day']-1)] = $banner_stats->fields['banner_day'];

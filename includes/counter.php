@@ -3,10 +3,10 @@
  * counter.php
  *
  * @package general
- * @copyright Copyright 2003-2009 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: counter.php 16091 2010-04-27 21:46:02Z wilt $
+ * @version $Id: counter.php 18695 2011-05-04 05:24:19Z drbyte $
  * @private
  */
 if (!defined('IS_ADMIN_FLAG')) {
@@ -31,7 +31,7 @@ if ($result->recordCount() <=0 || $counter->RecordCount() > 0 )
   $counter_now = ($counter->fields['counter'] + 1);
   $session_counter_now = ($counter->fields['session_counter'] + $session_counter);
   $sql = "update " . TABLE_COUNTER_HISTORY . " set counter = '" . $counter_now . "', session_counter ='" . $session_counter_now . "' where startdate='" . $date_now . "'";
-  
+
   $db->Execute($sql);
 }
 

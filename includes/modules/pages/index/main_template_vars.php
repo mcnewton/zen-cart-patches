@@ -3,10 +3,10 @@
  * index main_template_vars.php
  *
  * @package page
- * @copyright Copyright 2003-2006 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: main_template_vars.php 6066 2007-03-25 17:51:43Z ajeh $
+ * @version $Id: main_template_vars.php 18695 2011-05-04 05:24:19Z drbyte $
  */
 
 // This should be first line of the script:
@@ -188,7 +188,7 @@ if ($category_depth == 'nested')
   // set the product filters according to selected product type
   $typefilter = 'default';
   if (isset($_GET['typefilter'])) $typefilter = $_GET['typefilter'];
-  require(DIR_WS_INCLUDES . zen_get_index_filters_directory($typefilter . '_filter.php'));
+  require(zen_get_index_filters_directory($typefilter . '_filter.php'));
 
 
 

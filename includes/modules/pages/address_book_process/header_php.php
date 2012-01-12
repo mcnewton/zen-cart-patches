@@ -3,10 +3,10 @@
  * Header code file for the Address Book Process page
  *
  * @package page
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: header_php.php 15534 2010-02-20 05:23:11Z drbyte $
+ * @version $Id: header_php.php 18695 2011-05-04 05:24:19Z drbyte $
  */
 // This should be first line of the script:
 $zco_notifier->notify('NOTIFY_HEADER_START_ADDRESS_BOOK_PROCESS');
@@ -21,13 +21,14 @@ require(DIR_WS_MODULES . zen_get_module_directory('require_languages.php'));
 /**
  * Process deletes
  */
-if (isset($_GET['action']) && ($_GET['action'] == 'deleteconfirm') && isset($_GET['delete']) && is_numeric($_GET['delete'])) {
+if (isset($_GET['action']) && ($_GET['action'] == 'deleteconfirm') && isset($_POST['delete']) && is_numeric($_POST['delete'])) 
+{
   $sql = "DELETE FROM " . TABLE_ADDRESS_BOOK . "
           WHERE  address_book_id = :delete
           AND    customers_id = :customersID";
 
   $sql = $db->bindVars($sql, ':customersID', $_SESSION['customer_id'], 'integer');
-  $sql = $db->bindVars($sql, ':delete', $_GET['delete'], 'integer');
+  $sql = $db->bindVars($sql, ':delete', $_POST['delete'], 'integer');
   $db->Execute($sql);
 
   $zco_notifier->notify('NOTIFY_HEADER_ADDRESS_BOOK_DELETION_DONE');

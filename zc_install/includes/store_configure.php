@@ -2,17 +2,17 @@
 /**
  * @package Installer
  * @access private
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: store_configure.php 16936 2010-07-20 17:20:01Z drbyte $
+ * @version $Id: store_configure.php 18695 2011-05-04 05:24:19Z drbyte $
  */
 
 $file_contents =
 '<'.'?php' . "\n" .
 '/**' . "\n" .
-' * @package Configuration Settings circa 1.3.9' . "\n" .
-' * @copyright Copyright 2003-2010 Zen Cart Development Team' . "\n" .
+' * @package Configuration Settings circa 1.5.0' . "\n" .
+' * @copyright Copyright 2003-2011 Zen Cart Development Team' . "\n" .
 ' * @copyright Portions Copyright 2003 osCommerce' . "\n" .
 ' * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0' . "\n" .
 ' * File Built by zc_install on ' . date('Y-m-d h:i:s') . "\n" .
@@ -42,7 +42,7 @@ $file_contents =
 '  define(\'DIR_WS_LANGUAGES\', DIR_WS_INCLUDES . \'languages/\');' . "\n" .
 '  define(\'DIR_WS_DOWNLOAD_PUBLIC\', DIR_WS_CATALOG . \'pub/\');' . "\n" .
 '  define(\'DIR_WS_TEMPLATES\', DIR_WS_INCLUDES . \'templates/\');' . "\n\n" .
-'  define(\'DIR_WS_PHPBB\', \'' . '' . '/\');' . "\n\n" .
+'  define(\'DIR_WS_PHPBB\', \'' . $this->getConfigKey('DIR_FS_PHPBB') . '/\');' . "\n\n" .
 '// * DIR_FS_* = Filesystem directories (local/physical)' . "\n" .
 '  //the following path is a COMPLETE path to your Zen Cart files. eg: /var/www/vhost/accountname/public_html/store/' . "\n" .
 '  define(\'DIR_FS_CATALOG\', \'' . $this->getConfigKey('DIR_FS_CATALOG') . '/\');' . "\n\n" .
@@ -54,13 +54,11 @@ $file_contents =
 '// define our database connection' . "\n" .
 '  define(\'DB_TYPE\', \'' . $this->getConfigKey('DB_TYPE'). '\');' . "\n" .
 '  define(\'DB_PREFIX\', \'' . $this->getConfigKey('DB_PREFIX'). '\');' . "\n" .
+'  define(\'DB_CHARSET\', \'' . $this->getConfigKey('DB_CHARSET'). '\');' . "\n" .
 '  define(\'DB_SERVER\', \'' . $this->getConfigKey('DB_SERVER') . '\');' . "\n" .
 '  define(\'DB_SERVER_USERNAME\', \'' . $this->getConfigKey('DB_SERVER_USERNAME') . '\');' . "\n" .
 '  define(\'DB_SERVER_PASSWORD\', \'' . $this->getConfigKey('DB_SERVER_PASSWORD') . '\');' . "\n" .
-'  define(\'DB_DATABASE\', \'' . $this->getConfigKey('DB_DATABASE') . '\');' . "\n" .
-'  define(\'USE_PCONNECT\', \'false\');' . "\n" .
-'  define(\'STORE_SESSIONS\', \'' . $this->getConfigKey('STORE_SESSIONS') . '\');' . "\n" .
-'  // for STORE_SESSIONS, use \'db\' for best support, or \'\' for file-based storage' . "\n\n" .
+'  define(\'DB_DATABASE\', \'' . $this->getConfigKey('DB_DATABASE') . '\');' . "\n\n" .
 '  // The next 2 "defines" are for SQL cache support.' . "\n" .
 '  // For SQL_CACHE_METHOD, you can select from:  none, database, or file' . "\n" .
 '  // If you choose "file", then you need to set the DIR_FS_SQL_CACHE to a directory where your apache ' . "\n" .

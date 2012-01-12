@@ -3,9 +3,9 @@
  * authorizenet_admin_notification.php admin display component
  *
  * @package paymentMethod
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: authorizenet_admin_notification.php 15870 2010-04-11 02:18:43Z drbyte $
+ * @version $Id: authorizenet_admin_notification.php 18695 2011-05-04 05:24:19Z drbyte $
  */
 
   $outputStartBlock = '';
@@ -74,7 +74,7 @@
     $outputVoid .= '<tr style="background-color : #dddddd; border-style : dotted;">'."\n";
     $outputVoid .= '<td class="main">' . MODULE_PAYMENT_AUTHORIZENET_AIM_ENTRY_VOID_TITLE . '<br />'. "\n";
     $outputVoid .= zen_draw_form('aimvoid', FILENAME_ORDERS, zen_get_all_get_params(array('action')) . 'action=doVoid', 'post', '', true) . zen_hide_session_id();
-    $outputVoid .= MODULE_PAYMENT_AUTHORIZENET_AIM_ENTRY_VOID . '<br />' . zen_draw_input_field('voidauthid', 'enter auth ID', 'length="32"');
+    $outputVoid .= MODULE_PAYMENT_AUTHORIZENET_AIM_ENTRY_VOID . '<br />' . zen_draw_input_field('voidauthid', 'enter auth/trans ID', 'length="32"');
     $outputVoid .= '<br />' . MODULE_PAYMENT_AUTHORIZENET_AIM_TEXT_VOID_CONFIRM_CHECK . zen_draw_checkbox_field('voidconfirm', '', false);
     //comment field
     $outputVoid .= '<br /><br />' . MODULE_PAYMENT_AUTHORIZENET_AIM_ENTRY_VOID_TEXT_COMMENTS . '<br />' . zen_draw_textarea_field('voidnote', 'soft', '50', '3', MODULE_PAYMENT_AUTHORIZENET_AIM_ENTRY_VOID_DEFAULT_MESSAGE);

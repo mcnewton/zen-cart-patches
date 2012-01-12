@@ -3,10 +3,10 @@
  * Payment Class.
  *
  * @package classes
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: payment.php 17614 2010-09-25 11:12:15Z wilt $
+ * @version $Id: payment.php 18697 2011-05-04 14:35:20Z wilt $
  */
 if (!defined('IS_ADMIN_FLAG')) {
   die('Illegal Access');

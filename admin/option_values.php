@@ -1,10 +1,10 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: option_values.php 17891 2010-10-08 22:17:22Z wilt $
+ * @version $Id: option_values.php 18695 2011-05-04 05:24:19Z drbyte $
  */
 ?>
 <?php
@@ -43,7 +43,7 @@
       $all_products_attributes= $db->Execute("select ptoc.products_id, pa.products_attributes_id from " .
       TABLE_PRODUCTS_TO_CATEGORIES . " ptoc, " .
       TABLE_PRODUCTS_ATTRIBUTES . " pa " . "
-      where ptoc.categories_id = '" . $_POST['categories_update_id'] . "' and
+      where ptoc.categories_id = '" . (int)$_POST['categories_update_id'] . "' and
       pa.products_id = ptoc.products_id"
       );
       while (!$all_products_attributes->EOF) {
@@ -58,15 +58,18 @@
       break;
 // update all products in catalog
     case ('update_all_products_attributes_sort_order'):
-      $all_products_attributes= $db->Execute("select p.products_id, pa.products_attributes_id from " .
-      TABLE_PRODUCTS . " p, " .
-      TABLE_PRODUCTS_ATTRIBUTES . " pa " . "
-      where p.products_id= pa.products_id"
-      );
-      while (!$all_products_attributes->EOF) {
-        $count++;
-        zen_update_attributes_products_option_values_sort_order($all_products_attributes->fields['products_id']);
-        $all_products_attributes->MoveNext();
+      if (isset($_POST['confirm']) && $_POST['confirm'] == 'y')
+      {
+        $all_products_attributes= $db->Execute("select p.products_id, pa.products_attributes_id from " .
+        TABLE_PRODUCTS . " p, " .
+        TABLE_PRODUCTS_ATTRIBUTES . " pa " . "
+        where p.products_id= pa.products_id"
+        );
+        while (!$all_products_attributes->EOF) {
+          $count++;
+          zen_update_attributes_products_option_values_sort_order($all_products_attributes->fields['products_id']);
+          $all_products_attributes->MoveNext();
+        }
       }
       $messageStack->add_session(SUCCESS_PRODUCT_UPDATE_SORT_ALL, 'success');
       $action='';
@@ -129,7 +132,7 @@ if ($_GET['options_id']=='') {
       <td class="dataTableHeadingContent"> <?php echo TEXT_SELECT_OPTION; ?> </td>
       <td class="dataTableHeadingContent">&nbsp;<select name="options_id">
 <?php
-        $options_values = $db->Execute("select * from " . TABLE_PRODUCTS_OPTIONS . " where language_id = '" . (int)$_SESSION['languages_id'] . "' and products_options_name !='' and products_options_type !='" . PRODUCTS_OPTIONS_TYPE_TEXT . "' and products_options_type !='" . PRODUCTS_OPTIONS_TYPE_FILE . "' order by products_options_name");
+        $options_values = $db->Execute("select * from " . TABLE_PRODUCTS_OPTIONS . " where language_id = '" . (int)$_SESSION['languages_id'] . "' and products_options_name !='' and products_options_type !='" . (int)PRODUCTS_OPTIONS_TYPE_TEXT . "' and products_options_type !='" . (int)PRODUCTS_OPTIONS_TYPE_FILE . "' order by products_options_name");
         while(!$options_values->EOF) {
             echo "\n" . '<option name="' . $options_values->fields['products_options_name'] . '" value="' . $options_values->fields['products_options_id'] . '">' . $options_values->fields['products_options_name'] . '</option>';
             $options_values->MoveNext();
@@ -152,7 +155,7 @@ if ($_GET['options_id']=='') {
 <?php
     echo '    <tr class="dataTableHeadingRow"><td class="dataTableHeadingContent">Option ID</td><td class="dataTableHeadingContent">Option Value Name</td><td class="dataTableHeadingContent">Sort Order</td></tr><tr>';
 
-    $row = $db->Execute("SELECT * FROM " . TABLE_PRODUCTS_OPTIONS_VALUES . " pov, " . TABLE_PRODUCTS_OPTIONS_VALUES_TO_PRODUCTS_OPTIONS . " povtpo WHERE povtpo.products_options_values_id = pov.products_options_values_id and povtpo.products_options_id='" . $_GET['options_id'] . "' and pov.language_id = '" . $_SESSION['languages_id'] . "' ORDER BY pov.products_options_values_sort_order, pov.products_options_values_id");
+    $row = $db->Execute("SELECT * FROM " . TABLE_PRODUCTS_OPTIONS_VALUES . " pov, " . TABLE_PRODUCTS_OPTIONS_VALUES_TO_PRODUCTS_OPTIONS . " povtpo WHERE povtpo.products_options_values_id = pov.products_options_values_id and povtpo.products_options_id='" . (int)$_GET['options_id'] . "' and pov.language_id = '" . (int)$_SESSION['languages_id'] . "' ORDER BY pov.products_options_values_sort_order, pov.products_options_values_id");
 
     if (!$row->EOF) {
        $option_values_exist = true;
@@ -232,7 +235,7 @@ if (empty($_GET['options_id'])) {
         <td colspan="2"><br /><table border="0" cellspacing="0" cellpadding="2">
           <tr>
             <td class="main" align="left" valign="top"><?php echo TEXT_INFO_ATTRIBUTES_FEATURES_UPDATES; ?></td>
-            <td class="main" align="right" valign="middle"><?php echo '<a href="' . zen_href_link(FILENAME_PRODUCTS_OPTIONS_VALUES, 'action=update_all_products_attributes_sort_order') . '">' . zen_image_button('button_update.gif', IMAGE_UPDATE) . '</a>'; ?></td>
+            <td><?php echo zen_draw_form('update_all_sort', FILENAME_PRODUCTS_OPTIONS_VALUES, 'action=update_all_products_attributes_sort_order')?><?php echo zen_draw_hidden_field('confirm', 'y'); ?> <?php echo zen_image_submit('button_update.gif', IMAGE_UPDATE); ?></form></td>
           </tr>
         </table></td>
       </tr>

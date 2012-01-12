@@ -1,10 +1,10 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2009 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: stats_products_purchased.php 17534 2010-09-08 19:50:34Z wilt $
+ * @version $Id: stats_products_purchased.php 18698 2011-05-04 14:50:06Z wilt $
  */
 
   require('includes/application_top.php');
@@ -61,6 +61,7 @@
     echo zen_draw_form('search', FILENAME_STATS_PRODUCTS_PURCHASED, '', 'get', '', true);
     echo HEADING_TITLE_SEARCH_DETAIL_REPORTS . ' ' . zen_draw_input_field('products_filter') . zen_hide_session_id();
     if (isset($products_filter) && zen_not_null($products_filter)) {
+      $products_filter = preg_replace('/[^0-9,]/', '', $products_filter);
       $products_filter = zen_db_input(zen_db_prepare_input($products_filter));
       echo '<br/ >' . TEXT_INFO_SEARCH_DETAIL_FILTER . $products_filter;
     }

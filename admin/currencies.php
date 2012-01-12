@@ -1,10 +1,10 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2009 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: currencies.php 15074 2009-12-10 03:04:31Z drbyte $
+ * @version $Id: currencies.php 19330 2011-08-07 06:32:56Z drbyte $
  */
 
   require('includes/application_top.php');
@@ -18,6 +18,13 @@
     switch ($action) {
       case 'insert':
       case 'save':
+        if ($_POST['title'] == '' || $_POST['code'] == '' ) {
+          $_GET['action']= '';
+          $messageStack->add_session(ERROR_INVALID_CURRENCY_ENTRY, 'error');
+          zen_redirect(zen_href_link(FILENAME_CURRENCIES, 'page=' . $_GET['page']));
+          break;
+        }
+
         if (isset($_GET['cID'])) $currency_id = zen_db_prepare_input($_GET['cID']);
         $title = zen_db_prepare_input($_POST['title']);
         $code = strtoupper(zen_db_prepare_input($_POST['code']));
@@ -25,11 +32,11 @@
         $symbol_right = zen_db_prepare_input($_POST['symbol_right']);
         $decimal_point = zen_db_prepare_input($_POST['decimal_point']);
         $thousands_point = zen_db_prepare_input($_POST['thousands_point']);
-        $decimal_places = zen_db_prepare_input($_POST['decimal_places']);
+        $decimal_places = zen_db_prepare_input((int)$_POST['decimal_places']);
         $value = zen_db_prepare_input((float)$_POST['value']);
 
-        // special handling for JPY, which always uses whole numbers, never decimals
-        if ($code == 'JPY') {
+        // special handling for currencies which don't support decimal places
+        if ($decimal_point == '0' || $code == 'JPY') {
           $value = (int)$value;
           $decimal_places = 0;
         }
@@ -65,19 +72,16 @@
           $messageStack->add_session(ERROR_ADMIN_DEMO, 'caution');
           zen_redirect(zen_href_link(FILENAME_CURRENCIES, 'page=' . $_GET['page']));
         }
-        $currencies_id = zen_db_prepare_input($_GET['cID']);
+        $currencies_id = zen_db_prepare_input($_POST['cID']);
 
         $currency = $db->Execute("select currencies_id
                                   from " . TABLE_CURRENCIES . "
-                                  where code = '" . DEFAULT_CURRENCY . "'");
-
-
+                                  where code = '" . zen_db_input(DEFAULT_CURRENCY) . "'");
         if ($currency->fields['currencies_id'] == $currencies_id) {
           $db->Execute("update " . TABLE_CONFIGURATION . "
                         set configuration_value = ''
                         where configuration_key = 'DEFAULT_CURRENCY'");
         }
-
         $db->Execute("delete from " . TABLE_CURRENCIES . "
                       where currencies_id = '" . (int)$currencies_id . "'");
 
@@ -86,7 +90,7 @@
       case 'update_currencies':
         $server_used = CURRENCY_SERVER_PRIMARY;
         zen_set_time_limit(600);
-        $currency = $db->Execute("select currencies_id, code, title from " . TABLE_CURRENCIES);
+        $currency = $db->Execute("select currencies_id, code, title, decimal_places from " . TABLE_CURRENCIES);
         while (!$currency->EOF) {
           $quote_function = 'quote_' . CURRENCY_SERVER_PRIMARY . '_currency';
           $rate = $quote_function($currency->fields['code']);
@@ -104,8 +108,8 @@
             $rate = (string)((float)$rate * (float)CURRENCY_UPLIFT_RATIO);
           }
 
-          // special handling for JPY, which always uses whole numbers, never decimals
-          if ($code == 'JPY') {
+          // special handling for currencies which don't support decimal places
+          if ($currency->fields['decimal_places'] == '0') {
             $rate = (int)$rate;
           }
 
@@ -269,12 +273,12 @@
 
       $contents = array('form' => zen_draw_form('currencies', FILENAME_CURRENCIES, 'page=' . $_GET['page'] . '&cID=' . $cInfo->currencies_id . '&action=save'));
       $contents[] = array('text' => TEXT_INFO_EDIT_INTRO);
-      $contents[] = array('text' => '<br>' . TEXT_INFO_CURRENCY_TITLE . '<br>' . zen_draw_input_field('title', $cInfo->title));
-      $contents[] = array('text' => '<br>' . TEXT_INFO_CURRENCY_CODE . '<br>' . zen_draw_input_field('code', $cInfo->code));
-      $contents[] = array('text' => '<br>' . TEXT_INFO_CURRENCY_SYMBOL_LEFT . '<br>' . zen_draw_input_field('symbol_left', htmlspecialchars($cInfo->symbol_left)));
-      $contents[] = array('text' => '<br>' . TEXT_INFO_CURRENCY_SYMBOL_RIGHT . '<br>' . zen_draw_input_field('symbol_right', htmlspecialchars($cInfo->symbol_right)));
-      $contents[] = array('text' => '<br>' . TEXT_INFO_CURRENCY_DECIMAL_POINT . '<br>' . zen_draw_input_field('decimal_point', $cInfo->decimal_point));
-      $contents[] = array('text' => '<br>' . TEXT_INFO_CURRENCY_THOUSANDS_POINT . '<br>' . zen_draw_input_field('thousands_point', $cInfo->thousands_point));
+      $contents[] = array('text' => '<br>' . TEXT_INFO_CURRENCY_TITLE . '<br>' . zen_draw_input_field('title', htmlspecialchars($cInfo->title, ENT_COMPAT, CHARSET, TRUE)));
+      $contents[] = array('text' => '<br>' . TEXT_INFO_CURRENCY_CODE . '<br>' . zen_draw_input_field('code', htmlspecialchars($cInfo->code, ENT_COMPAT, CHARSET, TRUE)));
+      $contents[] = array('text' => '<br>' . TEXT_INFO_CURRENCY_SYMBOL_LEFT . '<br>' . zen_draw_input_field('symbol_left', htmlspecialchars($cInfo->symbol_left, ENT_COMPAT, CHARSET, TRUE)));
+      $contents[] = array('text' => '<br>' . TEXT_INFO_CURRENCY_SYMBOL_RIGHT . '<br>' . zen_draw_input_field('symbol_right', htmlspecialchars($cInfo->symbol_right, ENT_COMPAT, CHARSET, TRUE)));
+      $contents[] = array('text' => '<br>' . TEXT_INFO_CURRENCY_DECIMAL_POINT . '<br>' . zen_draw_input_field('decimal_point', htmlspecialchars($cInfo->decimal_point, ENT_COMPAT, CHARSET, TRUE)));
+      $contents[] = array('text' => '<br>' . TEXT_INFO_CURRENCY_THOUSANDS_POINT . '<br>' . zen_draw_input_field('thousands_point', htmlspecialchars($cInfo->thousands_point, ENT_COMPAT, CHARSET, TRUE)));
       $contents[] = array('text' => '<br>' . TEXT_INFO_CURRENCY_DECIMAL_PLACES . '<br>' . zen_draw_input_field('decimal_places', $cInfo->decimal_places));
       $contents[] = array('text' => '<br>' . TEXT_INFO_CURRENCY_VALUE . '<br>' . zen_draw_input_field('value', $cInfo->value));
       if (DEFAULT_CURRENCY != $cInfo->code) $contents[] = array('text' => '<br>' . zen_draw_checkbox_field('default') . ' ' . TEXT_INFO_SET_AS_DEFAULT);
@@ -282,11 +286,10 @@
       break;
     case 'delete':
       $heading[] = array('text' => '<b>' . TEXT_INFO_HEADING_DELETE_CURRENCY . '</b>');
-      $contents = array('form'=>zen_draw_form('delete', FILENAME_CURRENCIES, 'page=' . $_GET['page'] . '&cID=' . $cInfo->currencies_id . '&action=deleteconfirm', 'post'));
+      $contents = array('form'=>zen_draw_form('delete', FILENAME_CURRENCIES, 'page=' . $_GET['page'] . '&action=deleteconfirm') . zen_draw_hidden_field('cID', $cInfo->currencies_id));
       $contents[] = array('text' => TEXT_INFO_DELETE_INTRO);
       $contents[] = array('text'=> (($remove_currency) ? zen_image_submit('button_delete.gif', IMAGE_DELETE) : '') . ' <a href="' . zen_href_link(FILENAME_CURRENCIES, 'page=' . $_GET['page'] . '&cID=' . $_GET['cID']) . '">' . zen_image_button('button_cancel.gif', IMAGE_CANCEL) . '</a>', 'align'=>'center');
       $contents[] = array('text' => '<br><b>' . $cInfo->title . '</b>');
-//      $contents[] = array('align' => 'center', 'text' => '<br>' . (($remove_currency) ? '<a href="' . zen_href_link(FILENAME_CURRENCIES, 'page=' . $_GET['page'] . '&cID=' . $cInfo->currencies_id . '&action=deleteconfirm') . '">' . zen_image_button('button_delete.gif', IMAGE_DELETE) . '</a>' : '') . ' <a href="' . zen_href_link(FILENAME_CURRENCIES, 'page=' . $_GET['page'] . '&cID=' . $cInfo->currencies_id) . '">' . zen_image_button('button_cancel.gif', IMAGE_CANCEL) . '</a>');
       break;
     default:
       if (is_object($cInfo)) {

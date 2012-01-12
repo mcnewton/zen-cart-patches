@@ -17,7 +17,7 @@
  * @package classes
  * @author Brent R. Matzelle
  * @copyright 2001 - 2003 Brent R. Matzelle
- * @version (within Zen Cart) $Id: class.phpmailer.php 14225 2009-08-24 01:04:37Z drbyte $
+ * @version (within Zen Cart) $Id: class.phpmailer.php 19328 2011-08-06 22:53:47Z drbyte $
  * @version Modified for Zen Cart added protocols to enable use with Gmail 2007-09-30 Chuck Redman
  */
 /**
@@ -1106,11 +1106,11 @@ class PHPMailer
       return "";
     }
     $magic_quotes = get_magic_quotes_runtime();
-    if (function_exists('set_magic_quotes_runtime')) set_magic_quotes_runtime(0);
+    if (version_compare(PHP_VERSION, 5.3, '<') && function_exists('set_magic_quotes_runtime')) set_magic_quotes_runtime(0);
     $file_buffer = fread($fd, filesize($path));
     $file_buffer = $this->EncodeString($file_buffer, $encoding);
     fclose($fd);
-    if (function_exists('set_magic_quotes_runtime')) @set_magic_quotes_runtime($magic_quotes);
+    if (version_compare(PHP_VERSION, 5.3, '<') && function_exists('set_magic_quotes_runtime')) @set_magic_quotes_runtime($magic_quotes);
     return $file_buffer;
   }
 

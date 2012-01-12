@@ -3,10 +3,10 @@
  * ot_shipping order-total module
  *
  * @package orderTotal
- * @copyright Copyright 2003-2009 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: ot_shipping.php 15075 2009-12-10 21:21:02Z drbyte $
+ * @version $Id: ot_shipping.php 19002 2011-07-03 10:06:10Z wilt $
  */
 
   class ot_shipping {
@@ -18,7 +18,7 @@
       $this->title = MODULE_ORDER_TOTAL_SHIPPING_TITLE;
       $this->description = MODULE_ORDER_TOTAL_SHIPPING_DESCRIPTION;
       $this->sort_order = MODULE_ORDER_TOTAL_SHIPPING_SORT_ORDER;
-
+      unset($_SESSION['shipping_tax_description']);
       $this->output = array();
       if (MODULE_ORDER_TOTAL_SHIPPING_FREE_SHIPPING == 'true') {
         switch (MODULE_ORDER_TOTAL_SHIPPING_DESTINATION) {

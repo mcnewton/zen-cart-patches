@@ -1,10 +1,10 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2009 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: password_funcs.php 14139 2009-08-10 13:46:02Z wilt $
+ * @version $Id: password_funcs.php 18784 2011-05-25 07:40:29Z drbyte $
  */
 
 ////
@@ -25,7 +25,7 @@
   }
 
 ////
-// This function makes a new password from a plaintext password. 
+// This function makes a new password from a plaintext password.
   function zen_encrypt_password($plain) {
     $password = '';
 
@@ -41,7 +41,7 @@
   }
 
 ////
-// This function comes up with a plaintext word. 
+// This function comes up with a plaintext word.
 // You can then pass this word over to zen_encrypt_password or another similar function
   function zen_create_random_value($length, $type = 'mixed') {
     if ( ($type != 'mixed') && ($type != 'chars') && ($type != 'digits')) return false;
@@ -62,6 +62,9 @@
       }
     }
 
+    if ($type == 'mixed' && !preg_match('/^(?=.*[\w]+.*)(?=.*[\d]+.*)[\d\w]{' . $length . ',}$/', $rand_value)) {
+      $rand_value .= zen_rand(0,9);
+    }
+
     return $rand_value;
   }
-?>

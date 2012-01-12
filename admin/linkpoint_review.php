@@ -1,10 +1,10 @@
 <?php
 /**
  * @package linkpoint_api_payment_module
- * @copyright Copyright 2003-2006 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: linkpoint_review.php 4612 2006-09-26 08:03:05Z drbyte $
+ * @version $Id: linkpoint_review.php 18695 2011-05-04 05:24:19Z drbyte $
  */
 
   require('includes/application_top.php');
@@ -13,6 +13,7 @@
   $currencies = new currencies();
 
   $action = (isset($_GET['action']) ? $_GET['action'] : '');
+  if (isset($_GET['cID'])) $_GET['cID'] = (int)$_GET['cID'];
 
   if (substr($_GET['search'],0,3) == '%23' or substr($_GET['search'],0,1) == '#') {
     if (substr($_GET['search'],0,3) == '%23') {

@@ -1,12 +1,12 @@
 <?php
 /**
- * product_info header_php.php 
+ * product_info header_php.php
  *
  * @package page
- * @copyright Copyright 2003-2007 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: header_php.php 6963 2007-09-08 02:36:34Z drbyte $
+ * @version $Id: header_php.php 18697 2011-05-04 14:35:20Z wilt $
  */
 
   // This should be first line of the script:
@@ -26,6 +26,7 @@
   if ( $res->fields['total'] < 1 ) {
     unset($_GET['products_id']);
     unset($breadcrumb->_trail[sizeof($breadcrumb->_trail)-1]['title']);
+    $robotsNoIndex = true;
     header('HTTP/1.1 404 Not Found');
   }
 
@@ -36,4 +37,3 @@
 
   // This should be last line of the script:
   $zco_notifier->notify('NOTIFY_HEADER_END_PRODUCT_INFO');
-?>

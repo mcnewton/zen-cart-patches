@@ -1,10 +1,10 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2009 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: stats_customers_referrals.php 14139 2009-08-10 13:46:02Z wilt $
+ * @version $Id: stats_customers_referrals.php 18695 2011-05-04 05:24:19Z drbyte $
  */
   require('includes/application_top.php');
 
@@ -82,7 +82,7 @@
                 <td class="main">
                   <?php
                     echo zen_draw_form('new_date', FILENAME_STATS_CUSTOMERS_REFERRALS, '', 'get') . '&nbsp;&nbsp;' . zen_draw_pull_down_menu('referral_code', $customers_referrals, $_GET['referral_code'], 'onChange="this.form.submit();"') .
-                     zen_hide_session_id() . 
+                     zen_hide_session_id() .
                      zen_draw_hidden_field('action', 'new_date') .
                      zen_draw_hidden_field('start_date', $_GET['start_date']) .
                      zen_draw_hidden_field('end_date', $_GET['end_date']);
@@ -121,10 +121,13 @@
 //  $sd = $_GET['start_date'];
 //  $ed = $_GET['end_date'];
   if ($_GET['referral_code'] == '0') {
-    $customers_orders_query = "select c.customers_id, c.customers_referral, o.orders_id, o.date_purchased, o.order_total, o.coupon_code from " . TABLE_CUSTOMERS . " c, " . TABLE_ORDERS . " o where c.customers_id = o.customers_id and c.customers_referral= '' and (o.date_purchased >= '" . $sd . "' and o.date_purchased <= '" . $ed . "') order by o.date_purchased, o.orders_id";
+    $customers_orders_query = "select c.customers_id, c.customers_referral, o.orders_id, o.date_purchased, o.order_total, o.coupon_code from " . TABLE_CUSTOMERS . " c, " . TABLE_ORDERS . " o where c.customers_id = o.customers_id and c.customers_referral= '' and (o.date_purchased >= :sd: and o.date_purchased <= :ed:) order by o.date_purchased, o.orders_id";
   } else {
-    $customers_orders_query = "select c.customers_id, c.customers_referral, o.orders_id, o.date_purchased, o.order_total, o.coupon_code from " . TABLE_CUSTOMERS . " c, " . TABLE_ORDERS . " o where c.customers_id = o.customers_id and c.customers_referral='" . $_GET['referral_code'] . "' and (o.date_purchased >= '" . $sd . "' and o.date_purchased <= '" . $ed . "') order by o.date_purchased, o.orders_id";
+    $customers_orders_query = "select c.customers_id, c.customers_referral, o.orders_id, o.date_purchased, o.order_total, o.coupon_code from " . TABLE_CUSTOMERS . " c, " . TABLE_ORDERS . " o where c.customers_id = o.customers_id and c.customers_referral=:refcode: and (o.date_purchased >= :sd: and o.date_purchased <= :ed:) order by o.date_purchased, o.orders_id";
   }
+  $customers_orders_query = $db->bindVars($customers_orders_query, ':ed:', $ed, 'date');
+  $customers_orders_query = $db->bindVars($customers_orders_query, ':sd:', $sd, 'date');
+  $customers_orders_query = $db->bindVars($customers_orders_query, ':refcode:', $_GET['referral_code'], 'string');
   $customers_orders = $db->Execute($customers_orders_query);
 ?>
           <tr>

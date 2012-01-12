@@ -5,10 +5,10 @@
  * Prepares list of additional product images to be displayed in template
  *
  * @package templateSystem
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: additional_images.php 16913 2010-07-16 03:38:06Z ajeh $
+ * @version $Id: additional_images.php 18697 2011-05-04 14:35:20Z wilt $
  */
 if (!defined('IS_ADMIN_FLAG')) {
   die('Illegal Access');
@@ -44,8 +44,7 @@ if ($products_image != '' && $flag_show_product_info_additional_images != 0) {
     while ($file = $dir->read()) {
       if (!is_dir($products_image_directory . $file)) {
         if (substr($file, strrpos($file, '.')) == $file_extension) {
-          //          if(preg_match("/" . $products_image_match . "/i", $file) == '1') {
-          if(preg_match("/" . $products_image_base . "/i", $file) == 1) {
+          if(preg_match('/\Q' . $products_image_base . '\E/i', $file) == 1) {
             if ($file != $products_image) {
               if ($products_image_base . str_replace($products_image_base, '', $file) == $file) {
                 //  echo 'I AM A MATCH ' . $file . '<br>';
@@ -86,12 +85,12 @@ if ($num_images) {
     $products_image_large = ($flag_has_large ? $products_image_large : $products_image_directory . $file);
     $flag_display_large = (IMAGE_ADDITIONAL_DISPLAY_LINK_EVEN_WHEN_NO_LARGE == 'Yes' || $flag_has_large);
     $base_image = $products_image_directory . $file;
-    $thumb_slashes = zen_image($base_image, addslashes($products_name), SMALL_IMAGE_WIDTH, SMALL_IMAGE_HEIGHT);
+    $thumb_slashes = zen_image(addslashes($base_image), addslashes($products_name), SMALL_IMAGE_WIDTH, SMALL_IMAGE_HEIGHT);
     $thumb_regular = zen_image($base_image, $products_name, SMALL_IMAGE_WIDTH, SMALL_IMAGE_HEIGHT);
     $large_link = zen_href_link(FILENAME_POPUP_IMAGE_ADDITIONAL, 'pID=' . $_GET['products_id'] . '&pic=' . $i . '&products_image_large_additional=' . $products_image_large);
 
     // Link Preparation:
-    $script_link = '<script language="javascript" type="text/javascript"><!--' . "\n" . 'document.write(\'' . ($flag_display_large ? '<a href="javascript:popupWindow(\\\'' . $large_link . '\\\')">' . $thumb_slashes . '<br />' . TEXT_CLICK_TO_ENLARGE . '</a>' : $thumb_slashes) . '\');' . "\n" . '//--></script>';
+    $script_link = '<script language="javascript" type="text/javascript"><!--' . "\n" . 'document.write(\'' . ($flag_display_large ? '<a href="javascript:popupWindow(\\\'' . str_replace($products_image_large, urlencode(addslashes($products_image_large)), $large_link) . '\\\')">' . $thumb_slashes . '<br />' . TEXT_CLICK_TO_ENLARGE . '</a>' : $thumb_slashes) . '\');' . "\n" . '//--></script>';
 
     $noscript_link = '<noscript>' . ($flag_display_large ? '<a href="' . zen_href_link(FILENAME_POPUP_IMAGE_ADDITIONAL, 'pID=' . $_GET['products_id'] . '&pic=' . $i . '&products_image_large_additional=' . $products_image_large) . '" target="_blank">' . $thumb_regular . '<br /><span class="imgLinkAdditional">' . TEXT_CLICK_TO_ENLARGE . '</span></a>' : $thumb_regular ) . '</noscript>';
 
@@ -102,7 +101,7 @@ if ($num_images) {
 
     // List Box array generation:
     $list_box_contents[$row][$col] = array('params' => 'class="additionalImages centeredContent back"' . ' ' . 'style="width:' . $col_width . '%;"',
-    'text' => "\n      " . $link);
+                                           'text' => "\n      " . $link);
     $col ++;
     if ($col > (IMAGES_AUTO_ADDED -1)) {
       $col = 0;
@@ -110,4 +109,3 @@ if ($num_images) {
     }
   } // end for loop
 } // endif
-

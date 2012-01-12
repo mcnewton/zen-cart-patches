@@ -4,15 +4,32 @@
  * see {@link  http://www.zen-cart.com/wiki/index.php/Developers_API_Tutorials#InitSystem wikitutorials} for more details.
  *
  * @package initSystem
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: init_sanitize.php 17600 2010-09-22 00:45:20Z drbyte $
+ * @version $Id: init_sanitize.php 18695 2011-05-04 05:24:19Z drbyte $
  * @todo move the array process to security class
  */
 
   if (!defined('IS_ADMIN_FLAG')) {
     die('Illegal Access');
+  }
+  $csrfBlackListLocal = array();
+  $csrfBlackList = (isset($csrfBlackListCustom)) ? array_merge($csrfBlackListLocal, $csrfBlackListCustom) : $csrfBlackListLocal;
+  if (! isset ( $_SESSION ['securityToken'] ))
+  {
+    $_SESSION ['securityToken'] = md5 ( uniqid ( rand (), true ) );
+  }
+  if ((isset ( $_GET ['action'] ) || isset($_POST['action']) ) && $_SERVER['REQUEST_METHOD'] == 'POST')
+  {
+    $mainPage = isset($_GET['main_page']) ? $_GET['main_page'] : FILENAME_DEFAULT;
+    if (!in_array($mainPage, $csrfBlackList))
+    {
+      if ((! isset ( $_SESSION ['securityToken'] ) || ! isset ( $_POST ['securityToken'] )) || ($_SESSION ['securityToken'] !== $_POST ['securityToken']))
+      {
+        zen_redirect ( zen_href_link ( FILENAME_PAGE_NOT_FOUND, '', $request_type ) );
+      }
+    }
   }
   if (isset($_GET['typefilter'])) $_GET['typefilter'] = preg_replace('/[^0-9a-zA-Z_-]/', '', $_GET['typefilter']);
   if (isset($_GET['products_id'])) $_GET['products_id'] = preg_replace('/[^0-9a-f:]/', '', $_GET['products_id']);
@@ -129,4 +146,3 @@
   $current_page_base = $current_page;
   $code_page_directory = DIR_WS_MODULES . 'pages/' . $current_page_base;
   $page_directory = $code_page_directory;
-

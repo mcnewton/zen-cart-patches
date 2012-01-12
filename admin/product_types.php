@@ -1,10 +1,10 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2009 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: product_types.php 14139 2009-08-10 13:46:02Z wilt $
+ * @version $Id: product_types.php 19330 2011-08-07 06:32:56Z drbyte $
  */
 
   require('includes/application_top.php');
@@ -77,7 +77,7 @@
           // remove image from database if none
           if ($type_image->filename != 'none') {
             $db->Execute("update " . TABLE_PRODUCT_TYPES . "
-                          set default_image = '" .  $_POST['img_dir'] . $type_image->filename . "'
+                          set default_image = '" .  zen_db_input($_POST['img_dir'] . $type_image->filename) . "'
                           where type_id = '" . (int)$type_id . "'");
           } else {
             $db->Execute("update " . TABLE_PRODUCT_TYPES . "
@@ -95,7 +95,7 @@
           $messageStack->add_session(ERROR_ADMIN_DEMO, 'caution');
           zen_redirect(zen_href_link(FILENAME_PRODUCT_TYPES, 'page=' . $_GET['page']));
         }
-        $type_id = zen_db_prepare_input($_GET['ptID']);
+        $type_id = zen_db_prepare_input($_POST['ptID']);
 
         if (isset($_POST['delete_image']) && ($_POST['delete_image'] == 'on')) {
           $product_type = $db->Execute("select default_image
@@ -247,7 +247,7 @@ if ($_GET['action'] == 'layout' || $_GET['action'] == 'layout_edit') {
       if ($cInfo->set_function) {
         eval('$value_field = ' . $cInfo->set_function . '"' . htmlspecialchars($cInfo->configuration_value) . '");');
       } else {
-        $value_field = zen_draw_input_field('configuration_value', $cInfo->configuration_value, 'size="60"');
+        $value_field = zen_draw_input_field('configuration_value', htmlspecialchars($cInfo->configuration_value, ENT_COMPAT, CHARSET, TRUE), 'size="60"');
       }
 
       $contents = array('form' => zen_draw_form('configuration', FILENAME_PRODUCT_TYPES, 'ptID=' . $_GET['ptID'] . '&cID=' . $cInfo->configuration_id . '&action=layout_save'));
@@ -395,7 +395,7 @@ if ($_GET['action'] == 'layout' || $_GET['action'] == 'layout_edit') {
     case 'delete':
       $heading[] = array('text' => '<b>' . TEXT_HEADING_DELETE_PRODUCT_TYPE . '</b>');
 
-      $contents = array('form' => zen_draw_form('manufacturers', FILENAME_PRODUCT_TYPES, 'page=' . $_GET['page'] . '&ptID=' . $ptInfo->type_id . '&action=deleteconfirm'));
+      $contents = array('form' => zen_draw_form('manufacturers', FILENAME_PRODUCT_TYPES, 'page=' . $_GET['page'] . '&action=deleteconfirm') . zen_draw_hidden_field('ptID', $ptInfo->type_id));
       $contents[] = array('text' => TEXT_DELETE_INTRO);
       $contents[] = array('text' => '<br><b>' . $ptInfo->type_name . '</b>');
       $contents[] = array('text' => '<br>' . zen_draw_checkbox_field('delete_image', '', true) . ' ' . TEXT_DELETE_IMAGE);

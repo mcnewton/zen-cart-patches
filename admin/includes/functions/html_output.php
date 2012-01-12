@@ -1,10 +1,10 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2009 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: html_output.php 17361 2010-08-25 14:58:56Z wilt $
+ * @version $Id: html_output.php 19356 2011-08-22 05:22:42Z drbyte $
  */
 
 ////
@@ -200,7 +200,7 @@
       $form .= ' ' . $params;
     }
     $form .= '>';
-    $form .= '<input type="hidden" name="securityToken" value="' . $_SESSION['securityToken'] . '">';
+    if (strtolower($method) == 'post') $form .= '<input type="hidden" name="securityToken" value="' . $_SESSION['securityToken'] . '" />';
     return $form;
   }
 
@@ -279,9 +279,9 @@
 
     if ($text == '~*~*#' && (isset($GLOBALS[$name]) && is_string($GLOBALS[$name])) && ($reinsert_value == true) ) {
       $field .= stripslashes($GLOBALS[$name]);
-      $field = str_replace('&gt;', '>', $field); 
+      $field = str_replace('&gt;', '>', $field);
     } elseif ($text != '~*~*#' && zen_not_null($text)) {
-      $field = str_replace('&gt;', '>', $field); 
+      $field = str_replace('&gt;', '>', $field);
       $field .= $text;
     }
 

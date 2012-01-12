@@ -1,6 +1,6 @@
 # This SQL script upgrades the core Zen Cart database structure from v1.2.1 to v1.2.2
 #
-# $Id: mysql_upgrade_zencart_121_to_122.sql 4243 2006-08-24 10:55:28Z drbyte $
+# $Id: mysql_upgrade_zencart_121_to_122.sql 18695 2011-05-04 05:24:19Z drbyte $
 #
 
 ## CONFIGURATION TABLE
@@ -28,7 +28,7 @@ CREATE TABLE paypal_session (
   saved_session blob NOT NULL,
   expiry int(17) NOT NULL default '0',
   PRIMARY KEY  (unique_id)
-) TYPE=MyISAM;
+) ;
 
 
 
@@ -50,7 +50,7 @@ CREATE TABLE project_version_history (
   project_version_ip_address varchar(20) NOT NULL default '',
   PRIMARY KEY  (project_version_id),
   UNIQUE KEY project_version_key (project_version_key)
-) TYPE=MyISAM COMMENT='Database Version Tracking History';
+) COMMENT='Database Version Tracking History';
 
 
 

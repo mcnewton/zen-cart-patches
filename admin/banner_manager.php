@@ -1,15 +1,20 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: banner_manager.php 15678 2010-03-16 02:34:53Z kuroi $
+ * @version $Id: banner_manager.php 19330 2011-08-07 06:32:56Z drbyte $
  */
 
   require('includes/application_top.php');
 
   $action = (isset($_GET['action']) ? $_GET['action'] : '');
+  if (isset($_GET['flagbanners_on_ssl'])) $_GET['flagbanners_on_ssl'] = (int)$_GET['flagbanners_on_ssl'];
+  if (isset($_GET['bID'])) $_GET['bID'] = (int)$_GET['bID'];
+  if (isset($_GET['flag'])) $_GET['flag'] = (int)$_GET['flag'];
+  if (isset($_GET['page'])) $_GET['page'] = (int)$_GET['page'];
+  if (isset($_GET['flagbanners_open_new_windows'])) $_GET['flagbanners_open_new_windows'] = (int)$_GET['flagbanners_open_new_windows'];
 
   $banner_extension = zen_banner_image_extension();
 
@@ -146,7 +151,7 @@
         }
         break;
       case 'deleteconfirm':
-        $banners_id = zen_db_prepare_input($_GET['bID']);
+        $banners_id = zen_db_prepare_input($_POST['bID']);
 
         if (isset($_POST['delete_image']) && ($_POST['delete_image'] == 'on')) {
           $banner = $db->Execute("select banners_image
@@ -372,7 +377,7 @@ function popupImageWindow(url) {
           </tr>
           <tr>
             <td class="main"><?php echo TEXT_BANNERS_TITLE; ?></td>
-            <td class="main"><?php echo zen_draw_input_field('banners_title', $bInfo->banners_title, zen_set_field_length(TABLE_BANNERS, 'banners_title'), true); ?></td>
+            <td class="main"><?php echo zen_draw_input_field('banners_title', htmlspecialchars($bInfo->banners_title, ENT_COMPAT, CHARSET, TRUE), zen_set_field_length(TABLE_BANNERS, 'banners_title'), true); ?></td>
           </tr>
           <tr>
             <td class="main"><?php echo TEXT_BANNERS_URL; ?></td>
@@ -404,7 +409,7 @@ function popupImageWindow(url) {
           </tr>
           <tr>
             <td valign="top" class="main"><?php echo TEXT_BANNERS_HTML_TEXT; ?></td>
-            <td class="main"><?php echo TEXT_BANNERS_HTML_TEXT_INFO . '<br />' . zen_draw_textarea_field('banners_html_text', 'soft', '60', '5', $bInfo->banners_html_text); ?></td>
+            <td class="main"><?php echo TEXT_BANNERS_HTML_TEXT_INFO . '<br />' . zen_draw_textarea_field('banners_html_text', 'soft', '60', '5', htmlspecialchars($bInfo->banners_html_text, ENT_COMPAT, CHARSET, TRUE)); ?></td>
           </tr>
           <tr>
             <td colspan="2"><?php echo zen_draw_separator('pixel_trans.gif', '1', '10'); ?></td>
@@ -558,7 +563,7 @@ if (($_GET['page'] == '' or $_GET['page'] == '1') and $_GET['bID'] != '') {
     case 'delete':
       $heading[] = array('text' => '<b>' . $bInfo->banners_title . '</b>');
 
-      $contents = array('form' => zen_draw_form('banners', FILENAME_BANNER_MANAGER, 'page=' . $_GET['page'] . '&bID=' . $bInfo->banners_id . '&action=deleteconfirm'));
+      $contents = array('form' => zen_draw_form('banners', FILENAME_BANNER_MANAGER, 'page=' . $_GET['page'] . '&action=deleteconfirm') . zen_draw_hidden_field('bID', $bInfo->banners_id));
       $contents[] = array('text' => TEXT_INFO_DELETE_INTRO);
       $contents[] = array('text' => '<br><b>' . $bInfo->banners_title . '</b>');
       if ($bInfo->banners_image) $contents[] = array('text' => '<br>' . zen_draw_checkbox_field('delete_image', 'on', true) . ' ' . TEXT_INFO_DELETE_IMAGE);

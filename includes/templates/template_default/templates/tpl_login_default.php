@@ -3,10 +3,10 @@
  * Page Template
  *
  * @package templateSystem
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: tpl_login_default.php 15881 2010-04-11 16:32:39Z wilt $
+ * @version $Id: tpl_login_default.php 18695 2011-05-04 05:24:19Z drbyte $
  */
 ?>
 <div class="centerColumn" id="loginDefault">
@@ -47,7 +47,6 @@
 
 <label class="inputLabel" for="login-password"><?php echo ENTRY_PASSWORD; ?></label>
 <?php echo zen_draw_password_field('password', '', 'size="18" id="login-password"'); ?>
-<?php echo zen_draw_hidden_field('securityToken', $_SESSION['securityToken']); ?>
 <br class="clearBoth" />
 
 <div class="buttonRow forward"><?php echo zen_image_submit(BUTTON_IMAGE_LOGIN, BUTTON_LOGIN_ALT); ?></div>

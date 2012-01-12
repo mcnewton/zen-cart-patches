@@ -3,10 +3,10 @@
  * upcoming_products module
  *
  * @package modules
- * @copyright Copyright 2003-2008 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: upcoming_products.php 8730 2008-06-28 01:31:22Z drbyte $
+ * @version $Id: upcoming_products.php 18923 2011-06-13 03:40:09Z wilt $
  */
 if (!defined('IS_ADMIN_FLAG')) {
   die('Illegal Access');
@@ -18,8 +18,9 @@ $list_of_products = '';
 $expected_query = '';
 
 $display_limit = zen_get_upcoming_date_range();
-$limit_clause = "  order by " . EXPECTED_PRODUCTS_FIELD . " " . EXPECTED_PRODUCTS_SORT . "
-                   limit " . MAX_DISPLAY_UPCOMING_PRODUCTS;
+
+$limit_clause = "  order by " . (EXPECTED_PRODUCTS_FIELD == 'date_expected' ? 'date_expected' : 'products_name') . " " . (EXPECTED_PRODUCTS_SORT == 'asc' ? 'asc' : 'desc') . "
+                   limit " . (int)MAX_DISPLAY_UPCOMING_PRODUCTS;
 
 if ( (($manufacturers_id > 0 && $_GET['filter_id'] == 0) || $_GET['music_genre_id'] > 0 || $_GET['record_company_id'] > 0) || (!isset($new_products_category_id) || $new_products_category_id == '0') ) {
   $expected_query = "select p.products_id, pd.products_name, products_date_available as date_expected, p.master_categories_id
@@ -60,4 +61,3 @@ if ($expected_query != '' && $expected->RecordCount() > 0) {
   }
   require($template->get_template_dir('tpl_modules_upcoming_products.php', DIR_WS_TEMPLATE, $current_page_base,'templates'). '/' . 'tpl_modules_upcoming_products.php');
 }
-?>

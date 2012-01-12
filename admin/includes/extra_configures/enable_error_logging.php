@@ -7,9 +7,9 @@
  * Using this method, the debug details are stored at: /cache/myDEBUG-999999-00000000.log
  *
  * @package debug
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: enable_error_logging.php 16900 2010-07-14 22:38:38Z drbyte $
+ * @version $Id: enable_error_logging.php 19328 2011-08-06 22:53:47Z drbyte $
  */
 /**
  * Specify the pages you wish to enable debugging for (ie: main_page=xxxxxxxx)
@@ -31,8 +31,7 @@
  * Error reporting level to log
  * Default: E_ALL ^E_NOTICE
  */
-  $errors_to_log = (version_compare(PHP_VERSION, 5.3, '>=') ? E_ALL & ~E_DEPRECATED & ~E_NOTICE : version_compare(PHP_VERSION, 6.0, '>=') ? E_ALL & ~E_DEPRECATED & ~E_NOTICE & ~E_STRICT : E_ALL & ~E_NOTICE);
-
+  $errors_to_log = (version_compare(PHP_VERSION, 5.3, '>=') ? E_ALL & ~E_DEPRECATED & ~E_NOTICE : version_compare(PHP_VERSION, 5.4, '>=') ? E_ALL & ~E_DEPRECATED & ~E_NOTICE & ~E_STRICT : E_ALL & ~E_NOTICE);
 
 ///// DO NOT EDIT BELOW THIS LINE /////
 

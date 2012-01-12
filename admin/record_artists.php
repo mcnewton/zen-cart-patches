@@ -1,10 +1,10 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2007 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: record_artists.php 6131 2007-04-08 06:56:51Z drbyte $
+ * @version $Id: record_artists.php 19330 2011-08-07 06:32:56Z drbyte $
  */
 
   require('includes/application_top.php');
@@ -37,7 +37,7 @@
 
       if ($_POST['artists_image_manual'] != '') {
         // add image manually
-        $artists_image_name = $_POST['img_dir'] . $_POST['artists_image_manual'];
+        $artists_image_name = zen_db_input($_POST['img_dir'] . $_POST['artists_image_manual']);
         $db->Execute("update " . TABLE_RECORD_ARTISTS . "
                       set artists_image = '" .  $artists_image_name . "'
                       where artists_id = '" . (int)$artists_id . "'");
@@ -48,7 +48,7 @@
           // remove image from database if none
           if ($artists_image->filename != 'none') {
             $db->Execute("update " . TABLE_RECORD_ARTISTS . "
-                          set artists_image = '" .  $_POST['img_dir'] . $artists_image->filename . "'
+                          set artists_image = '" .  zen_db_input($_POST['img_dir'] . $artists_image->filename) . "'
                           where artists_id = '" . (int)$artists_id . "'");
           } else {
             $db->Execute("update " . TABLE_RECORD_ARTISTS . "
@@ -86,7 +86,7 @@
           $messageStack->add_session(ERROR_ADMIN_DEMO, 'caution');
           zen_redirect(zen_href_link(FILENAME_RECORD_ARTISTS, 'page=' . $_GET['page']));
         }
-        $artists_id = zen_db_prepare_input($_GET['mID']);
+        $artists_id = zen_db_prepare_input($_POST['mID']);
 
         if (isset($_POST['delete_image']) && ($_POST['delete_image'] == 'on')) {
 
@@ -263,7 +263,7 @@
 
       $contents = array('form' => zen_draw_form('artists', FILENAME_RECORD_ARTISTS, 'page=' . $_GET['page'] . '&mID=' . $aInfo->artists_id . '&action=save', 'post', 'enctype="multipart/form-data"'));
       $contents[] = array('text' => TEXT_EDIT_INTRO);
-      $contents[] = array('text' => '<br />' . TEXT_RECORD_ARTIST_NAME . '<br>' . zen_draw_input_field('artists_name', $aInfo->artists_name, zen_set_field_length(TABLE_RECORD_ARTISTS, 'artists_name')));
+      $contents[] = array('text' => '<br />' . TEXT_RECORD_ARTIST_NAME . '<br>' . zen_draw_input_field('artists_name', htmlspecialchars($aInfo->artists_name, ENT_COMPAT, CHARSET, TRUE), zen_set_field_length(TABLE_RECORD_ARTISTS, 'artists_name')));
       $contents[] = array('text' => '<br />' . TEXT_RECORD_ARTIST_IMAGE . '<br>' . zen_draw_file_field('artists_image') . '<br />' . $aInfo->artists_image);
       $dir = @dir(DIR_FS_CATALOG_IMAGES);
       $dir_info[] = array('id' => '', 'text' => "Main Directory");
@@ -289,7 +289,7 @@
     case 'delete':
       $heading[] = array('text' => '<b>' . TEXT_HEADING_DELETE_RECORD_ARTIST . '</b>');
 
-      $contents = array('form' => zen_draw_form('artists', FILENAME_RECORD_ARTISTS, 'page=' . $_GET['page'] . '&mID=' . $aInfo->artists_id . '&action=deleteconfirm'));
+      $contents = array('form' => zen_draw_form('artists', FILENAME_RECORD_ARTISTS, 'page=' . $_GET['page'] . '&action=deleteconfirm') . zen_draw_hidden_field('mID', $aInfo->artists_id));
       $contents[] = array('text' => TEXT_DELETE_INTRO);
       $contents[] = array('text' => '<br><b>' . $aInfo->artists_name . '</b>');
       $contents[] = array('text' => '<br>' . zen_draw_checkbox_field('delete_image', '', true) . ' ' . TEXT_DELETE_IMAGE);

@@ -1,24 +1,11 @@
 <?php
-//
-// +----------------------------------------------------------------------+
-// |zen-cart Open Source E-commerce                                       |
-// +----------------------------------------------------------------------+
-// | Copyright (c) 2003 The zen-cart developers                           |
-// |                                                                      |
-// | http://www.zen-cart.com/index.php                                    |
-// |                                                                      |
-// | Portions Copyright (c) 2003 osCommerce                               |
-// +----------------------------------------------------------------------+
-// | This source file is subject to version 2.0 of the GPL license,       |
-// | that is bundled with this package in the file LICENSE, and is        |
-// | available through the world-wide-web at the following url:           |
-// | http://www.zen-cart.com/license/2_0.txt.                             |
-// | If you did not receive a copy of the zen-cart license and are unable |
-// | to obtain it through the world-wide-web, please send a note to       |
-// | license@zen-cart.com so we can mail you a copy immediately.          |
-// +----------------------------------------------------------------------+
-//  $Id: group_pricing.php 3295 2006-03-28 07:27:49Z drbyte $
-//
+/**
+ * @package admin
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
+ * @copyright Portions Copyright 2003 osCommerce
+ * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
+ * @version $Id: group_pricing.php 19330 2011-08-07 06:32:56Z drbyte $
+ */
 
   require('includes/application_top.php');
 
@@ -56,7 +43,7 @@
 
         $delete_cust_confirmed = (isset($_POST['delete_customers']) && $_POST['delete_customers'] =='on') ? true : false ;
 
-        $group_id = zen_db_prepare_input($_GET['gID']);
+        $group_id = zen_db_prepare_input($_POST['gID']);
         $customers_query = $db->Execute("select customers_id from " . TABLE_CUSTOMERS . " where customers_group_pricing = '" . (int)$group_id . "'");
 
         if ($customers_query->RecordCount() > 0 && $delete_cust_confirmed == true) {
@@ -131,6 +118,27 @@
               </tr>
 <?php
   $groups_query_raw = "select * from " . TABLE_GROUP_PRICING;
+
+// Split Page
+// reset page when page is unknown
+if (($_GET['page'] == '' or $_GET['page'] == '1') and $_GET['gID'] != '') {
+  $check_page = $db->Execute($groups_query_raw);
+  $check_count=1;
+  if ($check_page->RecordCount() > MAX_DISPLAY_SEARCH_RESULTS) {
+    while (!$check_page->EOF) {
+      if ($check_page->fields['group_id'] == $_GET['gID']) {
+        break;
+      }
+      $check_count++;
+      $check_page->MoveNext();
+    }
+    $_GET['page'] = round((($check_count/MAX_DISPLAY_SEARCH_RESULTS)+(fmod_round($check_count,MAX_DISPLAY_SEARCH_RESULTS) !=0 ? .5 : 0)),0);
+//    zen_redirect(zen_href_link(FILENAME_CUSTOMERS, 'cID=' . $_GET['cID'] . (isset($_GET['page']) ? '&page=' . $_GET['page'] : ''), 'NONSSL'));
+  } else {
+    $_GET['page'] = 1;
+  }
+}
+
   $groups_split = new splitPageResults($_GET['page'], MAX_DISPLAY_SEARCH_RESULTS, $groups_query_raw, $groups_query_numrows);
   $groups = $db->Execute($groups_query_raw);
   while (!$groups->EOF) {
@@ -197,14 +205,14 @@
 
       $contents = array('form' => zen_draw_form('group_pricing', FILENAME_GROUP_PRICING, 'page=' . $_GET['page'] . '&gID=' . $gInfo->group_id . '&action=save', 'post'));
       $contents[] = array('text' => TEXT_EDIT_INTRO);
-      $contents[] = array('text' => '<br />' . TEXT_GROUP_PRICING_NAME . '<br>' . zen_draw_input_field('group_name', $gInfo->group_name, zen_set_field_length(TABLE_GROUP_PRICING, 'group_name')));
+      $contents[] = array('text' => '<br />' . TEXT_GROUP_PRICING_NAME . '<br>' . zen_draw_input_field('group_name', htmlspecialchars($gInfo->group_name, ENT_COMPAT, CHARSET, TRUE), zen_set_field_length(TABLE_GROUP_PRICING, 'group_name')));
       $contents[] = array('text' => '<br>' . TEXT_GROUP_PRICING_AMOUNT . '<br>' . zen_draw_input_field('group_percentage', $gInfo->group_percentage));
       $contents[] = array('align' => 'center', 'text' => '<br>' . zen_image_submit('button_save.gif', IMAGE_SAVE) . ' <a href="' . zen_href_link(FILENAME_GROUP_PRICING, 'page=' . $_GET['page'] . '&gID=' . $gInfo->group_id) . '">' . zen_image_button('button_cancel.gif', IMAGE_CANCEL) . '</a>');
       break;
     case 'delete':
       $heading[] = array('text' => '<b>' . TEXT_HEADING_DELETE_PRICING_GROUP . '</b>');
 
-      $contents = array('form' => zen_draw_form('group_pricing', FILENAME_GROUP_PRICING, 'page=' . $_GET['page'] . '&gID=' . $gInfo->group_id . '&action=deleteconfirm'));
+      $contents = array('form' => zen_draw_form('group_pricing', FILENAME_GROUP_PRICING, 'page=' . $_GET['page'] . '&action=deleteconfirm') . zen_draw_hidden_field('gID', $gInfo->group_id));
       $contents[] = array('text' => TEXT_DELETE_INTRO);
       $contents[] = array('text' => '<br><b>' . $gInfo->group_name . '</b>');
 

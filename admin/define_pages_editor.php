@@ -1,10 +1,10 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2006 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: define_pages_editor.php 4279 2006-08-26 03:31:29Z drbyte $
+ * @version $Id: define_pages_editor.php 19330 2011-08-07 06:32:56Z drbyte $
  */
 
   require('includes/application_top.php');
@@ -146,14 +146,14 @@
             }
 
             echo zen_draw_form('new_page', FILENAME_DEFINE_PAGES_EDITOR, '', 'get') . '&nbsp;&nbsp;' . zen_draw_pull_down_menu('define_it', $za_lookup, '-1', 'onChange="this.form.submit();"') .
-            zen_hide_session_id() . 
+            zen_hide_session_id() .
             zen_draw_hidden_field('action', 'new_page') . '&nbsp;&nbsp;</form>';
           ?>
 <?php
 // toggle switch for editor
         echo TEXT_EDITOR_INFO . zen_draw_form('set_editor_form', FILENAME_DEFINE_PAGES_EDITOR, '', 'get') . '&nbsp;&nbsp;' . zen_draw_pull_down_menu('reset_editor', $editors_pulldown, $current_editor_key, 'onChange="this.form.submit();"') .
         zen_draw_hidden_field('action', 'set_editor') .
-        zen_hide_session_id() . 
+        zen_hide_session_id() .
         '</form>';
 ?>
         </td>
@@ -185,18 +185,7 @@ if (isset($_GET['filename'])) {
           <tr><?php echo zen_draw_form('language', FILENAME_DEFINE_PAGES_EDITOR, 'lngdir=' . $_SESSION['language'] . '&filename=' . $_GET['filename'] . '&action=save'); ?>
             <td><table border="0" cellspacing="0" cellpadding="2">
               <tr>
-                <td class="main">
-				<?php if ($_SESSION['html_editor_preference_status']=="FCKEDITOR") {
-                $oFCKeditor = new FCKeditor('file_contents') ;
-                $oFCKeditor->Value = $file_contents ;
-                $oFCKeditor->Width  = '700' ;
-                $oFCKeditor->Height = '450' ;
-//                $oFCKeditor->Create() ;
-                $output = $oFCKeditor->CreateHtml() ; echo $output;
-					} else { // using HTMLAREA or just raw "source"
-					echo zen_draw_textarea_field('file_contents', 'soft', '100%', '30', $file_contents, (($file_writeable) ? '' : 'readonly') . ' id="file_contents"');
-					} ?>
-				</td>
+                <td class="main"><?php echo zen_draw_textarea_field('file_contents', 'soft', '100%', '30', htmlspecialchars($file_contents, ENT_COMPAT, CHARSET, TRUE), (($file_writeable) ? '' : 'readonly') . ' id="file_contents"'); ?></td>
               </tr>
               <tr>
                 <td><?php echo zen_draw_separator('pixel_trans.gif', '1', '10'); ?></td>

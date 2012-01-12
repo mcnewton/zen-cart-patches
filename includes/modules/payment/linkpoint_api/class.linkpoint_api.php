@@ -1,9 +1,9 @@
 <?php
 /**
  * @package paymentMethod
- * @copyright Copyright 2003-2010 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Copyright 2003 LinkPoint International, Inc. All Rights Reserved.
- * @version (within Zen Cart SVN) $Id: class.linkpoint_api.php 15881 2010-04-11 16:32:39Z wilt $
+ * @version (within Zen Cart SVN) $Id: class.linkpoint_api.php 18942 2011-06-13 23:26:41Z wilt $
  */
 /* lphp.php  LINKPOINT PHP MODULE */
 

@@ -1,10 +1,10 @@
 <?php
 /**
  * @package admin
- * @copyright Copyright 2003-2009 Zen Cart Development Team
+ * @copyright Copyright 2003-2011 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: store_manager.php 15954 2010-04-15 16:56:44Z drbyte $
+ * @version $Id: store_manager.php 19689 2011-10-04 15:51:25Z drbyte $
  */
 
   define('HEADING_TITLE', 'Store Manager');
@@ -16,22 +16,21 @@
   define('SUCCESS_PRODUCT_UPDATE_PRODUCTS_ORDERED', '<strong>Successful</strong> reset of Products Ordered to 0');
   define('SUCCESS_UPDATE_ALL_MASTER_CATEGORIES_ID', '<strong>Successful</strong> reset of all Master Categories for Linked Products');
   define('SUCCESS_UPDATE_COUNTER', '<strong>Successful</strong> Counter Updated to: ');
-  define('SUCCESS_CLEAN_ADMIN_ACTIVITY_LOG', '<strong>Successful</strong> Update of the Admin Activity log');
 
   define('ERROR_CONFIGURATION_KEY_NOT_FOUND', '<strong>Error:</strong> No matching Configuration Keys were found ...');
   define('ERROR_CONFIGURATION_KEY_NOT_ENTERED', '<strong>Error:</strong> No Configuration Key or Text was entered to search for ... Search was terminated');
 
-  define('TEXT_INFO_COUNTER_UPDATE', '<strong>Update Counter</strong><br />to to a new value: ');
+  define('TEXT_INFO_COUNTER_UPDATE', '<strong>Update Hit Counter</strong><br />to to a new value: ');
   define('TEXT_INFO_PRODUCTS_PRICE_SORTER_UPDATE', '<strong>Update ALL Products Price Sorter</strong><br />to be able to sort by displayed prices: ');
   define('TEXT_INFO_PRODUCTS_VIEWED_UPDATE', '<strong>Reset ALL Products Viewed</strong><br />Reset Product Viewed Counts to 0: ');
   define('TEXT_INFO_PRODUCTS_ORDERED_UPDATE', '<strong>Reset ALL Products Ordered</strong><br />Reset Product Ordered Counts to 0: ');
   define('TEXT_INFO_MASTER_CATEGORIES_ID_UPDATE', '<strong>Reset ALL Products Master Categories ID</strong><br />to be used for Linked Products and Pricing: ');
-  define('TEXT_INFO_ADMIN_ACTIVITY_LOG', '<strong>Empty Admin Activity Log table from the database<br />WARNING: Be sure to backup your database before running this update!</strong><br />The Admin Activity Log is a tracking method that records activity in the Admin. Due to its nature it can become very large, very fast and does need to be cleaned out from time to time.<br />Warnings are given at 50,000 records or 60 days, which ever happens first.');
 
-  define('TEXT_ORDERS_ID_UPDATE', '<strong>Reset Current Order ID</strong>');
-  define('TEXT_INFO_ORDERS_ID_UPDATE', '<strong>NOTE: Before updating the Current Order ID ...</strong><br /><br />Create a test order first. Then, using this Test Order ID complete the information below.<br />The New Order ID for the next Real Order should be entered as 1 less than the Order ID you wish to use.<br /><strong>Example:</strong> If you want your next Real Order ID to be 1225, enter the number 1224<br /><br /><strong>WARNING:</strong> You can only reset the Order ID forward, and not backwards.<br />So if you set the Orders ID to 25, then change it again to 20, the next Orders ID will still be 26.');
-  define('TEXT_OLD_ORDERS_ID', 'Old Order ID');
   define('TEXT_NEW_ORDERS_ID', 'New Order ID');
+  define('TEXT_INFO_SET_NEXT_ORDER_NUMBER', '<strong>Set next order number</strong><br />NOTE: You cannot set the order number to a value lower than any existing order already in the database.');
+  define('TEXT_MSG_NEXT_ORDER', 'The next order number has been set to %s');
+  define('TEXT_MSG_NEXT_ORDER_MAX', 'Due to existing order data, the next order number is currently: %s');
+  define('TEXT_MSG_NEXT_ORDER_TOO_LARGE', 'Due to database limitations, you cannot set the next order number higher than 2000000000. Please choose a lower value.');
 
   define('TEXT_CONFIGURATION_CONSTANT', '<strong>Look-up CONSTANT or Language File defines</strong>');
   define('TEXT_CONFIGURATION_KEY', 'Key or Name:');
@@ -61,7 +60,8 @@
   define('TEXT_INFO_CONFIGURATION_HIDDEN', ' or, HIDDEN');
 
   define('TEXT_INFO_DATABASE_OPTIMIZE', '<strong>Optimize Database</strong> to remove wasted space from deleted records.<br />May be optionally run monthly or weekly on a busy database.<br />(Best to run during non-busy times.)');
+  define('TEXT_INFO_OPTIMIZING_DATABASE_TABLES', 'Database table optimization in progress. This may take a few minutes. Please wait. The previous menu will re-appear when finished ... ');
   define('SUCCESS_DB_OPTIMIZE', 'Database Optimization - Tables Processed: ');
 
-  define('TEXT_INFO_PURGE_DEBUG_LOG_FILES', '<strong>Cleanup Debug Log Files</strong><br /><strong>CAUTION: </strong>Zen Cart records PHP error messages for debugging purposes, and many payment modules can be set to log debug data to diagnose communication problems. <br />Clicking this purge option will *permanently* remove *ALL* debug logs associated with PHP errors and the PayPal, Authorize.net, and Linkpoint/FirstData modules.');
+  define('TEXT_INFO_PURGE_DEBUG_LOG_FILES', '<strong>Cleanup Debug Log Files</strong><br /><strong>CAUTION: </strong>Zen Cart records PHP error messages for debugging purposes, and many payment modules can be set to log debug data to diagnose communication problems. <br />Clicking this purge option will *permanently* remove *ALL* debug logs associated with PHP errors and payment modules from the /cache/ folder.');
   define('SUCCESS_CLEAN_DEBUG_FILES', 'Debug Log Files Purged');
