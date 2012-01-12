@@ -24,6 +24,9 @@ PACKAGE CONTENTS
 For files that are modified or added by this package, please see the
 contents of MANIFEST-downloadscripts.txt.
 
+Patches are at https://github.com/mcnewton/zen-cart-patches
+in the branch 'package-dlscripts'.
+
 
 INSTALLATION
 
